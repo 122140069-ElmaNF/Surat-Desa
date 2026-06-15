@@ -1,9 +1,11 @@
 import db from "@/lib/db";
+import PimpinanDashboardStats from "./PimpinanDashboardStats";
 import PimpinanSuratTable, {
   SuratPersetujuanRow,
 } from "./PimpinanSuratTable";
 
 export default async function PimpinanDashboardPage() {
+
   const [rows] = await db.query(
     `SELECT
       ps.id,
@@ -39,36 +41,20 @@ export default async function PimpinanDashboardPage() {
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 className="page-title">Persetujuan Surat</h1>
+        <h1 className="page-title">
+          Persetujuan Surat
+        </h1>
 
         <p className="page-subtitle">
           Daftar surat yang membutuhkan persetujuan dan tanda tangan kepala desa.
         </p>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          marginBottom: "24px",
-          flexWrap: "wrap",
+      <PimpinanDashboardStats
+        data={{
+          totalMenunggu,
         }}
-      >
-        <div
-          className="stat-card"
-          style={{
-            width: "280px",
-          }}
-        >
-          <div className="stat-label">
-            Menunggu Persetujuan
-          </div>
-
-          <div className="stat-value">
-            {totalMenunggu}
-          </div>
-        </div>
-      </div>
+      />
 
       <PimpinanSuratTable
         surat={rows as SuratPersetujuanRow[]}

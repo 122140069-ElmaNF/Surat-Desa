@@ -11,7 +11,7 @@ export default function AdminLayout({
 
       <div className="admin-content">
         <header className="topbar">
-          <h1>Admin Surat Desa</h1>
+          <h1>Dashboard Admin</h1>
         </header>
 
         <main>{children}</main>

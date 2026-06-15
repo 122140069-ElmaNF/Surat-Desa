@@ -1,37 +1,21 @@
-import Link from "next/link";
-import type { RowDataPacket } from "mysql2";
 import db from "@/lib/db";
-
-type StatRow = RowDataPacket & {
-  total_surat: number;
-  surat_hari_ini: number;
-  pending: number;
-  selesai: number;
-};
-
-type SuratTerbaruRow = RowDataPacket & {
-  id: number;
-  kode_tracking: string;
-  nama: string | null;
-  nama_surat: string | null;
-  status: string;
-  created_at: string;
-};
+import AdminDashboardStats from "./AdminDashboardStats";
+import AdminSuratTerbaruTable from "./AdminSuratTerbaruTable";
 
 export default async function AdminDashboardPage() {
-  const [rows] = await db.query<StatRow[]>(
-    `SELECT
+  const [rows] = await db.query(`
+    SELECT
       COUNT(*) AS total_surat,
       SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS surat_hari_ini,
       SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending,
       SUM(CASE WHEN status = 'selesai' THEN 1 ELSE 0 END) AS selesai
-    FROM pengajuan_surat`
-  );
+    FROM pengajuan_surat
+  `);
 
-  const data = rows[0];
+  const data = (rows as any[])[0];
 
-  const [suratTerbaru] = await db.query<SuratTerbaruRow[]>(
-    `SELECT
+  const [suratTerbaru] = await db.query(`
+    SELECT
       ps.id,
       ps.kode_tracking,
       ps.status,
@@ -48,204 +32,16 @@ export default async function AdminDashboardPage() {
     FROM pengajuan_surat ps
     LEFT JOIN jenis_surat js ON js.id = ps.jenis_surat_id
     ORDER BY ps.created_at DESC
-    LIMIT 3`
-  );
+    LIMIT 3
+  `);
 
   return (
     <div>
-      <div className="page-header" style={{ marginBottom: "24px" }}>
-        <div>
-          <h1 className="page-title">Dashboard Admin</h1>
-          <p className="page-subtitle">
-            Ringkasan pengajuan surat desa.
-          </p>
-        </div>
+      <AdminDashboardStats data={data} />
 
-        <div className="action-row">
-          <Link href="/admin/buat-surat">
-            <button
-              style={{
-                padding: "10px 16px",
-                border: "none",
-                borderRadius: "6px",
-                backgroundColor: "#16a34a",
-                color: "white",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Buat Surat
-            </button>
-          </Link>
-          <Link href="/admin/surat">
-            <button
-              style={{
-                padding: "10px 16px",
-                border: "none",
-                borderRadius: "6px",
-                backgroundColor: "#2563eb",
-                color: "white",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Lihat Surat Masuk
-            </button>
-          </Link>
-        </div>
-      </div>
-
-      <div className="stat-grid">
-        <StatCard title="Total Surat" value={data.total_surat || 0} />
-        <StatCard title="Surat Hari Ini" value={data.surat_hari_ini || 0} />
-        <StatCard title="Pending" value={data.pending || 0} />
-        <StatCard title="Selesai" value={data.selesai || 0} />
-      </div>
-
-      <section style={{ marginTop: "28px" }}>
-        <div className="page-header" style={{ marginBottom: "14px" }}>
-          <div>
-            <h2 style={{ margin: 0, fontSize: "22px", color: "#111827" }}>
-              Surat Masuk Terbaru
-            </h2>
-            <p className="page-subtitle" style={{ marginTop: "6px" }}>
-              3 pengajuan terbaru yang masuk ke sistem.
-            </p>
-          </div>
-
-          <Link href="/admin/surat">
-            <button
-              style={{
-                padding: "9px 14px",
-                border: "1px solid #d1d5db",
-                borderRadius: "6px",
-                backgroundColor: "white",
-                color: "#111827",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Lihat Semua
-            </button>
-          </Link>
-        </div>
-
-        <div className="responsive-table-wrap">
-          <table
-            className="responsive-table"
-            style={{
-              minWidth: "760px",
-              borderCollapse: "collapse",
-            }}
-          >
-            <thead>
-              <tr style={{ backgroundColor: "#f9fafb" }}>
-                <TableHead>Kode Tracking</TableHead>
-                <TableHead>Nama Pemohon</TableHead>
-                <TableHead>Jenis Surat</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Tanggal</TableHead>
-              </tr>
-            </thead>
-            <tbody>
-              {suratTerbaru.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    style={{
-                      padding: "22px",
-                      textAlign: "center",
-                      color: "#6b7280",
-                    }}
-                  >
-                    Belum ada surat masuk.
-                  </td>
-                </tr>
-              ) : (
-                suratTerbaru.map((surat) => (
-                  <tr key={surat.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                    <TableCell label="Kode Tracking">{surat.kode_tracking}</TableCell>
-                    <TableCell label="Nama Pemohon">{surat.nama || "-"}</TableCell>
-                    <TableCell label="Jenis Surat">{surat.nama_surat || "-"}</TableCell>
-                    <TableCell label="Status">
-                      <StatusBadge status={surat.status} />
-                    </TableCell>
-                    <TableCell label="Tanggal">{formatTanggal(surat.created_at)}</TableCell>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <AdminSuratTerbaruTable
+        data={suratTerbaru as any[]}
+      />
     </div>
   );
-}
-
-function StatCard({ title, value }: { title: string; value: number }) {
-  return (
-    <div className="stat-card">
-      <div className="stat-label">{title}</div>
-      <div className="stat-value">{value}</div>
-    </div>
-  );
-}
-
-function TableHead({ children }: { children: React.ReactNode }) {
-  return (
-    <th
-      style={{
-        padding: "14px",
-        textAlign: "left",
-        color: "#374151",
-        fontSize: "14px",
-        borderBottom: "1px solid #e5e7eb",
-      }}
-    >
-      {children}
-    </th>
-  );
-}
-
-function TableCell({ children, label }: { children: React.ReactNode; label: string }) {
-  return <td data-label={label} style={{ padding: "14px", color: "#111827" }}>{children}</td>;
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const isSelesai = status === "selesai";
-  const isMenungguTandaTangan = status === "menunggu tanda tangan";
-
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        padding: "5px 10px",
-        borderRadius: "999px",
-        backgroundColor: isSelesai
-          ? "#dcfce7"
-          : isMenungguTandaTangan
-            ? "#dbeafe"
-            : "#fef3c7",
-        color: isSelesai
-          ? "#166534"
-          : isMenungguTandaTangan
-            ? "#1e40af"
-            : "#92400e",
-        fontSize: "13px",
-        fontWeight: 700,
-      }}
-    >
-      {status}
-    </span>
-  );
-}
-
-function formatTanggal(value: string) {
-  return new Date(value).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
