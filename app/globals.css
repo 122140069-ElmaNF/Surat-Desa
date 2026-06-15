@@ -486,6 +486,12 @@ img {
   color: white;
   padding: 24px 18px;
   flex-shrink: 0;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .sidebar-header {
@@ -532,6 +538,7 @@ img {
 
 .admin-content {
   flex: 1;
+  margin-left: 260px;
   padding: 24px;
   overflow-x: auto;
 }
@@ -570,6 +577,7 @@ img {
   }
 
   .admin-content {
+    margin-left: 220px;
     padding: 16px;
   }
 }
@@ -585,8 +593,14 @@ img {
   }
 
   .sidebar {
+    position: relative;
     width: 100%;
+    height: auto;
     padding: 16px;
+  }
+
+  .admin-content {
+    margin-left: 0;
   }
 
   .sidebar-menu {

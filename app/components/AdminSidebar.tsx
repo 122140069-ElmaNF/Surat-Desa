@@ -41,6 +41,19 @@ const menus = [
 export default function AdminSidebar() {
   const pathname = usePathname();
 
+  const isActive = (href: string) => {
+    // Dashboard hanya aktif di /admin
+    if (href === "/admin") {
+      return pathname === "/admin";
+    }
+
+    // Menu lain aktif untuk halaman utama dan turunannya
+    return (
+      pathname === href ||
+      pathname.startsWith(`${href}/`)
+    );
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -52,15 +65,13 @@ export default function AdminSidebar() {
         {menus.map((menu) => {
           const Icon = menu.icon;
 
-          const active =
-            pathname === menu.href ||
-            pathname.startsWith(menu.href + "/");
-
           return (
             <Link
               key={menu.href}
               href={menu.href}
-              className={`menu-item ${active ? "active" : ""}`}
+              className={`menu-item ${
+                isActive(menu.href) ? "active" : ""
+              }`}
             >
               <Icon size={20} />
               <span>{menu.title}</span>
