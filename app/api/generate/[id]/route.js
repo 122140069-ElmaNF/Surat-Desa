@@ -35,7 +35,8 @@ export async function GET(req, context) {
 
   return Response.json({
     hasil,
-    use_kop: surat.use_kop
+    use_kop: surat.use_kop,
+    status: pengajuan.status,
   });
 }
 

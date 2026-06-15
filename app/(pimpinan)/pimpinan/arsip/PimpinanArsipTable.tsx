@@ -15,18 +15,10 @@ export default function PimpinanArsipTable({
   surat: ArsipSuratRow[];
 }) {
   return (
-    <div
-      style={{
-        backgroundColor: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        overflowX: "auto",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
-      }}
-    >
+    <div className="responsive-table-wrap">
       <table
+        className="responsive-table"
         style={{
-          width: "100%",
           minWidth: "780px",
           borderCollapse: "collapse",
         }}
@@ -58,10 +50,10 @@ export default function PimpinanArsipTable({
           ) : (
             surat.map((item) => (
               <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                <Td>{item.kode_tracking}</Td>
-                <Td>{item.nama || "-"}</Td>
-                <Td>{item.nama_surat || "-"}</Td>
-                <Td>
+                <Td label="Kode Tracking">{item.kode_tracking}</Td>
+                <Td label="Nama Pemohon">{item.nama || "-"}</Td>
+                <Td label="Jenis Surat">{item.nama_surat || "-"}</Td>
+                <Td label="Status">
                   <span
                     style={{
                       display: "inline-block",
@@ -76,8 +68,8 @@ export default function PimpinanArsipTable({
                     {item.status}
                   </span>
                 </Td>
-                <Td>{formatTanggal(item.created_at)}</Td>
-                <Td>
+                <Td label="Tanggal">{formatTanggal(item.created_at)}</Td>
+                <Td label="Aksi">
                   <Link href={`/pimpinan/preview/${item.id}?print=1`}>
                     <button
                       style={{
@@ -119,9 +111,12 @@ function Th({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Td({ children }: { children: React.ReactNode }) {
+function Td({ children, label }: { children: React.ReactNode; label: string }) {
   return (
-    <td style={{ padding: "14px", color: "#111827", verticalAlign: "top" }}>
+    <td
+      data-label={label}
+      style={{ padding: "14px", color: "#111827", verticalAlign: "top" }}
+    >
       {children}
     </td>
   );

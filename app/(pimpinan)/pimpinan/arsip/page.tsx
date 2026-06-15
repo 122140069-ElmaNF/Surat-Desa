@@ -1,9 +1,15 @@
 import db from "@/lib/db";
-import PimpinanArsipTable, { ArsipSuratRow } from "./PimpinanArsipTable";
+import { ArsipSuratRow } from "./PimpinanArsipTable";
 import SearchableArsip from "./SearchableArsip";
 
+type ArsipSuratDbRow = Omit<ArsipSuratRow, "created_at"> & {
+  created_at: string | Date | null;
+};
+
 export default async function PimpinanArsipPage() {
-  const [rows] = await db.query(
+  let rows: ArsipSuratDbRow[] = [];
+  try {
+    const result = await db.query(
     `SELECT
       ps.id,
       ps.kode_tracking,
@@ -22,21 +28,29 @@ export default async function PimpinanArsipPage() {
     LEFT JOIN jenis_surat js ON js.id = ps.jenis_surat_id
     WHERE ps.status = 'selesai'
     ORDER BY ps.created_at DESC`
-  );
+    );
+
+    rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : [];
+  } catch (err) {
+    console.error("ERROR fetching arsip rows:", err);
+    rows = [];
+  }
+
+  const sanitized: ArsipSuratRow[] = rows.map((r) => ({
+    ...r,
+    created_at: r.created_at ? new Date(r.created_at).toISOString() : "",
+  }));
 
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 style={{ margin: 0, fontSize: "28px", color: "#111827" }}>
-          Arsip Surat
-        </h1>
-        <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
+        <h1 className="page-title">Arsip Surat</h1>
+        <p className="page-subtitle">
           Surat yang sudah disetujui dan mendapatkan tanda tangan.
         </p>
       </div>
 
-      {/* render a client-side search component with initial rows */}
-      <SearchableArsip initialRows={rows as ArsipSuratRow[]} />
+      <SearchableArsip initialRows={sanitized} />
     </div>
   );
 }

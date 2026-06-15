@@ -1,5 +1,5 @@
 import db from "@/lib/db";
-import AdminArsipTable, { ArsipSuratRow } from "./AdminArsipTable";
+import { ArsipSuratRow } from "./AdminArsipTable";
 import SearchableArsip from "./SearchableArsip";
 
 export default async function AdminArsipPage() {
@@ -27,10 +27,8 @@ export default async function AdminArsipPage() {
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 style={{ margin: 0, fontSize: "28px", color: "#111827" }}>
-          Arsip Surat
-        </h1>
-        <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
+        <h1 className="page-title">Arsip Surat</h1>
+        <p className="page-subtitle">
           Daftar surat yang sudah selesai dan mendapatkan tanda tangan.
         </p>
       </div>

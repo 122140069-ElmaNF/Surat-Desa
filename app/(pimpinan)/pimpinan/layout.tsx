@@ -1,4 +1,4 @@
-import Link from "next/link";
+import PimpinanSidebar from "@/app/components/PimpinanSidebar";
 
 export default function PimpinanLayout({
   children,
@@ -6,48 +6,16 @@ export default function PimpinanLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f3f4f6" }}>
-      <header
-        style={{
-          backgroundColor: "#0f172a",
-          color: "white",
-          padding: "18px 28px",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1180px",
-            margin: "0 auto",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "20px",
-          }}
-        >
-          <div style={{ fontSize: "20px", fontWeight: 700 }}>
-            Dashboard Pimpinan
-          </div>
+    <div className="admin-layout">
+      <PimpinanSidebar />
 
-          <nav style={{ display: "flex", gap: "16px" }}>
-            <Link
-              href="/pimpinan"
-              style={{ color: "white", textDecoration: "none" }}
-            >
-              Persetujuan Surat
-            </Link>
-            <Link
-              href="/pimpinan/arsip"
-              style={{ color: "white", textDecoration: "none" }}
-            >
-              Arsip Surat
-            </Link>
-          </nav>
+      <div className="admin-content">
+        <div className="topbar">
+          <h1>Dashboard Pimpinan</h1>
         </div>
-      </header>
 
-      <main style={{ maxWidth: "1180px", margin: "0 auto", padding: "28px" }}>
         {children}
-      </main>
+      </div>
     </div>
   );
 }

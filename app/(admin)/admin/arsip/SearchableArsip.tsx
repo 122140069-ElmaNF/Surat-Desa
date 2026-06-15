@@ -59,6 +59,7 @@ export default function SearchableArsip({
             onChange={(e) => setQ(e.target.value)}
             placeholder="Masukkan nama pemohon atau jenis surat"
             style={{
+              width: "100%",
               padding: "8px 10px",
               borderRadius: 6,
               border: "1px solid #d1d5db",
@@ -67,7 +68,7 @@ export default function SearchableArsip({
           />
         </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+        <div className="action-row" style={{ alignItems: "flex-end" }}>
           <button
             type="submit"
             style={{

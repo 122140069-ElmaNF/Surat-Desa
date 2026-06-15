@@ -37,25 +37,15 @@ export default async function AdminDetailSuratPage({ params }: PageProps) {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "16px",
-          marginBottom: "22px",
-        }}
-      >
+      <div className="page-header">
         <div>
-          <h1 style={{ margin: 0, fontSize: "28px", color: "#111827" }}>
-            Detail Surat
-          </h1>
-          <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
+          <h1 className="page-title">Detail Surat</h1>
+          <p className="page-subtitle">
             {surat.kode_tracking}
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div className="action-row">
           <Link href="/admin/surat">
             <button style={buttonStyle}>Kembali</button>
           </Link>
@@ -65,14 +55,14 @@ export default async function AdminDetailSuratPage({ params }: PageProps) {
         </div>
       </div>
 
-      <section style={cardStyle}>
+      <section className="card">
         <InfoRow label="Kode Tracking" value={surat.kode_tracking} />
         <InfoRow label="Jenis Surat" value={surat.nama_surat || "-"} />
         <InfoRow label="Status" value={surat.status} />
         <InfoRow label="Tanggal" value={formatTanggal(surat.created_at)} />
       </section>
 
-      <section style={{ ...cardStyle, marginTop: "18px" }}>
+      <section className="card" style={{ marginTop: "18px" }}>
         <h2 style={{ margin: "0 0 14px", fontSize: "20px", color: "#111827" }}>
           Data Pemohon
         </h2>
@@ -89,14 +79,6 @@ export default async function AdminDetailSuratPage({ params }: PageProps) {
     </div>
   );
 }
-
-const cardStyle = {
-  backgroundColor: "white",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-  padding: "22px",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
-};
 
 const buttonStyle = {
   padding: "10px 14px",
@@ -117,17 +99,9 @@ const primaryButtonStyle = {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        gap: "20px",
-        padding: "11px 0",
-        borderBottom: "1px solid #f3f4f6",
-      }}
-    >
-      <span style={{ color: "#6b7280", fontWeight: 600 }}>{label}</span>
-      <span style={{ color: "#111827", fontWeight: 600, textAlign: "right" }}>
+    <div className="info-row">
+      <span className="info-row-label">{label}</span>
+      <span className="info-row-value">
         {value}
       </span>
     </div>

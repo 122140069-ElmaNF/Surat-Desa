@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 
 type TrackingData = {
   kode_tracking: string;
@@ -15,9 +16,10 @@ export default function TrackingPage() {
   const [data, setData] = useState<TrackingData | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const searchParams = useSearchParams();
 
-  const handleCari = async () => {
-    const kodeTracking = kode.trim();
+  const handleCari = async (overrideKode?: string) => {
+    const kodeTracking = (overrideKode ?? kode).trim();
 
     if (!kodeTracking) {
       setData(null);
@@ -47,6 +49,15 @@ export default function TrackingPage() {
     }
   };
 
+  useEffect(() => {
+    const kodeParam = searchParams?.get("kode");
+    if (kodeParam) {
+      setKode(kodeParam);
+      handleCari(kodeParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const formatTanggal = (value: string) => {
     return new Date(value).toLocaleDateString("id-ID", {
       day: "2-digit",
@@ -58,30 +69,9 @@ export default function TrackingPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f3f4f6",
-        padding: "40px 20px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "640px",
-          margin: "0 auto",
-          backgroundColor: "white",
-          borderRadius: "10px",
-          padding: "32px",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-        }}
-      >
-        <h1
-          style={{
-            margin: "0 0 10px",
-            color: "#111827",
-            fontSize: "28px",
-          }}
-        >
+    <div className="public-page">
+      <div className="public-card">
+        <h1 className="page-title" style={{ marginBottom: "10px" }}>
           Tracking Surat
         </h1>
 
@@ -100,6 +90,7 @@ export default function TrackingPage() {
             display: "flex",
             gap: "10px",
             marginBottom: "20px",
+            flexWrap: "wrap",
           }}
         >
           <input
@@ -113,7 +104,7 @@ export default function TrackingPage() {
               }
             }}
             style={{
-              flex: 1,
+              flex: "1 1 260px",
               padding: "12px 14px",
               border: "1px solid #d1d5db",
               borderRadius: "6px",
@@ -125,8 +116,9 @@ export default function TrackingPage() {
           />
 
           <button
-            onClick={handleCari}
+            onClick={() => handleCari()}
             disabled={loading}
+            className="full-mobile"
             style={{
               padding: "12px 22px",
               border: "none",
@@ -197,17 +189,9 @@ export default function TrackingPage() {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        gap: "20px",
-        padding: "12px 0",
-        borderBottom: "1px solid #f3f4f6",
-      }}
-    >
-      <span style={{ color: "#6b7280", fontWeight: 500 }}>{label}</span>
-      <span style={{ color: "#111827", fontWeight: 600, textAlign: "right" }}>
+    <div className="info-row" style={{ padding: "12px 0" }}>
+      <span className="info-row-label" style={{ fontWeight: 500 }}>{label}</span>
+      <span className="info-row-value">
         {value}
       </span>
     </div>

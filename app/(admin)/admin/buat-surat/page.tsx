@@ -104,23 +104,13 @@ export default function AdminBuatSuratPage() {
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 style={{ margin: 0, fontSize: "28px", color: "#111827" }}>
-          Buat Surat
-        </h1>
-        <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
+        <h1 className="page-title">Buat Surat</h1>
+        <p className="page-subtitle">
           Buat pengajuan atas nama masyarakat dan langsung ajukan approval.
         </p>
       </div>
 
-      <div
-        style={{
-          backgroundColor: "white",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          padding: "24px",
-          boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
-        }}
-      >
+      <div className="card">
         <div style={{ marginBottom: "20px" }}>
           <label
             htmlFor="jenis-surat"
@@ -137,14 +127,9 @@ export default function AdminBuatSuratPage() {
             id="jenis-surat"
             value={selected || ""}
             onChange={(e) => handleSelect(e.target.value)}
+            className="input-control"
             style={{
-              width: "100%",
               maxWidth: "420px",
-              padding: "11px 12px",
-              border: "1px solid #d1d5db",
-              borderRadius: "6px",
-              backgroundColor: "white",
-              color: "#111827",
             }}
           >
             <option value="">Pilih jenis surat</option>
@@ -163,14 +148,7 @@ export default function AdminBuatSuratPage() {
         )}
 
         {fields.length > 0 && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-              gap: "16px",
-              marginBottom: "22px",
-            }}
-          >
+          <div className="form-grid" style={{ marginBottom: "22px" }}>
             {fields.map((field) => (
               <DynamicField
                 key={field.id}
@@ -185,6 +163,7 @@ export default function AdminBuatSuratPage() {
         <button
           onClick={handleApproval}
           disabled={!selected || submitting}
+          className="full-mobile"
           style={{
             padding: "11px 18px",
             border: "none",
@@ -228,7 +207,7 @@ function DynamicField({
       </label>
 
       {isTempatTanggalLahir(field) ? (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+        <div className="split-field">
           <input
             id={`field-${field.id}`}
             type="text"

@@ -73,18 +73,10 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        overflowX: "auto",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
-      }}
-    >
+    <div className="responsive-table-wrap">
       <table
+        className="responsive-table"
         style={{
-          width: "100%",
           borderCollapse: "collapse",
           minWidth: "920px",
         }}
@@ -116,10 +108,10 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
           ) : (
             surat.map((item) => (
               <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                <Td>{item.kode_tracking}</Td>
-                <Td>{item.nama || "-"}</Td>
-                <Td>{item.nama_surat || "-"}</Td>
-                <Td>
+                <Td label="Kode Tracking">{item.kode_tracking}</Td>
+                <Td label="Nama Pemohon">{item.nama || "-"}</Td>
+                <Td label="Jenis Surat">{item.nama_surat || "-"}</Td>
+                <Td label="Status">
                   <span
                     style={{
                       display: "inline-block",
@@ -144,8 +136,8 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
                     {item.status}
                   </span>
                 </Td>
-                <Td>{formatTanggal(item.created_at)}</Td>
-                <Td>
+                <Td label="Tanggal">{formatTanggal(item.created_at)}</Td>
+                <Td label="Aksi">
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                     <ActionLink href={`/admin/surat/${item.id}`} label="Lihat" />
                     <ActionLink
@@ -226,9 +218,12 @@ function Th({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Td({ children }: { children: React.ReactNode }) {
+function Td({ children, label }: { children: React.ReactNode; label: string }) {
   return (
-    <td style={{ padding: "14px", color: "#111827", verticalAlign: "top" }}>
+    <td
+      data-label={label}
+      style={{ padding: "14px", color: "#111827", verticalAlign: "top" }}
+    >
       {children}
     </td>
   );

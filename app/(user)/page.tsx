@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -22,106 +23,147 @@ export default function Home() {
 
   useEffect(() => {
     fetch("/api/jenis-surat")
-      .then(res => res.json())
-      .then(setJenis);
+      .then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          console.error("Failed to fetch jenis-surat:", res.status, text);
+          return [];
+        }
+
+        try {
+          return await res.json();
+        } catch (err) {
+          console.error("Failed parsing jenis-surat JSON:", err);
+          return [];
+        }
+      })
+      .then(setJenis)
+      .catch((err) => {
+        console.error("Fetch error jenis-surat:", err);
+        setJenis([]);
+      });
   }, []);
 
   const handleSelect = async (id: string) => {
-    const numericId = Number(id); // 🔥 fix penting
-    setSelected(numericId);
+    const numericId = Number(id);
+    setSelected(numericId || null);
+    setFields([]);
+    setForm({});
+
+    if (!numericId) {
+      return;
+    }
 
     const res = await fetch(`/api/field/${numericId}`);
     const data = await res.json();
-
-    console.log("DATA FIELD:", data);
-
     setFields(data);
   };
 
   const handleChange = (name: string, value: string) => {
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
-  console.log("SUBMIT DIKLIK");
-
-  if (!selected) {
-    alert("Pilih jenis surat dulu!");
-    return;
-  }
-
-    const payload = {
-    jenis_surat_id: selected,
-    fields: fields.map((f) => ({
-      field_id: f.id,
-      value: form[f.nama_field] || ""
-    }))
-  };
-
-  console.log("PAYLOAD:", payload);
-
-  try {
-    const res = await fetch("/api/pengajuan", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await res.json();
-
-    console.log("RESULT:", result);
-
-    if (res.ok) {
-      router.push(`/success/${result.kode_tracking}`);
-    } else {
-      alert("Gagal simpan data!");
+    if (!selected) {
+      alert("Pilih jenis surat dulu!");
+      return;
     }
 
-  } catch (error) {
-    console.error("ERROR:", error);
-    alert("Terjadi error!");
-  }
-};
+    const payload = {
+      jenis_surat_id: selected,
+      fields: fields.map((f) => ({
+        field_id: f.id,
+        value: form[f.nama_field] || "",
+      })),
+    };
+
+    try {
+      const res = await fetch("/api/pengajuan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        router.push(`/success/${result.kode_tracking}`);
+      } else {
+        alert("Gagal simpan data!");
+      }
+    } catch (error) {
+      console.error("ERROR:", error);
+      alert("Terjadi error!");
+    }
+  };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Pengajuan Surat</h1>
+    <div className="public-page">
+      <div className="public-card">
+        <div style={{ marginBottom: "22px" }}>
+          <h1 className="page-title">Pengajuan Surat</h1>
+          <p className="page-subtitle">
+            Pilih jenis surat lalu lengkapi data pemohon.
+          </p>
+        </div>
 
-      <select onChange={(e) => handleSelect(e.target.value)}>
-        <option value="">Pilih Surat</option>
-        {jenis.map((j) => (
-          <option key={j.id} value={j.id}>{j.nama_surat}</option>
-        ))}
-      </select>
+        <div style={{ marginBottom: "18px" }}>
+          <label
+            htmlFor="jenis-surat"
+            style={{
+              display: "block",
+              marginBottom: "8px",
+              color: "#374151",
+              fontWeight: 700,
+            }}
+          >
+            Jenis Surat
+          </label>
+          <select
+            id="jenis-surat"
+            className="input-control"
+            onChange={(e) => handleSelect(e.target.value)}
+          >
+            <option value="">Pilih Surat</option>
+            {jenis.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.nama_surat}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <div>
-        {fields.map((f) => (
-          <DynamicField
-            key={f.id}
-            field={f}
-            value={form[f.nama_field] || ""}
-            onChange={(value) => handleChange(f.nama_field, value)}
-          />
-        ))}
+        <div className="form-grid">
+          {fields.map((f) => (
+            <DynamicField
+              key={f.id}
+              field={f}
+              value={form[f.nama_field] || ""}
+              onChange={(value) => handleChange(f.nama_field, value)}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={handleSubmit}
+          className="full-mobile"
+          style={{
+            marginTop: "20px",
+            padding: "11px 20px",
+            backgroundColor: "#2563eb",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontWeight: 700,
+          }}
+        >
+          Submit
+        </button>
       </div>
-
-      <button
-        onClick={handleSubmit}
-        style={{
-          marginTop: "20px",
-          padding: "10px 20px",
-          backgroundColor: "#2563eb",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer"
-        }}
-      >
-        Submit
-      </button>
-      </div>
+    </div>
   );
 }
 
@@ -137,40 +179,62 @@ function DynamicField({
   const [tempat, tanggal] = splitTempatTanggal(value);
 
   return (
-    <div style={{ marginBottom: "10px" }}>
-      <label>{field.label_field}</label><br />
+    <div>
+      <label
+        htmlFor={`field-${field.id}`}
+        style={{
+          display: "block",
+          marginBottom: "8px",
+          color: "#374151",
+          fontWeight: 700,
+        }}
+      >
+        {field.label_field}
+      </label>
 
       {isTempatTanggalLahir(field) ? (
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div className="split-field">
           <input
+            id={`field-${field.id}`}
             type="text"
             placeholder="Tempat lahir"
-            style={inputStyle}
+            className="input-control"
             value={tempat}
             onChange={(e) => onChange(gabungTempatTanggal(e.target.value, tanggal))}
           />
           <input
             type="date"
-            style={inputStyle}
+            className="input-control"
             value={tanggal}
             onChange={(e) => onChange(gabungTempatTanggal(tempat, e.target.value))}
           />
         </div>
       ) : isTanggalLahir(field) ? (
         <input
+          id={`field-${field.id}`}
           type="date"
-          style={inputStyle}
+          className="input-control"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
       ) : isJenisKelamin(field) ? (
-        <select style={inputStyle} value={value} onChange={(e) => onChange(e.target.value)}>
+        <select
+          id={`field-${field.id}`}
+          className="input-control"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
           <option value="">Pilih jenis kelamin</option>
           <option value="Laki-laki">Laki-laki</option>
           <option value="Perempuan">Perempuan</option>
         </select>
       ) : isAgama(field) ? (
-        <select style={inputStyle} value={value} onChange={(e) => onChange(e.target.value)}>
+        <select
+          id={`field-${field.id}`}
+          className="input-control"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        >
           <option value="">Pilih agama</option>
           <option value="Islam">Islam</option>
           <option value="Kristen">Kristen</option>
@@ -181,8 +245,9 @@ function DynamicField({
         </select>
       ) : (
         <input
+          id={`field-${field.id}`}
           type="text"
-          style={inputStyle}
+          className="input-control"
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -190,15 +255,6 @@ function DynamicField({
     </div>
   );
 }
-
-const inputStyle = {
-  padding: "8px",
-  width: "300px",
-  backgroundColor: "white",
-  color: "black",
-  border: "1px solid #ccc",
-  borderRadius: "5px",
-};
 
 function fieldKey(field: FieldSurat) {
   return `${field.nama_field || ""} ${field.label_field || ""}`

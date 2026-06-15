@@ -25,10 +25,8 @@ export default async function AdminSuratPage() {
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 style={{ margin: 0, fontSize: "28px", color: "#111827" }}>
-          Surat Masuk
-        </h1>
-        <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
+        <h1 className="page-title">Surat Masuk</h1>
+        <p className="page-subtitle">
           Daftar semua pengajuan surat dari pemohon.
         </p>
       </div>

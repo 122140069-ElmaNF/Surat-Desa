@@ -6,6 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 export default function PimpinanPreviewPage() {
   const [data, setData] = useState("");
   const [useKop, setUseKop] = useState(true);
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState<"acc" | "tolak" | null>(null);
 
   const params = useParams();
@@ -22,6 +23,7 @@ export default function PimpinanPreviewPage() {
       .then((res) => {
         setData(res.hasil);
         setUseKop(res.use_kop);
+        setStatus(res.status || "");
       });
   }, [id]);
 
@@ -53,8 +55,13 @@ export default function PimpinanPreviewPage() {
         return;
       }
 
-      router.push("/pimpinan");
-      router.refresh();
+      if (action === "acc") {
+        setStatus("selesai");
+        router.refresh();
+      } else {
+        router.push("/pimpinan");
+        router.refresh();
+      }
     } catch (error) {
       console.error("ERROR PERSETUJUAN:", error);
       alert("Terjadi kesalahan");
@@ -87,17 +94,39 @@ export default function PimpinanPreviewPage() {
 
         {!isPrint ? (
           <div style={{ display: "flex", gap: "10px" }}>
+            {status === "selesai" ? (
+              <button
+                onClick={() => {
+                  try {
+                    window.print();
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+                style={{ ...actionButtonStyle, backgroundColor: "#111827" }}
+              >
+                Print
+              </button>
+            ) : null}
             <button
               onClick={() => updatePersetujuan("acc")}
-              disabled={loading !== null}
-              style={{ ...actionButtonStyle, backgroundColor: "#16a34a" }}
+              disabled={loading !== null || status === "selesai"}
+              style={{
+                ...actionButtonStyle,
+                backgroundColor: status === "selesai" ? "#9ca3af" : "#16a34a",
+                cursor: loading !== null || status === "selesai" ? "not-allowed" : "pointer",
+              }}
             >
-              {loading === "acc" ? "Memproses..." : "ACC"}
+              {status === "selesai" ? "Sudah ACC" : loading === "acc" ? "Memproses..." : "ACC"}
             </button>
             <button
               onClick={() => updatePersetujuan("tolak")}
-              disabled={loading !== null}
-              style={{ ...actionButtonStyle, backgroundColor: "#dc2626" }}
+              disabled={loading !== null || status === "selesai"}
+              style={{
+                ...actionButtonStyle,
+                backgroundColor: status === "selesai" ? "#9ca3af" : "#dc2626",
+                cursor: loading !== null || status === "selesai" ? "not-allowed" : "pointer",
+              }}
             >
               {loading === "tolak" ? "Memproses..." : "Tolak"}
             </button>
@@ -164,7 +193,19 @@ export default function PimpinanPreviewPage() {
           }}
         >
           <div>Kepala Desa</div>
-          <div style={{ height: "70px" }} />
+          <div style={{ height: "70px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {status === "selesai" && (
+              <img
+                src="/ttd/ttd-kades.png"
+                alt="Tanda tangan kepala desa"
+                style={{
+                  maxWidth: "180px",
+                  maxHeight: "70px",
+                  objectFit: "contain",
+                }}
+              />
+            )}
+          </div>
           <div style={{ fontWeight: "bold", textDecoration: "underline" }}>
             Nama Kepala Desa
           </div>

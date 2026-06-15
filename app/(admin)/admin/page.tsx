@@ -53,25 +53,15 @@ export default async function AdminDashboardPage() {
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "16px",
-          marginBottom: "24px",
-        }}
-      >
+      <div className="page-header" style={{ marginBottom: "24px" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: "28px", color: "#111827" }}>
-            Dashboard Admin
-          </h1>
-          <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
+          <h1 className="page-title">Dashboard Admin</h1>
+          <p className="page-subtitle">
             Ringkasan pengajuan surat desa.
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+        <div className="action-row">
           <Link href="/admin/buat-surat">
             <button
               style={{
@@ -105,13 +95,7 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-          gap: "16px",
-        }}
-      >
+      <div className="stat-grid">
         <StatCard title="Total Surat" value={data.total_surat || 0} />
         <StatCard title="Surat Hari Ini" value={data.surat_hari_ini || 0} />
         <StatCard title="Pending" value={data.pending || 0} />
@@ -119,20 +103,12 @@ export default async function AdminDashboardPage() {
       </div>
 
       <section style={{ marginTop: "28px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-            marginBottom: "14px",
-          }}
-        >
+        <div className="page-header" style={{ marginBottom: "14px" }}>
           <div>
             <h2 style={{ margin: 0, fontSize: "22px", color: "#111827" }}>
               Surat Masuk Terbaru
             </h2>
-            <p style={{ margin: "6px 0 0", color: "#6b7280" }}>
+            <p className="page-subtitle" style={{ marginTop: "6px" }}>
               3 pengajuan terbaru yang masuk ke sistem.
             </p>
           </div>
@@ -154,18 +130,10 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
 
-        <div
-          style={{
-            backgroundColor: "white",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            overflowX: "auto",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
-          }}
-        >
+        <div className="responsive-table-wrap">
           <table
+            className="responsive-table"
             style={{
-              width: "100%",
               minWidth: "760px",
               borderCollapse: "collapse",
             }}
@@ -196,13 +164,13 @@ export default async function AdminDashboardPage() {
               ) : (
                 suratTerbaru.map((surat) => (
                   <tr key={surat.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                    <TableCell>{surat.kode_tracking}</TableCell>
-                    <TableCell>{surat.nama || "-"}</TableCell>
-                    <TableCell>{surat.nama_surat || "-"}</TableCell>
-                    <TableCell>
+                    <TableCell label="Kode Tracking">{surat.kode_tracking}</TableCell>
+                    <TableCell label="Nama Pemohon">{surat.nama || "-"}</TableCell>
+                    <TableCell label="Jenis Surat">{surat.nama_surat || "-"}</TableCell>
+                    <TableCell label="Status">
                       <StatusBadge status={surat.status} />
                     </TableCell>
-                    <TableCell>{formatTanggal(surat.created_at)}</TableCell>
+                    <TableCell label="Tanggal">{formatTanggal(surat.created_at)}</TableCell>
                   </tr>
                 ))
               )}
@@ -216,28 +184,9 @@ export default async function AdminDashboardPage() {
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (
-    <div
-      style={{
-        backgroundColor: "white",
-        border: "1px solid #e5e7eb",
-        borderRadius: "8px",
-        padding: "22px",
-        boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
-      }}
-    >
-      <div style={{ color: "#6b7280", fontSize: "14px", fontWeight: 600 }}>
-        {title}
-      </div>
-      <div
-        style={{
-          marginTop: "12px",
-          color: "#111827",
-          fontSize: "34px",
-          fontWeight: 800,
-        }}
-      >
-        {value}
-      </div>
+    <div className="stat-card">
+      <div className="stat-label">{title}</div>
+      <div className="stat-value">{value}</div>
     </div>
   );
 }
@@ -258,8 +207,8 @@ function TableHead({ children }: { children: React.ReactNode }) {
   );
 }
 
-function TableCell({ children }: { children: React.ReactNode }) {
-  return <td style={{ padding: "14px", color: "#111827" }}>{children}</td>;
+function TableCell({ children, label }: { children: React.ReactNode; label: string }) {
+  return <td data-label={label} style={{ padding: "14px", color: "#111827" }}>{children}</td>;
 }
 
 function StatusBadge({ status }: { status: string }) {

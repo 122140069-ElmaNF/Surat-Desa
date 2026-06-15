@@ -25,18 +25,54 @@ export default async function PimpinanDashboardPage() {
     ORDER BY ps.created_at ASC`
   );
 
+  const [statRows] = await db.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM pengajuan_surat
+    WHERE status = 'menunggu tanda tangan'
+    `
+  );
+
+  const totalMenunggu =
+    (statRows as any[])[0]?.total || 0;
+
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 style={{ margin: 0, fontSize: "28px", color: "#111827" }}>
-          Persetujuan Surat
-        </h1>
-        <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
+        <h1 className="page-title">Persetujuan Surat</h1>
+
+        <p className="page-subtitle">
           Daftar surat yang membutuhkan persetujuan dan tanda tangan kepala desa.
         </p>
       </div>
 
-      <PimpinanSuratTable surat={rows as SuratPersetujuanRow[]} />
+      <div
+        style={{
+          display: "flex",
+          gap: "16px",
+          marginBottom: "24px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div
+          className="stat-card"
+          style={{
+            width: "280px",
+          }}
+        >
+          <div className="stat-label">
+            Menunggu Persetujuan
+          </div>
+
+          <div className="stat-value">
+            {totalMenunggu}
+          </div>
+        </div>
+      </div>
+
+      <PimpinanSuratTable
+        surat={rows as SuratPersetujuanRow[]}
+      />
     </div>
   );
 }

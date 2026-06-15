@@ -41,29 +41,20 @@ export default async function AdminEditSuratPage({ params }: PageProps) {
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 style={{ margin: 0, fontSize: "28px", color: "#111827" }}>
-          Edit Surat
-        </h1>
-        <p style={{ margin: "8px 0 0", color: "#6b7280" }}>
+        <h1 className="page-title">Edit Surat</h1>
+        <p className="page-subtitle">
           Edit data input pemohon untuk pengajuan {surat.kode_tracking}.
         </p>
       </div>
 
-      <form action={`/api/admin/surat/${surat.id}`} method="post" style={cardStyle}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: "16px",
-            marginBottom: "18px",
-          }}
-        >
+      <form action={`/api/admin/surat/${surat.id}`} method="post" className="card">
+        <div className="form-grid" style={{ marginBottom: "18px" }}>
           {(details as DetailField[]).map((detail) => (
             <EditField key={detail.id} detail={detail} />
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div className="action-row">
           <Link href="/admin/surat">
             <button type="button" style={buttonStyle}>
               Batal
@@ -103,7 +94,7 @@ function EditField({ detail }: { detail: DetailField }) {
       </label>
 
       {isTempatTanggalLahir(detail) ? (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+        <div className="split-field">
           <input
             id={`detail-${detail.id}`}
             name={`detail_${detail.id}_tempat`}
@@ -203,14 +194,6 @@ function splitTempatTanggal(value: string) {
   const [tempat = "", tanggal = ""] = value.split(",").map((item) => item.trim());
   return [tempat, tanggal];
 }
-
-const cardStyle = {
-  backgroundColor: "white",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-  padding: "22px",
-  boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
-};
 
 const buttonStyle = {
   padding: "10px 14px",
