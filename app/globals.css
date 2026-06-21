@@ -636,3 +636,42 @@ img {
     padding: 0;
   }
 }
+.surat-editor-content {
+  min-height: 900px;
+  outline: none;
+  font-family: "Times New Roman", serif;
+  font-size: 12pt;
+  line-height: 1.8;
+  color: #111827;
+}
+
+.surat-editor-content p {
+  margin-bottom: 12px;
+}
+
+.surat-editor-content h1,
+.surat-editor-content h2,
+.surat-editor-content h3 {
+  margin-bottom: 20px;
+}
+
+.surat-editor-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.surat-editor-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.surat-editor-content td,
+.surat-editor-content th {
+  border: 1px solid #111827;
+  padding: 8px;
+}
+
+.ProseMirror {
+  outline: none;
+}

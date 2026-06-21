@@ -1,213 +1,120 @@
 import Link from "next/link";
 import db from "@/lib/db";
+import SuratEditor from "./SuratEditor";
 
 type PageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{
+    id: string;
+  }>;
 };
 
-export default async function AdminEditSuratPage({ params }: PageProps) {
+type DetailRow = {
+  nama_field: string;
+  value: string | null;
+};
+
+export default async function AdminEditSuratPage({
+  params,
+}: PageProps) {
   const { id } = await params;
 
-  const [[surat]] = await db.query(
-    `SELECT
-      ps.id,
-      ps.kode_tracking,
-      ps.status,
-      js.nama_surat
-    FROM pengajuan_surat ps
-    LEFT JOIN jenis_surat js ON js.id = ps.jenis_surat_id
-    WHERE ps.id = ?
-    LIMIT 1`,
+  const [rows] = await db.query(
+    `
+      SELECT
+        ps.id,
+        ps.kode_tracking,
+        ps.status,
+        js.nama_surat,
+        js.template_surat,
+        js.use_kop
+      FROM pengajuan_surat ps
+      LEFT JOIN jenis_surat js
+        ON js.id = ps.jenis_surat_id
+      WHERE ps.id = ?
+      LIMIT 1
+    `,
     [id]
   );
 
-  const [details] = await db.query(
-    `SELECT
-      dp.id,
-      dp.value,
-      fs.label_field,
-      fs.nama_field
-    FROM detail_pengajuan dp
-    JOIN field_surat fs ON fs.id = dp.field_id
-    WHERE dp.pengajuan_id = ?
-    ORDER BY fs.id ASC`,
-    [id]
-  );
+  const surat = (rows as any[])[0];
 
   if (!surat) {
-    return <div style={{ color: "#991b1b" }}>Data surat tidak ditemukan.</div>;
+    return (
+      <div style={{ color: "#991b1b" }}>
+        Data surat tidak ditemukan.
+      </div>
+    );
   }
 
-  return (
-    <div>
-      <div style={{ marginBottom: "22px" }}>
-        <h1 className="page-title">Edit Surat</h1>
-        <p className="page-subtitle">
-          Edit data input pemohon untuk pengajuan {surat.kode_tracking}.
-        </p>
-      </div>
-
-      <form action={`/api/admin/surat/${surat.id}`} method="post" className="card">
-        <div className="form-grid" style={{ marginBottom: "18px" }}>
-          {(details as DetailField[]).map((detail) => (
-            <EditField key={detail.id} detail={detail} />
-          ))}
-        </div>
-
-        <div className="action-row">
-          <Link href="/admin/surat">
-            <button type="button" style={buttonStyle}>
-              Batal
-            </button>
-          </Link>
-          <button type="submit" style={primaryButtonStyle}>
-            Simpan
-          </button>
-        </div>
-      </form>
-    </div>
+  const [details] = await db.query(
+    `
+      SELECT
+        fs.nama_field,
+        dp.value
+      FROM detail_pengajuan dp
+      JOIN field_surat fs
+        ON fs.id = dp.field_id
+      WHERE dp.pengajuan_id = ?
+    `,
+    [id]
   );
-}
 
-type DetailField = {
-  id: number;
-  value: string | null;
-  label_field: string;
-  nama_field: string;
-};
+  let content = surat.template_surat || "";
 
-function EditField({ detail }: { detail: DetailField }) {
-  const [tempat, tanggal] = splitTempatTanggal(detail.value || "");
+  (details as DetailRow[]).forEach((detail) => {
+    const value = detail.value || "";
+
+    content = content.replaceAll(
+      `{{${detail.nama_field}}}`,
+      value
+    );
+  });
 
   return (
     <div>
-      <label
-        htmlFor={`detail-${detail.id}`}
+      <div
+        className="page-header"
         style={{
-          display: "block",
-          marginBottom: "8px",
-          color: "#374151",
-          fontWeight: 700,
+          marginBottom: "24px",
         }}
       >
-        {detail.label_field}
-      </label>
+        <div>
+          <h1 className="page-title">
+            Edit Surat
+          </h1>
 
-      {isTempatTanggalLahir(detail) ? (
-        <div className="split-field">
-          <input
-            id={`detail-${detail.id}`}
-            name={`detail_${detail.id}_tempat`}
-            type="text"
-            defaultValue={tempat}
-            placeholder="Tempat lahir"
-            style={inputStyle}
-          />
-          <input
-            name={`detail_${detail.id}_tanggal`}
-            type="date"
-            defaultValue={tanggal}
-            style={inputStyle}
-          />
+          <p className="page-subtitle">
+            Edit isi surat{" "}
+            <strong>
+              {surat.nama_surat}
+            </strong>{" "}
+            (
+            {surat.kode_tracking}
+            )
+          </p>
         </div>
-      ) : isTanggalLahir(detail) ? (
-        <input
-          id={`detail-${detail.id}`}
-          name={`detail_${detail.id}`}
-          type="date"
-          defaultValue={detail.value || ""}
-          style={inputStyle}
-        />
-      ) : isJenisKelamin(detail) ? (
-        <select
-          id={`detail-${detail.id}`}
-          name={`detail_${detail.id}`}
-          defaultValue={detail.value || ""}
-          style={inputStyle}
-        >
-          <option value="">Pilih jenis kelamin</option>
-          <option value="Laki-laki">Laki-laki</option>
-          <option value="Perempuan">Perempuan</option>
-        </select>
-      ) : isAgama(detail) ? (
-        <select
-          id={`detail-${detail.id}`}
-          name={`detail_${detail.id}`}
-          defaultValue={detail.value || ""}
-          style={inputStyle}
-        >
-          <option value="">Pilih agama</option>
-          <option value="Islam">Islam</option>
-          <option value="Kristen">Kristen</option>
-          <option value="Katolik">Katolik</option>
-          <option value="Hindu">Hindu</option>
-          <option value="Buddha">Buddha</option>
-          <option value="Konghucu">Konghucu</option>
-        </select>
-      ) : (
-        <input
-          id={`detail-${detail.id}`}
-          name={`detail_${detail.id}`}
-          type="text"
-          defaultValue={detail.value || ""}
-          style={inputStyle}
-        />
-      )}
+
+        <Link href="/admin/surat">
+          <button
+            style={{
+              padding: "10px 16px",
+              border: "1px solid #d1d5db",
+              borderRadius: "8px",
+              background: "white",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Kembali
+          </button>
+        </Link>
+      </div>
+
+      <SuratEditor
+        suratId={surat.id}
+        content={content}
+        useKop={Boolean(surat.use_kop)}
+      />
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "11px 12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  color: "#111827",
-  backgroundColor: "white",
-};
-
-function fieldKey(field: DetailField) {
-  return `${field.nama_field || ""} ${field.label_field || ""}`
-    .toLowerCase()
-    .replace(/_/g, " ");
-}
-
-function isTempatTanggalLahir(field: DetailField) {
-  const key = fieldKey(field);
-  return key.includes("tempat") && key.includes("lahir");
-}
-
-function isTanggalLahir(field: DetailField) {
-  const key = fieldKey(field);
-  return !key.includes("tempat") && key.includes("lahir") && (key.includes("tanggal") || key.includes("tgl"));
-}
-
-function isJenisKelamin(field: DetailField) {
-  return fieldKey(field).includes("jenis kelamin");
-}
-
-function isAgama(field: DetailField) {
-  return fieldKey(field).includes("agama");
-}
-
-function splitTempatTanggal(value: string) {
-  const [tempat = "", tanggal = ""] = value.split(",").map((item) => item.trim());
-  return [tempat, tanggal];
-}
-
-const buttonStyle = {
-  padding: "10px 14px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  backgroundColor: "white",
-  color: "#111827",
-  cursor: "pointer",
-  fontWeight: 600,
-};
-
-const primaryButtonStyle = {
-  ...buttonStyle,
-  border: "none",
-  backgroundColor: "#2563eb",
-  color: "white",
-};
