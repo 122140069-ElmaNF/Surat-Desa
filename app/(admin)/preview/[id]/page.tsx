@@ -64,9 +64,12 @@ export default function Preview() {
         )}
 
         {/* ISI SURAT */}
-        <div style={{ whiteSpace: "pre-line" }}>
-          {data}
-        </div>
+        <div
+          style={{ whiteSpace: "pre-line" }}
+          dangerouslySetInnerHTML={{
+            __html: data,
+          }}
+        />
 
       </div>
     </div>

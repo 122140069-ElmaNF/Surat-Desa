@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   FileCheck,
   Archive,
+  UserCog,
 } from "lucide-react";
 
 const menus = [
@@ -18,18 +19,23 @@ const menus = [
     href: "/pimpinan/arsip",
     icon: Archive,
   },
+  {
+    title: "Profil Pimpinan",
+    href: "/pimpinan/profil",
+    icon: UserCog,
+  },
 ];
 
 export default function PimpinanSidebar() {
   const pathname = usePathname();
 
   const isActive = (href: string) => {
-    // Persetujuan Surat hanya aktif di /pimpinan
+    // Menu Persetujuan Surat hanya aktif di halaman utama pimpinan
     if (href === "/pimpinan") {
       return pathname === "/pimpinan";
     }
 
-    // Arsip aktif untuk halaman arsip dan turunannya
+    // Menu lainnya aktif untuk halaman dan turunannya
     return (
       pathname === href ||
       pathname.startsWith(`${href}/`)

@@ -182,34 +182,12 @@ export default function PimpinanPreviewPage() {
           </>
         )}
 
-        <div style={{ whiteSpace: "pre-line" }}>{data}</div>
-
         <div
-          style={{
-            marginTop: "50px",
-            marginLeft: "auto",
-            width: "260px",
-            textAlign: "center",
+          style={{ whiteSpace: "pre-line" }}
+          dangerouslySetInnerHTML={{
+            __html: data,
           }}
-        >
-          <div>Kepala Desa</div>
-          <div style={{ height: "70px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            {status === "selesai" && (
-              <img
-                src="/ttd/ttd-kades.png"
-                alt="Tanda tangan kepala desa"
-                style={{
-                  maxWidth: "180px",
-                  maxHeight: "70px",
-                  objectFit: "contain",
-                }}
-              />
-            )}
-          </div>
-          <div style={{ fontWeight: "bold", textDecoration: "underline" }}>
-            Nama Kepala Desa
-          </div>
-        </div>
+        />
       </div>
     </div>
   );
