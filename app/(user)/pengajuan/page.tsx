@@ -100,71 +100,88 @@ export default function Home() {
   };
 
   return (
-    <div className="public-page">
-      <div className="public-card">
-        <div style={{ marginBottom: "22px" }}>
-          <h1 className="page-title">Pengajuan Surat</h1>
-          <p className="page-subtitle">
-            Pilih jenis surat lalu lengkapi data pemohon.
+  <div className="pengajuan-page">
+    {/* HERO */}
+    <section className="pengajuan-hero">
+      <div className="pengajuan-hero-content">
+        <h1>Pengajuan Surat Desa</h1>
+        <p>
+          Lengkapi data pemohon dan ajukan surat secara online
+          tanpa perlu datang ke kantor desa.
+        </p>
+      </div>
+    </section>
+
+    {/* FORM */}
+    <section className="pengajuan-content">
+      <div className="pengajuan-card">
+        <div className="pengajuan-header">
+          <h2>Form Pengajuan Surat</h2>
+          <p>
+            Pilih jenis surat terlebih dahulu kemudian
+            isi data sesuai kebutuhan surat.
           </p>
         </div>
 
-        <div style={{ marginBottom: "18px" }}>
-          <label
-            htmlFor="jenis-surat"
-            style={{
-              display: "block",
-              marginBottom: "8px",
-              color: "#374151",
-              fontWeight: 700,
-            }}
-          >
+        <div className="form-group">
+          <label htmlFor="jenis-surat">
             Jenis Surat
           </label>
+
           <select
             id="jenis-surat"
             className="input-control"
-            onChange={(e) => handleSelect(e.target.value)}
+            onChange={(e) =>
+              handleSelect(e.target.value)
+            }
           >
-            <option value="">Pilih Surat</option>
+            <option value="">
+              Pilih Jenis Surat
+            </option>
+
             {jenis.map((j) => (
-              <option key={j.id} value={j.id}>
+              <option
+                key={j.id}
+                value={j.id}
+              >
                 {j.nama_surat}
               </option>
             ))}
           </select>
         </div>
 
-        <div className="form-grid">
-          {fields.map((f) => (
-            <DynamicField
-              key={f.id}
-              field={f}
-              value={form[f.nama_field] || ""}
-              onChange={(value) => handleChange(f.nama_field, value)}
-            />
-          ))}
-        </div>
+        {fields.length > 0 && (
+          <>
+            <div className="form-grid">
+              {fields.map((f) => (
+                <DynamicField
+                  key={f.id}
+                  field={f}
+                  value={
+                    form[f.nama_field] || ""
+                  }
+                  onChange={(value) =>
+                    handleChange(
+                      f.nama_field,
+                      value
+                    )
+                  }
+                />
+              ))}
+            </div>
 
-        <button
-          onClick={handleSubmit}
-          className="full-mobile"
-          style={{
-            marginTop: "20px",
-            padding: "11px 20px",
-            backgroundColor: "#2563eb",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            fontWeight: 700,
-          }}
-        >
-          Submit
-        </button>
+            <button
+              onClick={handleSubmit}
+              className="submit-btn"
+            >
+              Ajukan Surat
+            </button>
+          </>
+        )}
       </div>
-    </div>
-  );
+    </section>
+  </div>
+);
 }
 
 function DynamicField({

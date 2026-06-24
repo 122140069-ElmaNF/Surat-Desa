@@ -90,85 +90,164 @@ export default async function AdminDetailSuratPage({
         </div>
       </div>
 
-      {/* Informasi Surat */}
-      <section className="card">
-        <h2
-          style={{
-            margin: "0 0 20px",
-            fontSize: "20px",
-            color: "#111827",
-          }}
-        >
-          Informasi Surat
-        </h2>
-
-        <InfoRow
-          label="Kode Tracking"
-          value={surat.kode_tracking}
-        />
-
-        <InfoRow
-          label="Jenis Surat"
-          value={surat.nama_surat || "-"}
-        />
-
-        <InfoRow
-          label="Status"
-          value={
-            <span
+      {/* Layout */}
+      <div className="detail-layout">
+        {/* Kolom Kiri */}
+        <div className="detail-left">
+          {/* Informasi Surat */}
+          <section className="card">
+            <h2
               style={{
-                padding: "6px 14px",
-                borderRadius: "999px",
-                background:
-                  surat.status === "selesai"
-                    ? "#dcfce7"
-                    : "#fef3c7",
-                color:
-                  surat.status === "selesai"
-                    ? "#166534"
-                    : "#b45309",
-                fontWeight: 700,
-                fontSize: "14px",
+                margin: "0 0 20px",
+                fontSize: "20px",
+                color: "#111827",
               }}
             >
-              {surat.status}
-            </span>
-          }
-        />
+              Informasi Surat
+            </h2>
 
-        <InfoRow
-          label="Tanggal"
-          value={formatTanggal(
-            surat.created_at
-          )}
-        />
-      </section>
+            <InfoRow
+              label="Kode Tracking"
+              value={surat.kode_tracking}
+            />
 
-      {/* Data Pemohon */}
-      <section
-        className="card"
-        style={{
-          marginTop: "24px",
-        }}
+            <InfoRow
+              label="Jenis Surat"
+              value={
+                surat.nama_surat || "-"
+              }
+            />
+
+            <InfoRow
+              label="Status"
+              value={
+                <span
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "999px",
+                    background:
+                      surat.status ===
+                      "selesai"
+                        ? "#dcfce7"
+                        : "#fef3c7",
+                    color:
+                      surat.status ===
+                      "selesai"
+                        ? "#166534"
+                        : "#b45309",
+                    fontWeight: 700,
+                    fontSize: "14px",
+                  }}
+                >
+                  {surat.status}
+                </span>
+              }
+            />
+
+            <InfoRow
+              label="Tanggal"
+              value={formatTanggal(
+                surat.created_at
+              )}
+            />
+          </section>
+
+          {/* Data Pemohon */}
+          <section
+            className="card"
+            style={{
+              marginTop: "24px",
+            }}
+          >
+            <h2
+              style={{
+                margin: "0 0 20px",
+                fontSize: "20px",
+                color: "#111827",
+              }}
+            >
+              Data Pemohon
+            </h2>
+
+            {details.map((detail) => (
+              <InfoRow
+                key={
+                  detail.nama_field
+                }
+                label={
+                  detail.label_field
+                }
+                value={
+                  detail.value || "-"
+                }
+              />
+            ))}
+          </section>
+        </div>
+
+        {/* Kolom Kanan */}
+<div className="detail-right">
+  <section className="card">
+    <h2
+      style={{
+        margin: "0 0 20px",
+        fontSize: "20px",
+        color: "#111827",
+      }}
+    >
+      Dokumen Persyaratan
+    </h2>
+
+    <div className="dokumen-grid">
+      <div className="dokumen-item">
+        <div className="dokumen-preview">
+          📄
+        </div>
+
+        <p>Foto KTP</p>
+      </div>
+
+      <div className="dokumen-item">
+        <div className="dokumen-preview">
+          📄
+        </div>
+
+        <p>Foto KK</p>
+      </div>
+    </div>
+  </section>
+
+  <section className="card">
+    <h2
+      style={{
+        margin: "0 0 20px",
+        fontSize: "20px",
+        color: "#111827",
+      }}
+    >
+      Aksi
+    </h2>
+
+    <div className="action-panel">
+      <button className="approval-btn">
+        Kirim Approval
+      </button>
+
+      <Link
+        href={`/admin/preview/${surat.id}`}
       >
-        <h2
-          style={{
-            margin: "0 0 20px",
-            fontSize: "20px",
-            color: "#111827",
-          }}
-        >
-          Data Pemohon
-        </h2>
+        <button className="print-btn">
+          Cetak Dokumen
+        </button>
+      </Link>
 
-        {details.map((detail) => (
-          <InfoRow
-            key={detail.nama_field}
-            label={detail.label_field}
-            value={detail.value || "-"}
-          />
-        ))}
-      </section>
+      <button className="reject-btn">
+        Tolak Surat
+      </button>
+    </div>
+  </section>
+</div>
+      </div>
     </div>
   );
 }
@@ -231,15 +310,16 @@ function formatTanggal(
   });
 }
 
-const buttonStyle: React.CSSProperties = {
-  padding: "12px 18px",
-  border: "1px solid #dbeafe",
-  borderRadius: "12px",
-  backgroundColor: "white",
-  color: "#2563eb",
-  cursor: "pointer",
-  fontWeight: 600,
-};
+const buttonStyle: React.CSSProperties =
+  {
+    padding: "12px 18px",
+    border: "1px solid #dbeafe",
+    borderRadius: "12px",
+    backgroundColor: "white",
+    color: "#2563eb",
+    cursor: "pointer",
+    fontWeight: 600,
+  };
 
 const primaryButtonStyle: React.CSSProperties =
   {

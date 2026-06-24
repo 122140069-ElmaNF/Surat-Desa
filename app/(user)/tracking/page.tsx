@@ -1,199 +1,133 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
-
-type TrackingData = {
-  kode_tracking: string;
-  nama_surat: string | null;
-  nama: string | null;
-  status: string;
-  created_at: string;
-};
+import { useState } from "react";
+import { Search, FileText, User, Calendar } from "lucide-react";
 
 export default function TrackingPage() {
   const [kode, setKode] = useState("");
-  const [data, setData] = useState<TrackingData | null>(null);
-  const [message, setMessage] = useState("");
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const searchParams = useSearchParams();
 
-  const handleCari = async (overrideKode?: string) => {
-    const kodeTracking = (overrideKode ?? kode).trim();
-
-    if (!kodeTracking) {
-      setData(null);
-      setMessage("Masukkan kode tracking terlebih dahulu");
+  const handleTracking = async () => {
+    if (!kode) {
+      alert("Masukkan kode tracking.");
       return;
     }
 
     setLoading(true);
-    setData(null);
-    setMessage("");
 
     try {
-      const res = await fetch(`/api/tracking/${encodeURIComponent(kodeTracking)}`);
+      const res = await fetch(`/api/tracking/${kode}`);
       const result = await res.json();
 
-      if (!res.ok) {
-        setMessage("Data tidak ditemukan");
-        return;
+      if (res.ok) {
+        setData(result.data);
+      } else {
+        alert(result.message || "Data tidak ditemukan.");
+        setData(null);
       }
-
-      setData(result.data);
     } catch (error) {
-      console.error("ERROR TRACKING:", error);
-      setMessage("Terjadi kesalahan saat mencari data");
-    } finally {
-      setLoading(false);
+      console.error(error);
+      alert("Terjadi kesalahan.");
+      setData(null);
     }
-  };
 
-  useEffect(() => {
-    const kodeParam = searchParams?.get("kode");
-    if (kodeParam) {
-      setKode(kodeParam);
-      handleCari(kodeParam);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  const formatTanggal = (value: string) => {
-    return new Date(value).toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    setLoading(false);
   };
 
   return (
-    <div className="public-page">
-      <div className="public-card">
-        <h1 className="page-title" style={{ marginBottom: "10px" }}>
-          Tracking Surat
-        </h1>
+    <div className="tracking-page">
+      {/* HERO */}
+      <section className="tracking-hero">
+        <div className="tracking-hero-content">
+          <Search size={55} />
 
-        <p
-          style={{
-            margin: "0 0 24px",
-            color: "#4b5563",
-            lineHeight: "1.6",
-          }}
-        >
-          Masukkan kode tracking untuk melihat status pengajuan surat Anda.
-        </p>
+          <h1>Cek Status Pengajuan Surat</h1>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            marginBottom: "20px",
-            flexWrap: "wrap",
-          }}
-        >
+          <p>
+            Masukkan kode tracking yang Anda
+            peroleh setelah melakukan pengajuan surat.
+          </p>
+        </div>
+      </section>
+
+      {/* CONTENT */}
+      <section className="tracking-content">
+        <div className="tracking-card">
+          <h2>Kode Tracking</h2>
+
           <input
             type="text"
-            placeholder="Contoh: TRX-2026-0001"
+            placeholder="Contoh: SD-240626-0001"
             value={kode}
-            onChange={(e) => setKode(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleCari();
-              }
-            }}
-            style={{
-              flex: "1 1 260px",
-              padding: "12px 14px",
-              border: "1px solid #d1d5db",
-              borderRadius: "6px",
-              color: "#111827",
-              backgroundColor: "white",
-              fontSize: "16px",
-              outline: "none",
-            }}
+            onChange={(e) =>
+              setKode(e.target.value)
+            }
+            className="tracking-input"
           />
 
           <button
-            onClick={() => handleCari()}
-            disabled={loading}
-            className="full-mobile"
-            style={{
-              padding: "12px 22px",
-              border: "none",
-              borderRadius: "6px",
-              backgroundColor: loading ? "#93c5fd" : "#2563eb",
-              color: "white",
-              fontSize: "16px",
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
+            onClick={handleTracking}
+            className="tracking-btn"
           >
-            {loading ? "Mencari..." : "Cari"}
+            {loading
+              ? "Memeriksa..."
+              : "Cek Status"}
           </button>
+
+          {data && (
+            <div className="status-card">
+              <div className="status-header">
+                <FileText size={24} />
+                <h3>Status Pengajuan</h3>
+              </div>
+
+              <div
+                className={`status-badge ${
+                  data.status === "selesai"
+                    ? "status-selesai"
+                    : data.status === "ditolak"
+                    ? "status-ditolak"
+                    : "status-pending"
+                }`}
+              >
+                {data.status}
+              </div>
+
+              <div className="status-info">
+                <p>
+                  <strong>Jenis Surat :</strong>{" "}
+                  {data.nama_surat}
+                </p>
+
+                <p>
+                  <strong>Kode Tracking :</strong>{" "}
+                  {data.kode_tracking}
+                </p>
+
+                <p>
+                  <strong>Nama Pemohon :</strong>{" "}
+                  {data.nama}
+                </p>
+
+                <p>
+                  <strong>Tanggal Pengajuan :</strong>{" "}
+                  {new Date(
+                    data.created_at
+                  ).toLocaleDateString(
+                    "id-ID",
+                    {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    }
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-
-        {message && (
-          <div
-            style={{
-              padding: "14px 16px",
-              borderRadius: "6px",
-              backgroundColor: "#fee2e2",
-              border: "1px solid #fecaca",
-              color: "#991b1b",
-              fontWeight: 500,
-            }}
-          >
-            {message}
-          </div>
-        )}
-
-        {data && (
-          <div
-            style={{
-              marginTop: "24px",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                padding: "16px 18px",
-                backgroundColor: "#f9fafb",
-                borderBottom: "1px solid #e5e7eb",
-                fontWeight: 700,
-                color: "#111827",
-              }}
-            >
-              Hasil Tracking
-            </div>
-
-            <div style={{ padding: "18px" }}>
-              <InfoRow label="Kode Tracking" value={data.kode_tracking} />
-              <InfoRow label="Nama" value={data.nama || "-"} />
-              <InfoRow label="Jenis Surat" value={data.nama_surat || "-"} />
-              <InfoRow label="Status" value={data.status} />
-              <InfoRow
-                label="Tanggal Pengajuan"
-                value={formatTanggal(data.created_at)}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="info-row" style={{ padding: "12px 0" }}>
-      <span className="info-row-label" style={{ fontWeight: 500 }}>{label}</span>
-      <span className="info-row-value">
-        {value}
-      </span>
+      </section>
     </div>
   );
 }

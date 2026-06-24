@@ -2,40 +2,30 @@ import Link from "next/link";
 
 export default function HeroSection() {
   return (
-    <section className="hero-section">
-      <div className="hero">
+    <section className="hero">
+      <div className="hero-content">
         <img
-          src="/logo.png"
+          src="\desa-logo.png"
           alt="Logo Desa"
-          style={{
-            width: 90,
-            margin: "0 auto 30px",
-          }}
+          className="hero-logo"
         />
 
         <h1>
-          LAYANAN SURAT MENYURAT DESA
+          LAYANAN SURAT MENYURAT DESA SUMBEREJO
         </h1>
 
         <p>
-          Pelayanan administrasi desa
-          secara online, mudah, cepat,
-          dan transparan tanpa perlu
-          datang ke kantor desa.
+          Pelayanan administrasi desa secara
+          online, mudah, cepat, dan transparan
+          tanpa perlu datang ke kantor desa.
         </p>
 
         <div className="hero-buttons">
-          <Link
-            href="/pengajuan"
-            className="primary-btn"
-          >
+          <Link href="/pengajuan">
             Pengajuan Surat
           </Link>
 
-          <Link
-            href="/tracking"
-            className="secondary-btn"
-          >
+          <Link href="/tracking">
             Cek Status Surat
           </Link>
         </div>
