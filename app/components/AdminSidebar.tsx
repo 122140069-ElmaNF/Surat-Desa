@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import {
+  usePathname,
+  useRouter,
+} from "next/navigation";
+
 import {
   LayoutDashboard,
   Mail,
   FilePlus2,
   Archive,
-  LogIn,
+  Users,
+  LogOut,
 } from "lucide-react";
 
 const menus = [
@@ -32,27 +37,40 @@ const menus = [
     icon: Archive,
   },
   {
-    title: "Login Admin",
-    href: "/login-admin",
-    icon: LogIn,
+    title: "Manajemen Admin",
+    href: "/admin/users",
+    icon: Users,
+  },
+  {
+    title: "Logout",
+    href: "#",
+    icon: LogOut,
   },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   const isActive = (href: string) => {
-    // Dashboard hanya aktif di /admin
     if (href === "/admin") {
       return pathname === "/admin";
     }
 
-    // Menu lain aktif untuk halaman utama dan turunannya
     return (
       pathname === href ||
       pathname.startsWith(`${href}/`)
     );
   };
+
+  async function handleLogout() {
+    await fetch("/api/logout", {
+      method: "POST",
+    });
+
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <aside className="sidebar">
@@ -65,12 +83,36 @@ export default function AdminSidebar() {
         {menus.map((menu) => {
           const Icon = menu.icon;
 
+          // ===== MENU LOGOUT =====
+          if (menu.title === "Logout") {
+            return (
+              <button
+                key={menu.title}
+                onClick={handleLogout}
+                className="menu-item"
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  width: "100%",
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                <Icon size={20} />
+                <span>{menu.title}</span>
+              </button>
+            );
+          }
+
+          // ===== MENU BIASA =====
           return (
             <Link
               key={menu.href}
               href={menu.href}
               className={`menu-item ${
-                isActive(menu.href) ? "active" : ""
+                isActive(menu.href)
+                  ? "active"
+                  : ""
               }`}
             >
               <Icon size={20} />
