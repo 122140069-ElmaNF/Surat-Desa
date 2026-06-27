@@ -934,3 +934,37 @@
   color: #0f172a;
 }
 
+/* ===========================
+   TRACKING DITOLAK
+=========================== */
+
+.tracking-reject-box{
+
+    margin-top:24px;
+
+    padding:22px;
+
+    border-radius:16px;
+
+    background:#fef2f2;
+
+    border:1px solid #fecaca;
+}
+
+.tracking-reject-box h4{
+
+    margin-bottom:12px;
+
+    color:#b91c1c;
+
+    font-size:18px;
+}
+
+.tracking-reject-box p{
+
+    margin-bottom:18px;
+
+    color:#7f1d1d;
+
+    line-height:1.7;
+}

@@ -7,18 +7,21 @@ export async function GET(req, context) {
     `SELECT
       ps.kode_tracking,
       ps.status,
+      ps.alasan_penolakan,
       ps.created_at,
       js.nama_surat,
       (
         SELECT dp.value
         FROM detail_pengajuan dp
-        JOIN field_surat fs ON fs.id = dp.field_id
+        JOIN field_surat fs
+          ON fs.id = dp.field_id
         WHERE dp.pengajuan_id = ps.id
           AND fs.nama_field = 'nama'
         LIMIT 1
       ) AS nama
     FROM pengajuan_surat ps
-    LEFT JOIN jenis_surat js ON js.id = ps.jenis_surat_id
+    LEFT JOIN jenis_surat js
+      ON js.id = ps.jenis_surat_id
     WHERE ps.kode_tracking = ?
     LIMIT 1`,
     [kode]
@@ -30,7 +33,9 @@ export async function GET(req, context) {
         success: false,
         message: "Data tidak ditemukan",
       },
-      { status: 404 }
+      {
+        status: 404,
+      }
     );
   }
 

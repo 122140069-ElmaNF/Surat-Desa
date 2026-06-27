@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams,} from "next/navigation";
 
 type JenisSurat = {
   id: number;
@@ -16,10 +16,14 @@ type FieldSurat = {
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tracking =
+    searchParams.get("tracking");
   const [jenis, setJenis] = useState<JenisSurat[]>([]);
   const [fields, setFields] = useState<FieldSurat[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [isEdit, setIsEdit] = useState(false);
 
   useEffect(() => {
     fetch("/api/jenis-surat")
@@ -44,11 +48,71 @@ export default function Home() {
       });
   }, []);
 
+    useEffect(() => {
+    if (!tracking) return;
+
+    async function loadEditData() {
+      try {
+        const res = await fetch(
+          `/api/pengajuan/edit/${tracking}`
+        );
+
+        const result =
+          await res.json();
+
+        if (!result.success) {
+          alert(result.message);
+          return;
+        }
+
+        setIsEdit(true);
+
+        setSelected(
+          result.jenis_surat_id
+        );
+
+        // ambil field sesuai jenis surat
+        const fieldRes =
+          await fetch(
+            `/api/field/${result.jenis_surat_id}`
+          );
+
+        const fieldData =
+          await fieldRes.json();
+
+        setFields(fieldData);
+
+        const values:
+        Record<string,string> = {};
+
+        result.fields.forEach(
+          (item:any) => {
+            values[item.nama_field] =
+              item.value ?? "";
+          }
+        );
+
+        setForm(values);
+
+      } catch (err) {
+
+        console.error(err);
+
+      }
+    }
+
+    loadEditData();
+
+  }, [tracking]);
+
   const handleSelect = async (id: string) => {
     const numericId = Number(id);
     setSelected(numericId || null);
     setFields([]);
-    setForm({});
+
+    if (!isEdit) {
+      setForm({});
+    }
 
     if (!numericId) {
       return;
@@ -64,40 +128,102 @@ export default function Home() {
   };
 
   const handleSubmit = async () => {
-    if (!selected) {
-      alert("Pilih jenis surat dulu!");
+  if (!selected) {
+    alert("Pilih jenis surat terlebih dahulu!");
+    return;
+  }
+
+  const payload = {
+    jenis_surat_id: selected,
+    fields: fields.map((f) => ({
+      field_id: f.id,
+      value: form[f.nama_field] || "",
+    })),
+  };
+
+  try {
+    let res;
+
+    // ===========================
+    // MODE PERBAIKI PENGAJUAN
+    // ===========================
+    if (isEdit && tracking) {
+
+      res = await fetch(
+        `/api/pengajuan/edit/${tracking}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fields: payload.fields,
+          }),
+        }
+      );
+
+    }
+
+    // ===========================
+    // MODE PENGAJUAN BARU
+    // ===========================
+    else {
+
+      res = await fetch(
+        "/api/pengajuan",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+    }
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      alert(
+        result.message ??
+          "Gagal menyimpan data."
+      );
       return;
     }
 
-    const payload = {
-      jenis_surat_id: selected,
-      fields: fields.map((f) => ({
-        field_id: f.id,
-        value: form[f.nama_field] || "",
-      })),
-    };
+    // ===========================
+    // BERHASIL UPDATE
+    // ===========================
+    if (isEdit) {
 
-    try {
-      const res = await fetch("/api/pengajuan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      alert(
+        "Pengajuan berhasil diperbarui. Silakan menunggu verifikasi Admin."
+      );
 
-      const result = await res.json();
+      router.push(
+        `/tracking?kode=${tracking}`
+      );
 
-      if (res.ok) {
-        router.push(`/success/${result.kode_tracking}`);
-      } else {
-        alert("Gagal simpan data!");
-      }
-    } catch (error) {
-      console.error("ERROR:", error);
-      alert("Terjadi error!");
+      return;
+
     }
-  };
+
+    // BERHASIL PENGAJUAN BARU
+    router.push(
+      `/success/${result.kode_tracking}`
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Terjadi kesalahan pada server."
+    );
+
+  }
+};
 
   return (
   <div className="pengajuan-page">
@@ -131,6 +257,8 @@ export default function Home() {
           <select
             id="jenis-surat"
             className="input-control"
+            value={selected ?? ""}
+            disabled={isEdit}
             onChange={(e) =>
               handleSelect(e.target.value)
             }
@@ -174,7 +302,11 @@ export default function Home() {
               onClick={handleSubmit}
               className="submit-btn"
             >
-              Ajukan Surat
+              {
+                isEdit
+                  ? "Perbarui Pengajuan"
+                  : "Ajukan Surat"
+              }
             </button>
           </>
         )}

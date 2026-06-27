@@ -606,3 +606,52 @@
 
     font-weight:700;
 }
+
+/* =====================================
+   HALAMAN TOLAK SURAT
+===================================== */
+
+.breadcrumb{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    margin-bottom:24px;
+
+    font-size:15px;
+    color:#64748b;
+}
+
+.breadcrumb strong{
+
+    color:#0f172a;
+}
+
+.reject-textarea{
+
+    width:100%;
+    min-height:220px;
+
+    resize:vertical;
+
+    padding:18px;
+
+    border:1px solid #dbeafe;
+    border-radius:16px;
+
+    font-size:15px;
+
+    outline:none;
+
+    transition:.25s;
+}
+
+.reject-textarea:focus{
+
+    border-color:#2563eb;
+
+    box-shadow:
+        0 0 0 4px
+        rgba(37,99,235,.12);
+}

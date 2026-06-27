@@ -241,9 +241,11 @@ export default async function AdminDetailSuratPage({
         </button>
       </Link>
 
-      <button className="reject-btn">
+      <Link href={`/admin/surat/${surat.id}/tolak`}>
+    <button className="reject-btn">
         Tolak Surat
-      </button>
+    </button>
+</Link>
     </div>
   </section>
 </div>

@@ -17,9 +17,8 @@ export function middleware(req: NextRequest) {
     );
   }
 
-  // ==========================
   // SUDAH LOGIN
-  // ==========================
+
   if (session) {
     try {
       const user = JSON.parse(session.value);

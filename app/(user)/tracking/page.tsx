@@ -1,39 +1,81 @@
 "use client";
 
-import { useState } from "react";
-import { Search, FileText, User, Calendar } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, FileText,} from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 export default function TrackingPage() {
+  const searchParams = useSearchParams();
+  const kodeTracking = searchParams.get("kode");
   const [kode, setKode] = useState("");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
 
-  const handleTracking = async () => {
-    if (!kode) {
-      alert("Masukkan kode tracking.");
-      return;
-    }
+  if (!kodeTracking) return;
 
-    setLoading(true);
+  setKode(kodeTracking);
 
-    try {
-      const res = await fetch(`/api/tracking/${kode}`);
-      const result = await res.json();
+  setTimeout(() => {
 
-      if (res.ok) {
-        setData(result.data);
-      } else {
-        alert(result.message || "Data tidak ditemukan.");
-        setData(null);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan.");
+    handleTracking(kodeTracking);
+
+  }, 100);
+
+}, [kodeTracking]);
+
+  async function handleTracking(
+  kodeInput?: string
+) {
+
+  const kodeCari =
+    kodeInput ?? kode;
+
+  if (!kodeCari) {
+    alert("Masukkan kode tracking.");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+
+    const res =
+      await fetch(
+        `/api/tracking/${kodeCari}`
+      );
+
+    const result =
+      await res.json();
+
+    if (res.ok) {
+
+      setData(result.data);
+
+    } else {
+
+      alert(
+        result.message ||
+        "Data tidak ditemukan."
+      );
+
       setData(null);
+
     }
 
-    setLoading(false);
-  };
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Terjadi kesalahan.");
+
+    setData(null);
+
+  }
+
+  setLoading(false);
+}
 
   return (
     <div className="tracking-page">
@@ -67,7 +109,7 @@ export default function TrackingPage() {
           />
 
           <button
-            onClick={handleTracking}
+            onClick={() => handleTracking()}
             className="tracking-btn"
           >
             {loading
@@ -124,6 +166,29 @@ export default function TrackingPage() {
                   )}
                 </p>
               </div>
+              {data.status === "ditolak" && (
+                <div className="tracking-reject-box">
+
+                  <h4>
+                    Alasan Penolakan
+                  </h4>
+
+                  <p>
+                    {data.alasan_penolakan}
+                  </p>
+
+                  <button
+                    className="tracking-btn"
+                    onClick={() =>
+                      window.location.href =
+                        `/pengajuan?tracking=${data.kode_tracking}`
+                    }
+                  >
+                    Perbaiki Pengajuan
+                  </button>
+
+                </div>
+              )}
             </div>
           )}
         </div>
