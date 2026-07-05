@@ -8,29 +8,27 @@ type ArsipSuratDbRow = Omit<ArsipSuratRow, "created_at"> & {
 
 export default async function PimpinanArsipPage() {
   let rows: ArsipSuratDbRow[] = [];
-  try {
-    const result = await db.query(
-    `SELECT
-      ps.id,
-      ps.kode_tracking,
-      ps.status,
-      ps.created_at,
-      js.nama_surat,
-      (
-        SELECT dp.value
-        FROM detail_pengajuan dp
-        JOIN field_surat fs ON fs.id = dp.field_id
-        WHERE dp.pengajuan_id = ps.id
-          AND fs.nama_field = 'nama'
-        LIMIT 1
-      ) AS nama
-    FROM pengajuan_surat ps
-    LEFT JOIN jenis_surat js ON js.id = ps.jenis_surat_id
-    WHERE ps.status = 'selesai'
-    ORDER BY ps.created_at DESC`
-    );
 
-    rows = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : [];
+  try {
+    const result = await db.query(`
+      SELECT
+        ps.id,
+        ps.kode_tracking,
+        ps.status,
+        ps.created_at,
+        ps.nomor_surat,
+        js.nama_surat
+      FROM pengajuan_surat ps
+      LEFT JOIN jenis_surat js
+        ON js.id = ps.jenis_surat_id
+      WHERE ps.status = 'selesai'
+      ORDER BY ps.created_at DESC
+    `);
+
+    rows =
+      Array.isArray(result) && Array.isArray(result[0])
+        ? (result[0] as ArsipSuratDbRow[])
+        : [];
   } catch (err) {
     console.error("ERROR fetching arsip rows:", err);
     rows = [];
@@ -38,19 +36,27 @@ export default async function PimpinanArsipPage() {
 
   const sanitized: ArsipSuratRow[] = rows.map((r) => ({
     ...r,
-    created_at: r.created_at ? new Date(r.created_at).toISOString() : "",
+    created_at: r.created_at
+      ? new Date(r.created_at).toISOString()
+      : "",
   }));
 
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 className="page-title">Arsip Surat</h1>
+        <h1 className="page-title">
+          Arsip Surat
+        </h1>
+
         <p className="page-subtitle">
-          Surat yang sudah disetujui dan mendapatkan tanda tangan.
+          Daftar surat yang telah disetujui dan
+          ditandatangani Kepala Desa.
         </p>
       </div>
 
-      <SearchableArsip initialRows={sanitized} />
+      <SearchableArsip
+        initialRows={sanitized}
+      />
     </div>
   );
 }

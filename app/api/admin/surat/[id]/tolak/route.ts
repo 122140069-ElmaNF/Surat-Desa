@@ -1,67 +1,30 @@
-import { NextRequest, NextResponse } from "next/server";
-import db from "@/lib/db";
-
-type Props = {
-  params: Promise<{
-    id: string;
-  }>;
-};
+import { NextResponse } from "next/server";
+import tolakSurat from "@/lib/surat/tolakSurat";
 
 export async function PATCH(
-  req: NextRequest,
-  { params }: Props
+  req: Request,
+  context: any
 ) {
   try {
 
-    const { id } = await params;
+    const { id } = await context.params;
 
     const body = await req.json();
 
-    const { alasan } = body;
-
-    if (!alasan?.trim()) {
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Alasan penolakan wajib diisi.",
-        },
-        {
-          status: 400,
-        }
+    const result =
+      await tolakSurat(
+        Number(id),
+        body.alasan
       );
 
-    }
+    return NextResponse.json(result);
 
-    await db.query(
-      `
-      UPDATE pengajuan_surat
-      SET
-          status = 'ditolak',
-          alasan_penolakan = ?
-      WHERE id = ?
-      `,
-      [
-        alasan.trim(),
-        id,
-      ]
-    );
-
-    return NextResponse.json({
-      success: true,
-      message:
-        "Surat berhasil ditolak.",
-    });
-
-  } catch (error) {
-
-    console.error(error);
+  } catch (err: any) {
 
     return NextResponse.json(
       {
         success: false,
-        message: "Server Error",
+        message: err.message,
       },
       {
         status: 500,

@@ -20,7 +20,7 @@ export async function POST(req) {
     );
   }
 
-  // 2. Generate tracking code: SKTM-080626-0001
+  
   const singkatan = buatSingkatan(jenisSurat.nama_surat);
   const tanggal = formatTanggalKode(new Date());
 

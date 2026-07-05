@@ -1,5 +1,5 @@
 import Link from "next/link";
-import db from "@/lib/db";
+import { getPengajuanDetail } from "@/lib/queries/getPengajuanDetail";
 import SuratEditor from "./SuratEditor";
 
 type PageProps = {
@@ -8,37 +8,14 @@ type PageProps = {
   }>;
 };
 
-type DetailRow = {
-  nama_field: string;
-  value: string | null;
-};
-
 export default async function AdminEditSuratPage({
   params,
 }: PageProps) {
   const { id } = await params;
 
-  const [rows] = await db.query(
-    `
-      SELECT
-        ps.id,
-        ps.kode_tracking,
-        ps.status,
-        js.nama_surat,
-        js.template_surat,
-        js.use_kop
-      FROM pengajuan_surat ps
-      LEFT JOIN jenis_surat js
-        ON js.id = ps.jenis_surat_id
-      WHERE ps.id = ?
-      LIMIT 1
-    `,
-    [id]
-  );
+  const data = await getPengajuanDetail(id);
 
-  const surat = (rows as any[])[0];
-
-  if (!surat) {
+  if (!data) {
     return (
       <div style={{ color: "#991b1b" }}>
         Data surat tidak ditemukan.
@@ -46,29 +23,25 @@ export default async function AdminEditSuratPage({
     );
   }
 
-  const [details] = await db.query(
-    `
-      SELECT
-        fs.nama_field,
-        dp.value
-      FROM detail_pengajuan dp
-      JOIN field_surat fs
-        ON fs.id = dp.field_id
-      WHERE dp.pengajuan_id = ?
-    `,
-    [id]
-  );
+  const { pengajuan, detail } = data;
 
-  let content = surat.template_surat || "";
+  let content =
+    pengajuan.template_surat || "";
 
-  (details as DetailRow[]).forEach((detail) => {
-    const value = detail.value || "";
-
-    content = content.replaceAll(
-      `{{${detail.nama_field}}}`,
-      value
+  if (detail) {
+    Object.entries(detail).forEach(
+      ([key, value]) => {
+        if (
+          typeof value === "string"
+        ) {
+          content = content.replaceAll(
+            `{{${key}}}`,
+            value
+          );
+        }
+      }
     );
-  });
+  }
 
   return (
     <div>
@@ -86,10 +59,10 @@ export default async function AdminEditSuratPage({
           <p className="page-subtitle">
             Edit isi surat{" "}
             <strong>
-              {surat.nama_surat}
+              {pengajuan.nama_surat}
             </strong>{" "}
             (
-            {surat.kode_tracking}
+            {pengajuan.kode_tracking}
             )
           </p>
         </div>
@@ -111,9 +84,11 @@ export default async function AdminEditSuratPage({
       </div>
 
       <SuratEditor
-        suratId={surat.id}
+        suratId={pengajuan.id}
         content={content}
-        useKop={Boolean(surat.use_kop)}
+        useKop={Boolean(
+          pengajuan.use_kop
+        )}
       />
     </div>
   );

@@ -6,6 +6,13 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 export default function PimpinanPreviewPage() {
   const [data, setData] = useState("");
   const [useKop, setUseKop] = useState(true);
+
+  const [profil, setProfil] = useState<{
+  nama_kepala_desa: string;
+  jabatan: string;
+  tanda_tangan: string;
+} | null>(null);
+
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState<"acc" | "tolak" | null>(null);
 
@@ -24,6 +31,7 @@ export default function PimpinanPreviewPage() {
         setData(res.hasil);
         setUseKop(res.use_kop);
         setStatus(res.status || "");
+        setProfil(res.profil ?? null);
       });
   }, [id]);
 
@@ -188,6 +196,49 @@ export default function PimpinanPreviewPage() {
             __html: data,
           }}
         />
+        <div
+            style={{
+              marginTop: "50px",
+              marginLeft: "auto",
+              width: "260px",
+              textAlign: "center",
+            }}
+          >
+            <div>
+              {profil?.jabatan ?? "Kepala Desa"}
+            </div>
+
+            <div
+              style={{
+                height: "80px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              {status === "selesai" &&
+                profil?.tanda_tangan && (
+                  <img
+                    src={profil.tanda_tangan}
+                    alt="Tanda Tangan"
+                    style={{
+                      maxWidth: "180px",
+                      maxHeight: "80px",
+                      objectFit: "contain",
+                    }}
+                  />
+                )}
+            </div>
+
+            <div
+              style={{
+                fontWeight: "bold",
+                textDecoration: "underline",
+              }}
+            >
+              {profil?.nama_kepala_desa}
+            </div>
+          </div>
       </div>
     </div>
   );

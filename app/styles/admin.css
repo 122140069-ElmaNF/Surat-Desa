@@ -655,3 +655,200 @@
         0 0 0 4px
         rgba(37,99,235,.12);
 }
+
+/* =====================================================
+DETAIL SURAT
+===================================================== */
+
+.detail-card{
+background:#fff;
+border-radius:18px;
+padding:28px;
+margin-top:24px;
+box-shadow:0 6px 20px rgba(15,23,42,.05);
+}
+
+.detail-title{
+font-size:22px;
+font-weight:700;
+margin-bottom:22px;
+color:#0f172a;
+}
+
+.detail-table{
+width:100%;
+border-collapse:collapse;
+}
+
+.detail-table tr{
+border-bottom:1px solid #f1f5f9;
+}
+
+.detail-table tr:last-child{
+border-bottom:none;
+}
+
+.detail-label{
+width:220px;
+padding:14px 0;
+font-weight:600;
+color:#64748b;
+vertical-align:top;
+}
+
+.detail-colon{
+width:20px;
+color:#64748b;
+vertical-align:top;
+}
+
+.detail-value{
+padding:14px 0;
+color:#0f172a;
+vertical-align:top;
+}
+
+/* =====================================================
+DOKUMEN PERSYARATAN
+===================================================== */
+
+.empty-text{
+color:#64748b;
+font-size:15px;
+}
+
+.dokumen-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+gap:20px;
+margin-top:20px;
+}
+
+.dokumen-item{
+border:1px solid #E2E8F0;
+border-radius:14px;
+padding:12px;
+background:white;
+transition:.25s;
+}
+
+.dokumen-item:hover{
+transform:translateY(-3px);
+box-shadow:0 8px 24px rgba(15,23,42,.08);
+}
+
+.dokumen-image{
+width:100%;
+height:180px;
+object-fit:cover;
+border-radius:10px;
+}
+
+.dokumen-file{
+height:180px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:60px;
+background:#F8FAFC;
+border-radius:10px;
+}
+
+.dokumen-footer{
+margin-top:14px;
+text-align:center;
+}
+
+.dokumen-link{
+display:inline-block;
+margin-top:8px;
+color:#2563EB;
+text-decoration:none;
+font-size:14px;
+font-weight:600;
+}
+
+.dokumen-link:hover{
+text-decoration:underline;
+}
+
+/* =====================================================
+ACTION
+===================================================== */
+
+.action-group{
+display:flex;
+flex-direction:column;
+gap:14px;
+margin-top:20px;
+}
+
+.status-info{
+padding:16px;
+background:#FEF3C7;
+border-radius:12px;
+color:#92400E;
+font-weight:600;
+text-align:center;
+}
+
+.status-success{
+padding:16px;
+background:#DCFCE7;
+border-radius:12px;
+color:#166534;
+font-weight:600;
+text-align:center;
+}
+
+.status-reject{
+padding:16px;
+background:#FEE2E2;
+border-radius:12px;
+color:#B91C1C;
+line-height:1.7;
+}
+
+/* =====================================================
+APPROVAL MODAL
+===================================================== */
+
+.approval-text{
+margin-top:20px;
+color:#64748B;
+font-size:15px;
+line-height:1.6;
+text-align:center;
+}
+
+/*======================================================
+DETAIL LAYOUT
+======================================================*/
+
+.detail-grid{
+    display:grid;
+    grid-template-columns: 3fr 2fr;
+    gap:28px;
+    align-items:start;
+}
+
+.detail-column{
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+.detail-column:first-child{
+    min-width:0;
+}
+
+.detail-column:last-child{
+    min-width:340px;
+}
+
+@media (max-width: 1024px){
+    .detail-grid{
+        grid-template-columns: 1fr;
+    }
+}

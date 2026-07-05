@@ -181,7 +181,7 @@ export default function TrackingPage() {
                     className="tracking-btn"
                     onClick={() =>
                       window.location.href =
-                        `/pengajuan?tracking=${data.kode_tracking}`
+                        `/pengajuan/perbaiki/${data.id}`
                     }
                   >
                     Perbaiki Pengajuan

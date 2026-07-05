@@ -1,18 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  useParams,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+
+type Profil = {
+  nama_kepala_desa: string;
+  jabatan: string;
+  tanda_tangan: string;
+};
 
 export default function AdminPreviewPage() {
   const [data, setData] = useState("");
   const [useKop, setUseKop] = useState(true);
   const [status, setStatus] = useState("");
+  const [profil, setProfil] =
+    useState<Profil | null>(null);
 
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams =
+    useSearchParams();
 
-  const isPrint = searchParams?.get("print") !== null;
+  const isPrint =
+    searchParams?.get("print") !== null;
+
   const id = params.id;
 
   useEffect(() => {
@@ -24,6 +39,7 @@ export default function AdminPreviewPage() {
         setData(res.hasil);
         setUseKop(res.use_kop);
         setStatus(res.status || "");
+        setProfil(res.profil ?? null);
       });
   }, [id]);
 
@@ -54,19 +70,27 @@ export default function AdminPreviewPage() {
         }}
       >
         <button
-          onClick={() => router.push("/admin")}
+          onClick={() =>
+            router.push("/admin")
+          }
           style={outlineButtonStyle}
         >
           Kembali
         </button>
 
         {!isPrint && (
-          <div style={{ display: "flex", gap: "10px" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+            }}
+          >
             <button
               onClick={handlePrint}
               style={{
                 ...actionButtonStyle,
-                backgroundColor: "#111827",
+                backgroundColor:
+                  "#111827",
               }}
             >
               Print
@@ -81,9 +105,11 @@ export default function AdminPreviewPage() {
           margin: "auto",
           background: "white",
           padding: "40px 60px",
-          fontFamily: "Times New Roman, serif",
+          fontFamily:
+            "Times New Roman, serif",
           lineHeight: "1.6",
-          boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+          boxShadow:
+            "0 0 10px rgba(0,0,0,0.1)",
         }}
       >
         {useKop && (
@@ -115,28 +141,42 @@ export default function AdminPreviewPage() {
                     fontSize: "18px",
                   }}
                 >
-                  PEMERINTAH DESA SUMBEREJO
+                  PEMERINTAH DESA
+                  SUMBEREJO
                 </div>
 
-                <div>Kecamatan Way Jepara</div>
+                <div>
+                  Kecamatan Way Jepara
+                </div>
 
-                <div>Kabupaten Lampung Timur</div>
+                <div>
+                  Kabupaten Lampung Timur
+                </div>
               </div>
             </div>
 
             <hr
               style={{
-                border: "2px solid black",
-                margin: "10px 0 20px",
+                border:
+                  "2px solid black",
+                margin:
+                  "10px 0 20px",
               }}
             />
           </>
         )}
 
-        <div style={{ whiteSpace: "pre-line" }}>
+        {/* Isi Surat */}
+        <div
+          style={{
+            whiteSpace:
+              "pre-line",
+          }}
+        >
           {data}
         </div>
 
+        {/* Penandatangan */}
         <div
           style={{
             marginTop: "50px",
@@ -145,36 +185,52 @@ export default function AdminPreviewPage() {
             textAlign: "center",
           }}
         >
-          <div>Kepala Desa</div>
-
-          <div
-            style={{
-              height: "70px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {status === "selesai" && (
-              <img
-                src="/ttd/ttd-kades.png"
-                alt="Tanda tangan kepala desa"
-                style={{
-                  maxWidth: "180px",
-                  maxHeight: "70px",
-                  objectFit: "contain",
-                }}
-              />
-            )}
+          <div>
+            {profil?.jabatan ??
+              "Kepala Desa"}
           </div>
 
           <div
             style={{
-              fontWeight: "bold",
-              textDecoration: "underline",
+              height: "80px",
+              display: "flex",
+              alignItems:
+                "center",
+              justifyContent:
+                "center",
             }}
           >
-            Nama Kepala Desa
+            {status ===
+              "selesai" &&
+              profil?.tanda_tangan && (
+                <img
+                  src={
+                    profil.tanda_tangan
+                  }
+                  alt="TTD Kepala Desa"
+                  style={{
+                    maxWidth:
+                      "180px",
+                    maxHeight:
+                      "80px",
+                    objectFit:
+                      "contain",
+                  }}
+                />
+              )}
+          </div>
+
+          <div
+            style={{
+              fontWeight:
+                "bold",
+              textDecoration:
+                "underline",
+            }}
+          >
+            {
+              profil?.nama_kepala_desa
+            }
           </div>
         </div>
       </div>

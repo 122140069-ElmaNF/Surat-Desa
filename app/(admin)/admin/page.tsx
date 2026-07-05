@@ -21,16 +21,10 @@ export default async function AdminDashboardPage() {
       ps.status,
       ps.created_at,
       js.nama_surat,
-      (
-        SELECT dp.value
-        FROM detail_pengajuan dp
-        JOIN field_surat fs ON fs.id = dp.field_id
-        WHERE dp.pengajuan_id = ps.id
-          AND fs.nama_field = 'nama'
-        LIMIT 1
-      ) AS nama
+      '-' AS nama
     FROM pengajuan_surat ps
-    LEFT JOIN jenis_surat js ON js.id = ps.jenis_surat_id
+    LEFT JOIN jenis_surat js
+      ON js.id = ps.jenis_surat_id
     ORDER BY ps.created_at DESC
     LIMIT 3
   `);

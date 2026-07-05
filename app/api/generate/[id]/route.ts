@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { getPengajuanDetail } from "@/lib/queries/getPengajuanDetail";
 
 export async function GET(
   req: Request,
@@ -6,97 +7,58 @@ export async function GET(
 ) {
   const { id } = await context.params;
 
-  // ======================
-  // Ambil pengajuan
-  // ======================
-const [pengajuanRows] = await db.query(
-  `
-  SELECT *
-  FROM pengajuan_surat
-  WHERE id = ?
-  `,
-  [id]
-);
+  const data = await getPengajuanDetail(id);
 
-const pengajuan = (pengajuanRows as any[])[0];
-
-  // ======================
-  // Ambil template surat
-  // ======================
-const [suratRows] = await db.query(
-  `
-  SELECT template_surat, use_kop
-  FROM jenis_surat
-  WHERE id = ?
-  `,
-  [pengajuan.jenis_surat_id]
-);
-
-const surat = (suratRows as any[])[0];
-
-
-  // ======================
-  // Ambil field pengajuan
-  // ======================
-  const [detailsRows] = await db.query(
-    `
-    SELECT
-      f.nama_field,
-      d.value
-    FROM detail_pengajuan d
-    JOIN field_surat f
-      ON d.field_id = f.id
-    WHERE d.pengajuan_id = ?
-    `,
-    [id]
-  );
-
-  const details = detailsRows as any[];
-
-  let hasil = surat.template_surat;
-
-  // Replace data penandatangan
-hasil = hasil.replaceAll(
-  "{{nama_penandatangan}}",
-  pengajuan.nama_penandatangan || ""
-);
-
-hasil = hasil.replaceAll(
-  "{{jabatan_penandatangan}}",
-  pengajuan.jabatan_penandatangan || ""
-);
-
-hasil = hasil.replaceAll(
-  "{{ttd}}",
-  pengajuan.file_ttd
-    ? `<img
-         src="${pengajuan.file_ttd}"
-         style="
-           width:150px;
-           height:auto;
-           margin-top:10px;
-           margin-bottom:10px;
-         "
-       />`
-    : ""
-);
-
-  // ======================
-  // Replace field
-  // ======================
-  details.forEach((d: any) => {
-    hasil = hasil.replaceAll(
-      `{{${d.nama_field}}}`,
-      formatValue(
-        d.nama_field,
-        d.value
-      )
+  if (!data) {
+    return Response.json(
+      {
+        success: false,
+        message: "Data tidak ditemukan",
+      },
+      {
+        status: 404,
+      }
     );
-  });
+  }
 
-  // ======================
-  // Tambahan manual
-  // ======================
+  const {
+    pengajuan,
+    detail,
+  } = data;
+
+  let hasil =
+    pengajuan.template_surat || "";
+
+  // ==========================
+  // Replace seluruh field
+  // ==========================
+
+  if (detail) {
+    detail.forEach((item) => {
+      hasil = hasil.replaceAll(
+        `{{${item.key}}}`,
+        formatValue(
+          item.key,
+          item.value
+        )
+      );
+    });
+  }
+
+  // ==========================
+  // Ambil Profil Kepala Desa
+  // ==========================
+
+  const [profilRows] =
+    await db.query(`
+      SELECT *
+      FROM profil_pimpinan
+      LIMIT 1
+    `);
+
+  const profil =
+    (profilRows as any[])[0];
+
   hasil = hasil.replaceAll(
     "{{tanggal}}",
     new Date().toLocaleDateString(
@@ -108,128 +70,59 @@ hasil = hasil.replaceAll(
       }
     )
   );
-
-  const [profilRows] = await db.query(`
-  SELECT *
-  FROM profil_pimpinan
-  LIMIT 1
-`);
-
-const profil = (profilRows as any[])[0];
-
-hasil = hasil.replaceAll(
-  "{{nama_penandatangan}}",
-  profil?.nama_kepala_desa || ""
-);
-
-hasil = hasil.replaceAll(
-  "{{jabatan_penandatangan}}",
-  profil?.jabatan || ""
-);
-
-if (
-  profil?.tanda_tangan &&
-  pengajuan.status === "selesai"
-) {
   hasil = hasil.replaceAll(
-    "{{ttd}}",
-    `<img
-      src="${profil.tanda_tangan}"
-      style="
-        width:140px;
-        height:auto;
-        display:block;
-      "
-    />`
+    "{{nomor_surat}}",
+    pengajuan.nomor_surat ?? ""
   );
-} else {
-  hasil = hasil.replaceAll(
-    "{{ttd}}",
-    ""
-  );
-}
-
-  // Nama penandatangan
-  hasil = hasil.replaceAll(
-    "{{nama_kepala_desa}}",
-    pengajuan.nama_penandatangan ??
-      ""
-  );
-
-  // Jabatan
-  hasil = hasil.replaceAll(
-    "{{jabatan}}",
-    pengajuan.jabatan_penandatangan ??
-      ""
-  );
-
-  // Gambar tanda tangan
-  const ttdHtml =
-    pengajuan.file_ttd
-      ? `
-      <div style="margin-top:20px">
-        <img
-          src="${pengajuan.file_ttd}"
-          style="
-            width:180px;
-            height:auto;
-          "
-        />
-      </div>
-    `
-      : "";
-
-  hasil = hasil.replaceAll(
-    "{{tanda_tangan}}",
-    ttdHtml
-  );
+  
+  console.log("Nomor Surat:", pengajuan.nomor_surat);
 
   return Response.json({
+    success: true,
     hasil,
-    use_kop: surat.use_kop,
     status: pengajuan.status,
+    use_kop: Boolean(
+      pengajuan.use_kop
+    ),
+
+    profil: {
+      nama_kepala_desa:
+        profil?.nama_kepala_desa ?? "",
+      jabatan:
+        profil?.jabatan ?? "",
+      tanda_tangan:
+        profil?.tanda_tangan ?? "",
+    },
   });
 }
 
 function formatValue(
-  namaField: string,
+  field: string,
   value: string
 ) {
   if (!value) return "";
 
-  const key = String(
-    namaField
-  )
+  const key = field
     .toLowerCase()
     .replace(/_/g, " ");
 
-  if (
-    key.includes("tempat") &&
-    key.includes("lahir")
-  ) {
-    const [
-      tempat = "",
-      tanggal = "",
-    ] = String(value)
+  if (key === "ttl") {
+    const parts = value
       .split(",")
-      .map((item) =>
-        item.trim()
-      );
+      .map((v) => v.trim());
 
-    return `${tempat}, ${formatTanggalIndonesia(
-      tanggal
-    )}`;
+    if (parts.length === 2) {
+      return `${parts[0]}, ${formatTanggalIndonesia(
+        parts[1]
+      )}`;
+    }
+
+    return value;
   }
 
   if (
-    !key.includes(
-      "tempat"
-    ) &&
-    key.includes("lahir") &&
-    (key.includes(
-      "tanggal"
-    ) ||
-      key.includes("tgl"))
+    key.includes("tanggal") ||
+    key.includes("tgl")
   ) {
     return formatTanggalIndonesia(
       value
@@ -242,9 +135,9 @@ function formatValue(
 function formatTanggalIndonesia(
   value: string
 ) {
-  const date = new Date(
-    value
-  );
+  if (!value) return "";
+
+  const date = new Date(value);
 
   if (
     Number.isNaN(

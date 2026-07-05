@@ -35,4 +35,5 @@ export default async function ProfilPimpinanPage() {
       </div>
     </div>
   );
+  
 }

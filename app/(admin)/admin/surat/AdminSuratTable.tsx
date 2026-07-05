@@ -149,34 +149,6 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
                       label="Preview"
                     />
                     <button
-                      onClick={() => approveSurat(item.id)}
-                      disabled={
-                        loadingId === item.id ||
-                        item.status === "selesai" ||
-                        item.status === "menunggu tanda tangan"
-                      }
-                      style={{
-                        padding: "8px 10px",
-                        border: "none",
-                        borderRadius: "5px",
-                        backgroundColor:
-                          item.status === "selesai" ||
-                          item.status === "menunggu tanda tangan"
-                            ? "#9ca3af"
-                            : "#16a34a",
-                        color: "white",
-                        cursor:
-                          loadingId === item.id ||
-                          item.status === "selesai" ||
-                          item.status === "menunggu tanda tangan"
-                            ? "not-allowed"
-                            : "pointer",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {loadingId === item.id ? "..." : "Approve"}
-                    </button>
-                    <button
                       onClick={() => hapusSurat(item.id)}
                       disabled={deleteId === item.id}
                       style={{
