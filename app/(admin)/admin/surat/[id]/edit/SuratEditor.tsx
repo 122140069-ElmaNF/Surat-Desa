@@ -151,7 +151,6 @@ export default function SuratEditor({
         }}
       >
         <button
-          type="button"
           onClick={handlePrint}
           style={buttonStyle}
         >
