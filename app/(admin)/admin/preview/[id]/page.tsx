@@ -7,6 +7,9 @@ import {
   useSearchParams,
 } from "next/navigation";
 
+import DomisiliTemplate from "@/app/components/surat/templates/DomisiliTemplate";
+import SuratPaper from "@/app/components/surat/SuratPaper";
+
 type Profil = {
   nama_kepala_desa: string;
   jabatan: string;
@@ -43,13 +46,9 @@ export default function AdminPreviewPage() {
       });
   }, [id]);
 
-  const handlePrint = () => {
-    try {
-      window.print();
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  function handlePrint() {
+    window.print();
+  }
 
   return (
     <div
@@ -59,200 +58,63 @@ export default function AdminPreviewPage() {
         padding: "32px",
       }}
     >
-      <div
-        style={{
-          maxWidth: "800px",
-          margin: "0 auto 18px",
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "10px",
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          onClick={() =>
-            router.push("/admin")
-          }
-          style={outlineButtonStyle}
-        >
-          Kembali
-        </button>
-
-        {!isPrint && (
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-            }}
-          >
-            <button
-              onClick={handlePrint}
-              style={{
-                ...actionButtonStyle,
-                backgroundColor:
-                  "#111827",
-              }}
-            >
-              Print
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          maxWidth: "800px",
-          margin: "auto",
-          background: "white",
-          padding: "40px 60px",
-          fontFamily:
-            "Times New Roman, serif",
-          lineHeight: "1.6",
-          boxShadow:
-            "0 0 10px rgba(0,0,0,0.1)",
-        }}
-      >
-        {useKop && (
-          <>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <img
-                src="/logo.png"
-                alt="logo"
-                style={{
-                  width: "80px",
-                  marginRight: "20px",
-                }}
-              />
-
-              <div
-                style={{
-                  textAlign: "center",
-                  flex: 1,
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "18px",
-                  }}
-                >
-                  PEMERINTAH DESA
-                  SUMBEREJO
-                </div>
-
-                <div>
-                  Kecamatan Way Jepara
-                </div>
-
-                <div>
-                  Kabupaten Lampung Timur
-                </div>
-              </div>
-            </div>
-
-            <hr
-              style={{
-                border:
-                  "2px solid black",
-                margin:
-                  "10px 0 20px",
-              }}
-            />
-          </>
-        )}
-
-        {/* Isi Surat */}
+      {!isPrint && (
         <div
           style={{
-            whiteSpace:
-              "pre-line",
+            maxWidth: "900px",
+            margin: "0 auto 24px",
+            display: "flex",
+            justifyContent: "space-between",
           }}
         >
-          {data}
-        </div>
-
-        {/* Penandatangan */}
-        <div
-          style={{
-            marginTop: "50px",
-            marginLeft: "auto",
-            width: "260px",
-            textAlign: "center",
-          }}
-        >
-          <div>
-            {profil?.jabatan ??
-              "Kepala Desa"}
-          </div>
-
-          <div
-            style={{
-              height: "80px",
-              display: "flex",
-              alignItems:
-                "center",
-              justifyContent:
-                "center",
-            }}
-          >
-            {status ===
-              "selesai" &&
-              profil?.tanda_tangan && (
-                <img
-                  src={
-                    profil.tanda_tangan
-                  }
-                  alt="TTD Kepala Desa"
-                  style={{
-                    maxWidth:
-                      "180px",
-                    maxHeight:
-                      "80px",
-                    objectFit:
-                      "contain",
-                  }}
-                />
-              )}
-          </div>
-
-          <div
-            style={{
-              fontWeight:
-                "bold",
-              textDecoration:
-                "underline",
-            }}
-          >
-            {
-              profil?.nama_kepala_desa
+          <button
+            onClick={() =>
+              router.push("/admin")
             }
-          </div>
+            style={outlineButtonStyle}
+          >
+            Kembali
+          </button>
+
+          <button
+            onClick={handlePrint}
+            style={actionButtonStyle}
+          >
+            Print
+          </button>
         </div>
-      </div>
+      )}
+
+      <SuratPaper>
+
+        <DomisiliTemplate
+          content={data}
+          useKop={useKop}
+          status={status}
+          profil={profil}
+        />
+
+      </SuratPaper>
+
     </div>
   );
 }
 
-const outlineButtonStyle = {
-  padding: "10px 14px",
+const outlineButtonStyle: React.CSSProperties = {
+  padding: "10px 16px",
   border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  backgroundColor: "white",
-  color: "#111827",
+  borderRadius: 8,
+  background: "#fff",
   cursor: "pointer",
-  fontWeight: 700,
+  fontWeight: 600,
 };
 
-const actionButtonStyle = {
-  padding: "10px 16px",
+const actionButtonStyle: React.CSSProperties = {
+  padding: "10px 18px",
   border: "none",
-  borderRadius: "6px",
-  color: "white",
+  borderRadius: 8,
+  background: "#111827",
+  color: "#fff",
   cursor: "pointer",
-  fontWeight: 700,
+  fontWeight: 600,
 };

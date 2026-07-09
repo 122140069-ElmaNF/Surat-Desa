@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getPengajuanDetail } from "@/lib/queries/getPengajuanDetail";
 import SuratEditor from "./SuratEditor";
+import { generateSurat } from "@/lib/surat/generateSurat";
 
 type PageProps = {
   params: Promise<{
@@ -24,24 +25,31 @@ export default async function AdminEditSuratPage({
   }
 
   const { pengajuan, detail } = data;
+  const fields: Record<string, string> = {};
 
-  let content =
-    pengajuan.template_surat || "";
+  detail.forEach((item) => {
+    fields[item.key] = String(item.value ?? "");
+  });
 
-  if (detail) {
-    Object.entries(detail).forEach(
-      ([key, value]) => {
-        if (
-          typeof value === "string"
-        ) {
-          content = content.replaceAll(
-            `{{${key}}}`,
-            value
-          );
-        }
-      }
-    );
-  }
+const content =
+  pengajuan.isi_surat && pengajuan.isi_surat.trim() !== ""
+    ? pengajuan.isi_surat
+    : generateSurat(
+        pengajuan.template_surat || "",
+        fields
+      );
+
+      fields.nomor_surat =
+  pengajuan.nomor_surat ?? "";
+
+fields.tanggal_surat =
+  pengajuan.tanggal_surat ?? "";
+
+fields.nama_penandatangan =
+  pengajuan.nama_penandatangan ?? "";
+
+fields.jabatan =
+  pengajuan.jabatan ?? "";
 
   return (
     <div>

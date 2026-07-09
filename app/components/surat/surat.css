@@ -1,0 +1,64 @@
+.surat-content{
+
+    font-family:"Times New Roman", serif;
+
+    font-size:15px;
+
+    line-height:1.45;
+
+    color:#000;
+}
+
+.surat-content p{
+
+    margin:0 0 6px;
+
+    line-height:1.45;
+
+}
+
+.surat-content h1,
+.surat-content h2,
+.surat-content h3{
+
+    margin:0;
+
+    text-align:center;
+
+    line-height:1.3;
+
+}
+
+.surat-content table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    margin:8px 0;
+
+}
+
+.surat-content td,
+.surat-content th{
+
+    padding:2px 4px;
+
+    vertical-align:top;
+
+}
+
+.surat-content ul,
+.surat-content ol{
+
+    margin:6px 0 6px 24px;
+
+}
+
+.surat-content img{
+
+    max-width:100%;
+
+    height:auto;
+
+}

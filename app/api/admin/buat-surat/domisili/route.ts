@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
+import { generateSurat } from "@/lib/surat/generateSurat";
 
 export async function POST(request: Request) {
   const conn = await db.getConnection();
@@ -55,12 +56,15 @@ export async function POST(request: Request) {
 
     // Ambil kode surat
     const [jenisRows]: any = await conn.query(`
-      SELECT kode_surat
+      SELECT 
+      kode_surat,
+      template_surat
       FROM jenis_surat
       WHERE id = 1
     `);
 
     const kodeSurat = jenisRows[0].kode_surat;
+    const templateSurat = jenisRows[0].template_surat ?? "";
 
     // Generate Tracking
     const sekarang = new Date();
@@ -135,6 +139,49 @@ export async function POST(request: Request) {
         fileName,
       ]
     );
+
+// Generate Isi Surat
+
+console.log("templateSurat =", templateSurat);
+console.log("typeof =", typeof templateSurat);
+
+const replaceFields: Record<string, string> = {
+  nomor_surat: "",
+  tanggal: new Date().toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }),
+
+  nama,
+  ttl,
+  nik,
+  agama,
+  jenis_kelamin,
+  pekerjaan,
+  alamat,
+  dusun,
+  rt,
+  rw,
+};
+
+const isiSurat = generateSurat(
+  templateSurat,
+  replaceFields
+);
+
+// Simpan Isi Surat
+await conn.query(
+  `
+  UPDATE pengajuan_surat
+  SET isi_surat = ?
+  WHERE id = ?
+  `,
+  [
+    isiSurat,
+    pengajuan_id,
+  ]
+);
 
     await conn.commit();
     return NextResponse.json({

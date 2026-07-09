@@ -1,0 +1,61 @@
+.editor-wrapper{
+    background:#f3f4f6;
+    border-radius:12px;
+    overflow:hidden;
+}
+
+.ProseMirror{
+    outline:none;
+    min-height:900px;
+
+    font-family:"Times New Roman", serif;
+    font-size:15px;
+    line-height:1.45;
+
+    color:#000;
+}
+
+/* Paragraph */
+.ProseMirror p{
+    margin:0 0 6px;
+    line-height:1.45;
+}
+
+/* Heading */
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3{
+    margin:0;
+    text-align:center;
+    line-height:1.3;
+}
+
+/* List */
+.ProseMirror ul,
+.ProseMirror ol{
+    margin:6px 0 6px 24px;
+}
+
+/* Table */
+.ProseMirror table{
+    width:100%;
+    border-collapse:collapse;
+    margin:8px 0;
+}
+
+.ProseMirror td,
+.ProseMirror th{
+    padding:2px 4px;
+    vertical-align:top;
+}
+
+/* Image */
+.ProseMirror img{
+    max-width:100%;
+    height:auto;
+}
+
+/* Focus */
+.ProseMirror:focus{
+    outline:none;
+}

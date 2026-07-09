@@ -26,24 +26,52 @@ export async function GET(
     detail,
   } = data;
 
-  let hasil =
-    pengajuan.template_surat || "";
+const fields: Record<string, string> = {};
+
+detail.forEach((item) => {
+  fields[item.key] = String(item.value ?? "");
+});
+
+fields.nomor_surat =
+  pengajuan.nomor_surat ?? "";
+
+fields.tanggal =
+  new Date().toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }
+  );
+
+fields.nama_penandatangan =
+  pengajuan.nama_penandatangan ?? "";
+
+fields.jabatan =
+  pengajuan.jabatan ?? "";
+
+let hasil =
+  pengajuan.isi_surat &&
+  pengajuan.isi_surat.trim() !== ""
+    ? pengajuan.isi_surat
+    : pengajuan.template_surat || "";
 
   // ==========================
   // Replace seluruh field
   // ==========================
 
-  if (detail) {
-    detail.forEach((item) => {
-      hasil = hasil.replaceAll(
-        `{{${item.key}}}`,
-        formatValue(
-          item.key,
-          item.value
-        )
-      );
-    });
+Object.entries(fields).forEach(
+  ([key, value]) => {
+    hasil = hasil.replaceAll(
+      `{{${key}}}`,
+      formatValue(
+        key,
+        String(value)
+      )
+    );
   }
+);
 
   // ==========================
   // Ambil Profil Kepala Desa
@@ -58,24 +86,6 @@ export async function GET(
 
   const profil =
     (profilRows as any[])[0];
-
-  hasil = hasil.replaceAll(
-    "{{tanggal}}",
-    new Date().toLocaleDateString(
-      "id-ID",
-      {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }
-    )
-  );
-  hasil = hasil.replaceAll(
-    "{{nomor_surat}}",
-    pengajuan.nomor_surat ?? ""
-  );
-  
-  console.log("Nomor Surat:", pengajuan.nomor_surat);
 
   return Response.json({
     success: true,
