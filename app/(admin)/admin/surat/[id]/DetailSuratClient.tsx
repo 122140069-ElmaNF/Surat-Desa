@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams, } from "next/navigation";
 import { useEffect, useState } from "react";
+import ApprovalModal from "@/app/components/approval/ApprovalModal";
 
 type Props = {
   pengajuan: any;
@@ -424,23 +425,15 @@ console.log("previewTanggal =", previewTanggal);
       </>
     )}
 
-    {pengajuan.status ===
-      "menunggu tanda tangan" && (
-
+    {pengajuan.status === "menunggu_persetujuan" && (
       <div className="status-info">
-
         Surat sedang menunggu
         persetujuan Kepala Desa.
-
       </div>
-
     )}
 
-    {pengajuan.status ===
-      "disetujui" && (
-
+    {pengajuan.status ==="disetujui" && (
       <>
-
         <button
           className="approval-btn"
           onClick={() =>
@@ -489,79 +482,16 @@ console.log("previewTanggal =", previewTanggal);
 
 </div>
 
-    {/* ================= MODAL ================= */}
-
-    {showModal && (
-
-    <div className="approval-overlay">
-
-    <div className="approval-modal">
-
-        <h2>
-        Konfirmasi Approval
-        </h2>
-
-        <p>
-        Nomor Surat
-        </p>
-
-        <div className="approval-number">
-        {previewNomor}
-        </div>
-
-        <p>
-        Tanggal Surat
-        </p>
-
-        <strong>
-        {previewTanggal}
-        </strong>
-
-        <p className="approval-text">
-
-        Pastikan nomor surat
-        sudah benar.
-
-        </p>
-
-        <div className="approval-button-group">
-
-        <button
-            className="edit-button"
-            onClick={() =>
-            router.push(
-                `/admin/surat/${pengajuan.id}/edit`
-            )
-            }
-        >
-            Edit Nomor
-        </button>
-
-        <button
-            className="approve-button"
-            onClick={handleApproval}
-            disabled={loadingApproval}
-        >
-            {loadingApproval
-            ? "Mengirim..."
-            : "Ya, Kirim"}
-        </button>
-
-        </div>
-
-        <button
-        className="close-button"
-        onClick={() =>
-            setShowModal(false)
-        }
-        >
-        Tutup
-        </button>
-
-    </div>
-    </div>
-
-    )}
+  <ApprovalModal
+  open={showModal}
+  suratId={pengajuan.id}
+  nomorSurat={previewNomor}
+  onClose={() => setShowModal(false)}
+  onSuccess={() => {
+    setShowModal(false);
+    router.refresh();
+  }}
+/>
 
     </div>
   );

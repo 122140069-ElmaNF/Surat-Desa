@@ -8,9 +8,7 @@ export async function PATCH(
   try {
 
     const { id } = await context.params;
-
     const body = await req.json();
-
     const { isi_surat } = body;
 
     await db.query(
@@ -37,7 +35,7 @@ export async function PATCH(
       {
         success: false,
       },
-      {
+{
         status: 500,
       }
     );

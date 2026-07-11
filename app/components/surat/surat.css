@@ -1,64 +1,119 @@
+/* =========================
+   GLOBAL SURAT
+========================= */
 .surat-content{
-
     font-family:"Times New Roman", serif;
-
-    font-size:15px;
-
-    line-height:1.45;
-
+    font-size:12pt;
     color:#000;
+    line-height:1;
 }
 
-.surat-content p{
-
-    margin:0 0 6px;
-
-    line-height:1.45;
-
-}
-
+/* =========================
+   HEADING
+========================= */
 .surat-content h1,
 .surat-content h2,
 .surat-content h3{
-
     margin:0;
-
+    font-weight:bold;
     text-align:center;
-
-    line-height:1.3;
-
+    line-height:1;
 }
 
-.surat-content table{
-
-    width:100%;
-
-    border-collapse:collapse;
-
-    margin:8px 0;
-
+.surat-content h1{
+    font-size:16pt;
 }
 
-.surat-content td,
-.surat-content th{
-
-    padding:2px 4px;
-
-    vertical-align:top;
-
+.surat-content h2{
+    font-size:14pt;
 }
 
+.surat-content h3{
+    font-size:12pt;
+}
+
+/* =========================
+   PARAGRAPH
+========================= */
+.surat-content p{
+    margin:0;
+    text-align:justify;
+    line-height:1;
+}
+
+/* paragraph pertama */
+.surat-content p + p{
+    margin-top:12pt;
+}
+
+/* =========================
+   LIST
+========================= */
 .surat-content ul,
 .surat-content ol{
-
-    margin:6px 0 6px 24px;
-
+    margin:12pt 0;
+    padding-left:28px;
 }
 
+/* =========================
+   TABLE
+========================= */
+.surat-content table{
+    width:100%;
+    border-collapse:collapse;
+    margin:12pt 0;
+    font-size:12pt;
+}
+
+.surat-content td{
+    padding:0;
+    vertical-align:top;
+}
+
+/* =========================
+   IDENTITAS
+========================= */
+
+.identitas{
+    width:100%;
+    border-collapse:collapse;
+    margin:12pt 0 18pt;
+    font-family:"Times New Roman", serif;
+    font-size:12pt;
+    line-height:1.5;
+}
+
+.identitas td{
+    padding:1px 0;
+    vertical-align:top;
+}
+
+.identitas td:nth-child(1){
+    width:4.5cm;
+    white-space:nowrap;
+}
+
+.identitas td:nth-child(2){
+    width:.5cm;
+    text-align:center;
+}
+
+.identitas td:nth-child(3){
+    text-align:left;
+}
+/* =========================
+   IMAGE
+========================= */
 .surat-content img{
-
     max-width:100%;
-
     height:auto;
+}
 
+/* =========================
+   PRINT
+========================= */
+@media print{
+    body{
+        background:white !important;
+    }
 }

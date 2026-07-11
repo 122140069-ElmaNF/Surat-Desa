@@ -480,15 +480,9 @@
 .delete-btn:hover{
     background:#dc2626;
 }
-
 /* ========================= */
 /* FORM ADMIN */
 /* ========================= */
-
-/* ========================= */
-/* FORM ADMIN */
-/* ========================= */
-
 .admin-form{
     display:flex;
     flex-direction:column;
@@ -514,13 +508,10 @@
 .admin-form-group select{
     width:100%;
     padding:14px 16px;
-
     border:1px solid #dbeafe;
     border-radius:12px;
-
     background:#fff;
     color:#0f172a;
-
     font-size:15px;
     outline:none;
 }
@@ -547,63 +538,42 @@
 }
 
 .topbar{
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
 }
 
 .topbar-user{
-
     display:flex;
-
     align-items:center;
-
     gap:15px;
 }
 
 .topbar-user h3{
-
     margin:0;
-
     font-size:16px;
-
     color:#0f172a;
 }
 
 .topbar-user span{
-
     color:#64748b;
-
     font-size:13px;
 }
 
 .user-avatar{
-
     width:50px;
-
     height:50px;
-
     border-radius:50%;
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     background:linear-gradient(
         135deg,
         #60a5fa,
         #2563eb
     );
-
     color:white;
-
     font-size:18px;
-
     font-weight:700;
 }
 

@@ -20,55 +20,95 @@ export default function TandaTangan({
   return (
     <div
       style={{
-        width: 260,
+        width: "280px",
         marginLeft: "auto",
-        marginTop: 48,
-        textAlign: "center",
+        marginTop: "24px",
         fontFamily: '"Times New Roman", serif',
-        fontSize: 16,
+        fontSize: "12pt",
+        lineHeight: 1.3,
       }}
     >
-      {(tempat || tanggal) && (
-        <div
-          style={{
-            marginBottom: 8,
-          }}
-        >
-          {tempat}
-          {tanggal ? `, ${tanggal}` : ""}
-        </div>
-      )}
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          marginBottom: "6px",
+        }}
+      >
+        <tbody>
+          <tr>
+            <td
+              style={{
+                width: "95px",
+                verticalAlign: "top",
+              }}
+            >
+              Dibuat di
+            </td>
 
-      <div>{jabatan}</div>
+            <td
+              style={{
+                width: "12px",
+                textAlign: "center",
+              }}
+            >
+              :
+            </td>
+
+            <td>{tempat}</td>
+          </tr>
+
+          <tr>
+            <td>Pada Tanggal</td>
+
+            <td
+              style={{
+                textAlign: "center",
+              }}
+            >
+              :
+            </td>
+
+            <td>{tanggal}</td>
+          </tr>
+        </tbody>
+      </table>
 
       <div
         style={{
-          height: 95,
+          marginBottom: "4px",
+        }}
+      >
+        {jabatan}
+      </div>
+
+      <div
+        style={{
+          height: "90px",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
         }}
       >
-        {showImage &&
-          image && (
-            <img
-              src={image}
-              alt="Tanda Tangan"
-              style={{
-                maxWidth: 170,
-                maxHeight: 90,
-                objectFit: "contain",
-              }}
-            />
-          )}
+        {showImage && image && (
+          <img
+            src={image}
+            alt="Tanda Tangan"
+            style={{
+              maxWidth: "170px",
+              maxHeight: "85px",
+              objectFit: "contain",
+            }}
+          />
+        )}
       </div>
 
       <div
         style={{
-          fontWeight: 700,
+          fontWeight: "bold",
           textDecoration: "underline",
           textTransform: "uppercase",
-          marginTop: 6,
+          textAlign: "center",
         }}
       >
         {nama}

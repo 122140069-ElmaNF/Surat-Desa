@@ -28,7 +28,7 @@ export default function KopSurat() {
         >
           <div
             style={{
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: 700,
             }}
           >
@@ -37,7 +37,7 @@ export default function KopSurat() {
 
           <div
             style={{
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: 700,
             }}
           >
@@ -46,19 +46,34 @@ export default function KopSurat() {
 
           <div
             style={{
-              fontSize: 24,
+              fontSize: 16,
               fontWeight: 700,
             }}
           >
             DESA SUMBEREJO
           </div>
 
+
+      <div
+        style={{
+          borderTop: "3px solid black",
+          marginTop: 14,
+        }}
+      />
+
+      <div
+        style={{
+          borderTop: "1px solid black",
+          marginTop: 2,
+          marginBottom: 30,
+        }}
+      />
           <div
             style={{
-              fontSize: 13,
+              fontSize: 10,
             }}
           >
-            Jl. ................. Kode Pos ..........
+            Alamat : Jln. Danau Indah Desa Sumberejo Kec. Way Jepara Kab. Lampung Timur KodePos 34196
           </div>
         </div>
       </div>

@@ -25,31 +25,55 @@ export default async function AdminEditSuratPage({
   }
 
   const { pengajuan, detail } = data;
+
   const fields: Record<string, string> = {};
 
+  // ==========================
+  // Field dari detail surat
+  // ==========================
   detail.forEach((item) => {
     fields[item.key] = String(item.value ?? "");
   });
 
+  // ==========================
+  // Field sistem
+  // ==========================
+  fields.nomor_surat =
+    pengajuan.nomor_surat ?? "";
+
+  fields.tanggal =
+    pengajuan.tanggal_surat
+      ? new Date(
+          pengajuan.tanggal_surat
+        ).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })
+      : "";
+
+  fields.nama_penandatangan =
+    pengajuan.nama_penandatangan ?? "";
+
+  fields.jabatan =
+    pengajuan.jabatan ?? "";
+
+// ==========================
+// Generate isi surat
+// ==========================
+
 const content =
-  pengajuan.isi_surat && pengajuan.isi_surat.trim() !== ""
-    ? pengajuan.isi_surat
-    : generateSurat(
+  pengajuan.status === "draft"
+    ? generateSurat(
         pengajuan.template_surat || "",
-        fields
-      );
-
-      fields.nomor_surat =
-  pengajuan.nomor_surat ?? "";
-
-fields.tanggal_surat =
-  pengajuan.tanggal_surat ?? "";
-
-fields.nama_penandatangan =
-  pengajuan.nama_penandatangan ?? "";
-
-fields.jabatan =
-  pengajuan.jabatan ?? "";
+        fields,
+        {
+          preserveSystemFields: true,
+        }
+      )
+    : (pengajuan.isi_surat ||
+        pengajuan.template_surat ||
+        "");
 
   return (
     <div>
@@ -69,9 +93,7 @@ fields.jabatan =
             <strong>
               {pengajuan.nama_surat}
             </strong>{" "}
-            (
-            {pengajuan.kode_tracking}
-            )
+            ({pengajuan.kode_tracking})
           </p>
         </div>
 

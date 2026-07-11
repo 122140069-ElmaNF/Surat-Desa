@@ -22,7 +22,7 @@ export default async function PimpinanDashboardPage() {
     LEFT JOIN domisili d
       ON d.pengajuan_id = ps.id
 
-    WHERE ps.status = 'menunggu tanda tangan'
+    WHERE ps.status = 'menunggu_persetujuan'
 
     ORDER BY ps.created_at ASC
   `);
@@ -30,7 +30,7 @@ export default async function PimpinanDashboardPage() {
   const [statRows] = await db.query(`
     SELECT COUNT(*) AS total
     FROM pengajuan_surat
-    WHERE status = 'menunggu tanda tangan'
+    WHERE status = 'menunggu_persetujuan'
   `);
 
   const totalMenunggu =

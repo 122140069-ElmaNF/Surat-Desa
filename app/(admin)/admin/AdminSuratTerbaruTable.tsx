@@ -172,7 +172,7 @@ function StatusBadge({
 
   const isMenunggu =
     status ===
-    "menunggu tanda tangan";
+    "menunggu_persetujuan";
 
   return (
     <span

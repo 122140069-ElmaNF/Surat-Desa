@@ -96,7 +96,7 @@ export default function PimpinanSuratTable({
                   color: "#6b7280",
                 }}
               >
-                Tidak ada surat yang menunggu tanda tangan.
+                Tidak ada surat yang menunggu persetujuan.
               </td>
             </tr>
           ) : (

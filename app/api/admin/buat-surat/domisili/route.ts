@@ -167,7 +167,10 @@ const replaceFields: Record<string, string> = {
 
 const isiSurat = generateSurat(
   templateSurat,
-  replaceFields
+  replaceFields,
+  {
+    preserveSystemFields: true,
+  }
 );
 
 // Simpan Isi Surat

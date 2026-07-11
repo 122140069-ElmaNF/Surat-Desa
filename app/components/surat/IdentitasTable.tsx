@@ -1,8 +1,8 @@
-"use client";
+import { ReactNode } from "react";
 
 type Item = {
   label: string;
-  value: React.ReactNode;
+  value: ReactNode;
 };
 
 type Props = {
@@ -14,45 +14,49 @@ export default function IdentitasTable({
 }: Props) {
   return (
     <table
+      className="identitas-table"
       style={{
         width: "100%",
         borderCollapse: "collapse",
-        marginTop: 16,
-        marginBottom: 24,
+        marginTop: "12pt",
+        marginBottom: "18pt",
         fontFamily: '"Times New Roman", serif',
-        fontSize: "16px",
+        fontSize: "12pt",
       }}
     >
       <tbody>
         {items.map((item) => (
-          <tr
-            key={item.label}
-            style={{
-              verticalAlign: "top",
-            }}
-          >
+          <tr key={item.label}>
+            {/* Label */}
             <td
+              className="identitas-label"
               style={{
-                width: "180px",
-                paddingBottom: "8px",
-                whiteSpace: "nowrap",
+                width: "4.5cm",
+                verticalAlign: "top",
+                padding: 0,
               }}
             >
               {item.label}
             </td>
 
+            {/* Titik dua */}
             <td
+              className="identitas-titik"
               style={{
-                width: "15px",
-                paddingBottom: "8px",
+                width: "0.5cm",
+                textAlign: "center",
+                verticalAlign: "top",
+                padding: 0,
               }}
             >
               :
             </td>
 
+            {/* Value */}
             <td
               style={{
-                paddingBottom: "8px",
+                verticalAlign: "top",
+                padding: 0,
                 textAlign: "justify",
               }}
             >
