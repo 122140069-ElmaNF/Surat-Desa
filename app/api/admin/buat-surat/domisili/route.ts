@@ -4,6 +4,7 @@ import { writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
 import { generateSurat } from "@/lib/surat/generateSurat";
+import getJenisSurat from "@/lib/surat/getJenisSurat";
 
 export async function POST(request: Request) {
   const conn = await db.getConnection();
@@ -54,17 +55,12 @@ export async function POST(request: Request) {
 
     await writeFile(uploadPath, buffer);
 
-    // Ambil kode surat
-    const [jenisRows]: any = await conn.query(`
-      SELECT 
-      kode_surat,
-      template_surat
-      FROM jenis_surat
-      WHERE id = 1
-    `);
+    // Ambil data jenis surat
+    const jenis = await getJenisSurat("SD");
 
-    const kodeSurat = jenisRows[0].kode_surat;
-    const templateSurat = jenisRows[0].template_surat ?? "";
+    const jenisSuratId = jenis.id;
+    const kodeSurat = jenis.kode_surat;
+    const templateSurat = jenis.template_surat ?? "";
 
     // Generate Tracking
     const sekarang = new Date();
@@ -80,8 +76,8 @@ export async function POST(request: Request) {
     const [countRows]: any = await conn.query(`
       SELECT COUNT(*) total
       FROM pengajuan_surat
-      WHERE jenis_surat_id = 1
-    `);
+      WHERE jenis_surat_id = ?
+    `, [jenisSuratId]);
 
     const urut = String(countRows[0].total + 1).padStart(4, "0");
     const kode_tracking =`${kodeSurat}-${tanggal}-${urut}`;
@@ -98,7 +94,7 @@ export async function POST(request: Request) {
       VALUES
       (?, ?, ?)
       `,
-      [1,"draft",kode_tracking,]
+      [jenisSuratId,"draft",kode_tracking,]
     );
 
     const pengajuan_id = result.insertId;

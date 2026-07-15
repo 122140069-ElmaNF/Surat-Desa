@@ -38,16 +38,6 @@ export default async function buildSuratHtml({
   fields.nomor_surat =
     nomorSurat;
 
-  fields.tanggal =
-    tanggalSurat.toLocaleDateString(
-      "id-ID",
-      {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }
-    );
-
   fields.jabatan =
     profil?.jabatan ?? "";
 

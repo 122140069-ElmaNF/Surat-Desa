@@ -20,13 +20,11 @@ export default function AdminPreviewPage() {
   const [data, setData] = useState("");
   const [useKop, setUseKop] = useState(true);
   const [status, setStatus] = useState("");
-  const [profil, setProfil] =
-    useState<Profil | null>(null);
-
+  const [profil, setProfil] = useState<Profil | null>(null);
+const [tanggalSurat, setTanggalSurat] = useState("");
   const params = useParams();
   const router = useRouter();
-  const searchParams =
-    useSearchParams();
+  const searchParams = useSearchParams();
 
   const isPrint =
     searchParams?.get("print") !== null;
@@ -43,6 +41,7 @@ export default function AdminPreviewPage() {
         setUseKop(res.use_kop);
         setStatus(res.status || "");
         setProfil(res.profil ?? null);
+        setTanggalSurat(res.tanggal_surat || "");
       });
   }, [id]);
 
@@ -92,6 +91,7 @@ export default function AdminPreviewPage() {
           useKop={useKop}
           status={status}
           profil={profil}
+          tanggalSurat={tanggalSurat}
         />
 
       </SuratPaper>

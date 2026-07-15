@@ -45,8 +45,8 @@ export default function PengajuanPage() {
         router.push("/pengajuan/izin-keramaian");
         break;
 
-      case "Surat Keterangan Pindah Agama":
-        router.push("/pengajuan/pindah-agama");
+      case "Surat Keterangan Tafsiran Harga Tanah":
+        router.push("/pengajuan/tafsiran-harga-tanah");
         break;
 
       case "Surat Keterangan Listrik":
@@ -69,20 +69,12 @@ export default function PengajuanPage() {
         router.push("/pengajuan/kehilangan");
         break;
 
-      case "Surat Pengantar SKCK":
-        router.push("/pengajuan/skck");
-        break;
-
       case "Surat Keterangan Kebenaran Data":
         router.push("/pengajuan/kebenaran-data");
         break;
 
       case "Surat Keterangan Beda Nama dan Identitas":
         router.push("/pengajuan/beda-nama-identitas");
-        break;
-
-      case "Surat Kuasa Penuh":
-        router.push("/pengajuan/kuasa-penuh");
         break;
 
       case "Surat Keterangan Tidak Berlanggan Air PDAM dan Telpon":

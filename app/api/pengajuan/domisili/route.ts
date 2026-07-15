@@ -64,14 +64,15 @@ export async function POST(request: Request) {
 
     const [jenisRows]: any = await conn.query(
       `
-      SELECT kode_surat
+      SELECT id,
+      kode_surat
       FROM jenis_surat
-      WHERE id = 1
+      WHERE kode_surat = 'SD'
       `
     );
 
     const kodeSurat = jenisRows[0].kode_surat;
-
+    const jenisSuratId = jenisRows[0].id;
     // ===============================
     // Generate Tracking
     // ===============================
@@ -90,8 +91,9 @@ export async function POST(request: Request) {
       `
       SELECT COUNT(*) total
       FROM pengajuan_surat
-      WHERE jenis_surat_id = 1
-      `
+      WHERE jenis_surat_id = ?
+      `,
+      [jenisSuratId]
     );
 
     const urut = String(
@@ -117,7 +119,7 @@ export async function POST(request: Request) {
       (?, ?, ?)
       `,
       [
-        1,
+        jenisSuratId,
         "pending",
         kode_tracking,
       ]

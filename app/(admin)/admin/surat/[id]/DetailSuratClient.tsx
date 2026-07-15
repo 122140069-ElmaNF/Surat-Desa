@@ -392,7 +392,7 @@ console.log("previewTanggal =", previewTanggal);
       Preview Surat
     </button>
 
-    {pengajuan.status === "draft" && (
+    {["draft", "pending"].includes(pengajuan.status) && (
       <>
         <button
           className="approval-btn"

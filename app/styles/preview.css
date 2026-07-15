@@ -1,0 +1,18 @@
+.surat-body {
+    font-family: "Times New Roman";
+    font-size: 12pt;
+    line-height: 1;
+}
+
+.surat-title {
+    text-align: center;
+    font-size: 14pt;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.surat-number {
+    text-align: center;
+    font-size: 12pt;
+    font-weight: bold;
+}

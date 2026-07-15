@@ -27,7 +27,7 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "menunggu tanda tangan" }),
+        body: JSON.stringify({ status: "menunggu_persetujuan" }),
       });
 
       if (!res.ok) {
@@ -120,13 +120,13 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
                       backgroundColor:
                         item.status === "selesai"
                           ? "#dcfce7"
-                          : item.status === "menunggu tanda tangan"
+                          : item.status === "menunggu_persetujuan"
                             ? "#dbeafe"
                             : "#fef3c7",
                       color:
                         item.status === "selesai"
                           ? "#166534"
-                          : item.status === "menunggu tanda tangan"
+                          : item.status === "menunggu_persetujuan"
                             ? "#1e40af"
                             : "#92400e",
                       fontSize: "13px",

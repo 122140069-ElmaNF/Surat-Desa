@@ -14,6 +14,8 @@ type Props = {
   status: string;
   profil: Profil | null;
 
+  tanggalSurat: string;
+
   editable?: boolean;
   onChange?: (value: string) => void;
 };
@@ -23,6 +25,7 @@ export default function DomisiliTemplate({
   useKop,
   status,
   profil,
+  tanggalSurat,
 
   editable = false,
   onChange,
@@ -60,20 +63,11 @@ export default function DomisiliTemplate({
 
       {/* ===================== TANDA TANGAN ===================== */}
 <TandaTangan
-  jabatan={
-    profil?.jabatan ??
-    "Kepala Desa"
-  }
-  nama={
-    profil?.nama_kepala_desa ??
-    ""
-  }
-  image={
-    profil?.tanda_tangan
-  }
-  showImage={
-    status === "selesai"
-  }
+  jabatan={profil?.jabatan ?? "Kepala Desa"}
+  nama={profil?.nama_kepala_desa ?? ""}
+  image={profil?.tanda_tangan}
+  showImage={status === "selesai"}
+  tanggal={tanggalSurat}
 />
     </SuratCanvas>
   );

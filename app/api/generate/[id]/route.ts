@@ -36,14 +36,15 @@ fields.nomor_surat =
   pengajuan.nomor_surat ?? "";
 
 fields.tanggal =
-  new Date().toLocaleDateString(
-    "id-ID",
-    {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    }
-  );
+  pengajuan.tanggal_surat
+    ? new Date(
+        pengajuan.tanggal_surat
+      ).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : "";
 
 fields.nama_penandatangan =
   pengajuan.nama_penandatangan ?? "";
@@ -91,9 +92,9 @@ Object.entries(fields).forEach(
     success: true,
     hasil,
     status: pengajuan.status,
-    use_kop: Boolean(
-      pengajuan.use_kop
-    ),
+    use_kop: Boolean(pengajuan.use_kop),
+
+    tanggal_surat: pengajuan.tanggal_surat,
 
     profil: {
       nama_kepala_desa:
