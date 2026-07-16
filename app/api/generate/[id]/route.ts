@@ -46,12 +46,6 @@ fields.tanggal =
       })
     : "";
 
-fields.nama_penandatangan =
-  pengajuan.nama_penandatangan ?? "";
-
-fields.jabatan =
-  pengajuan.jabatan ?? "";
-
 let hasil =
   pengajuan.isi_surat &&
   pengajuan.isi_surat.trim() !== ""
@@ -78,15 +72,32 @@ Object.entries(fields).forEach(
   // Ambil Profil Kepala Desa
   // ==========================
 
-  const [profilRows] =
-    await db.query(`
-      SELECT *
-      FROM profil_pimpinan
-      LIMIT 1
-    `);
+const [profilRows] = await db.query(`
+    SELECT *
+    FROM profil_pimpinan
+    LIMIT 1
+`);
 
-  const profil =
-    (profilRows as any[])[0];
+const profil = (profilRows as any[])[0];
+
+const profilFinal =
+  pengajuan.status === "selesai"
+    ? {
+        nama_kepala_desa:
+          pengajuan.nama_penandatangan,
+        jabatan:
+          pengajuan.jabatan_penandatangan,
+        tanda_tangan:
+          pengajuan.file_ttd,
+      }
+    : {
+        nama_kepala_desa:
+          profil?.nama_kepala_desa ?? "",
+        jabatan:
+          profil?.jabatan ?? "",
+        tanda_tangan:
+          profil?.tanda_tangan ?? "",
+      };
 
   return Response.json({
     success: true,
@@ -94,16 +105,17 @@ Object.entries(fields).forEach(
     status: pengajuan.status,
     use_kop: Boolean(pengajuan.use_kop),
 
-    tanggal_surat: pengajuan.tanggal_surat,
+    tanggalSurat: pengajuan.tanggal_surat
+      ? new Date(
+          pengajuan.tanggal_surat
+        ).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })
+      : "",
 
-    profil: {
-      nama_kepala_desa:
-        profil?.nama_kepala_desa ?? "",
-      jabatan:
-        profil?.jabatan ?? "",
-      tanda_tangan:
-        profil?.tanda_tangan ?? "",
-    },
+    profil: profilFinal,
   });
 }
 

@@ -9,7 +9,6 @@ import SubmitButton from "@/app/components/form/SubmitButton";
 type Props = {
   mode: "create" | "edit";
   initialData?: any;
-  onSubmit: (formData: FormData) => Promise<void>;
   submitLabel?: string;
   role?: "user" | "admin";
 };
@@ -17,7 +16,6 @@ type Props = {
 export default function DomisiliForm({
   mode,
   initialData,
-  onSubmit,
   submitLabel,
   role = "user",
 }: Props) {
@@ -243,15 +241,41 @@ export default function DomisiliForm({
     }
 
 try {
-  await onSubmit(formData);
+  const url =
+    mode === "edit"
+      ? `/api/pengajuan/domisili/${initialData.id}`
+      : "/api/surat/domisili";
+
+  const method =
+    mode === "edit"
+      ? "PUT"
+      : "POST";
+
+  const res = await fetch(url, {
+    method,
+    body: formData,
+  });
+
+  const json = await res.json();
+
+  if (!json.success) {
+    alert(json.message ?? "Gagal menyimpan.");
+    return;
+  }
 
   setErrors({});
   setFileKtp(null);
-          } catch (err) {
-            console.error(err);
-            alert("Terjadi kesalahan server.");
-          }
-        }
+
+  if (mode === "edit") {
+    alert("Perbaikan berhasil dikirim.");
+    window.location.href = `/tracking/${initialData.kode_tracking}`;
+  } else {
+    alert("Pengajuan berhasil.");
+  }
+} catch (err) {
+  console.error(err);
+  alert("Terjadi kesalahan server.");
+}}
 
   // RENDER
   return (

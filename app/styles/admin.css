@@ -118,8 +118,11 @@
 /* ======================
    TOPBAR
 ====================== */
-
 .topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
   background: white;
   padding: 25px 30px;
 
@@ -183,9 +186,34 @@
   gap: 20px;
 }
 
-.stat-card {
-  padding: 28px;
-  transition: 0.25s;
+.stat-card{
+    padding:24px;
+    transition:.25s;
+}
+
+@media (max-width:768px){
+
+.stat-card{
+    padding:18px;
+}
+
+.stat-value{
+    font-size:32px;
+}
+
+.stat-label{
+    font-size:14px;
+}
+
+.stat-icon{
+    width:52px;
+    height:52px;
+}
+
+.stat-icon svg{
+    width:22px;
+    height:22px;
+}
 }
 .stat-top {
   display: flex;
@@ -286,17 +314,12 @@
     flex-direction: row;
     overflow-x: auto;
   }
-
-  .admin-content {
-    margin-left: 0;
-    padding: 18px;
-  }
 }
 
-.dokumen-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+.dokumen-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
 }
 
 .dokumen-item {
@@ -537,12 +560,6 @@
     margin-top:28px;
 }
 
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
 .topbar-user{
     display:flex;
     align-items:center;
@@ -575,6 +592,21 @@
     color:white;
     font-size:18px;
     font-weight:700;
+}
+
+@media (max-width:768px){
+
+.topbar{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:18px;
+}
+
+.topbar-user{
+    width:100%;
+    justify-content:space-between;
+}
+
 }
 
 /* =====================================
@@ -821,4 +853,31 @@ DETAIL LAYOUT
     .detail-grid{
         grid-template-columns: 1fr;
     }
+}
+
+.responsive-table-wrap{
+    width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+}
+
+.responsive-table{
+    min-width:900px;
+}
+
+.page-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:16px;
+flex-wrap:wrap;
+}
+
+@media(max-width:768px){
+
+.page-header{
+flex-direction:column;
+align-items:flex-start;
+}
+
 }

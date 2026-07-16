@@ -73,14 +73,15 @@
 /* =========================
    IDENTITAS
 ========================= */
-
 .identitas{
     width:100%;
     border-collapse:collapse;
     margin:12pt 0 18pt;
+
+    margin-left: 28px;      /* identitas agak masuk */
     font-family:"Times New Roman", serif;
     font-size:12pt;
-    line-height:1.5;
+    line-height:1.35;
 }
 
 .identitas td{
@@ -89,12 +90,12 @@
 }
 
 .identitas td:nth-child(1){
-    width:4.5cm;
+    width:3.9cm;            /* lebih pendek */
     white-space:nowrap;
 }
 
 .identitas td:nth-child(2){
-    width:.5cm;
+    width:.35cm;            /* titik dua lebih dekat */
     text-align:center;
 }
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getPengajuanDetail } from "@/lib/queries/getPengajuanDetail";
 import SuratEditor from "./SuratEditor";
 import { generateSurat } from "@/lib/surat/generateSurat";
+import db from "@/lib/db";
 
 type PageProps = {
   params: Promise<{
@@ -25,6 +26,14 @@ export default async function AdminEditSuratPage({
   }
 
   const { pengajuan, detail } = data;
+
+  const [profilRows] = await db.query(`
+    SELECT *
+    FROM profil_pimpinan
+    LIMIT 1
+`);
+
+const profil = (profilRows as any[])[0];
 
   const fields: Record<string, string> = {};
 
@@ -62,18 +71,24 @@ export default async function AdminEditSuratPage({
 // Generate isi surat
 // ==========================
 
-const content =
-  pengajuan.status === "draft"
-    ? generateSurat(
-        pengajuan.template_surat || "",
-        fields,
-        {
-          preserveSystemFields: true,
-        }
-      )
-    : (pengajuan.isi_surat ||
-        pengajuan.template_surat ||
-        "");
+const shouldGenerate =
+  ["draft", "pending"].includes(
+    pengajuan.status
+  );
+
+const content = shouldGenerate
+  ? generateSurat(
+      pengajuan.template_surat || "",
+      fields,
+      {
+        preserveSystemFields: true,
+      }
+    )
+  : (
+      pengajuan.isi_surat ||
+      pengajuan.template_surat ||
+      ""
+    );
 
   return (
     <div>
@@ -116,9 +131,21 @@ const content =
       <SuratEditor
         suratId={pengajuan.id}
         content={content}
-        useKop={Boolean(
-          pengajuan.use_kop
-        )}
+        useKop={Boolean(pengajuan.use_kop)}
+
+        status={pengajuan.status}
+        tanggalSurat={pengajuan.tanggal_surat}
+
+        profil={{
+          nama_kepala_desa:
+            profil?.nama_kepala_desa ?? "",
+
+          jabatan:
+            profil?.jabatan ?? "",
+
+          tanda_tangan:
+            profil?.tanda_tangan ?? "",
+        }}
       />
     </div>
   );

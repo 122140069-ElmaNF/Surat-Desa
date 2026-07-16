@@ -1,6 +1,7 @@
 import "../surat.css";
 import SuratCanvas from "../SuratCanvas";
 import TandaTangan from "../TandaTangan";
+import { Editor, EditorContent } from "@tiptap/react";
 
 type Profil = {
   nama_kepala_desa: string;
@@ -14,9 +15,11 @@ type Props = {
   status: string;
   profil: Profil | null;
 
-  tanggalSurat: string;
+  tanggalSurat?: string;
 
   editable?: boolean;
+  editor?: Editor | null;
+
   onChange?: (value: string) => void;
 };
 
@@ -28,37 +31,35 @@ export default function DomisiliTemplate({
   tanggalSurat,
 
   editable = false,
+  editor,
+
   onChange,
 }: Props) {
   return (
     <SuratCanvas useKop={useKop}>
 
       {/* ===================== ISI SURAT ===================== */}
+<div
+  className="surat-content"
+  style={{
+    outline: editable
+      ? "1px dashed #9ca3af"
+      : "none",
 
-     <div
-    className="surat-content"
-    contentEditable={editable}
-    suppressContentEditableWarning
-    onInput={(e)=>
-        onChange?.(
-            (e.target as HTMLDivElement).innerHTML
-        )
-    }
-    style={{
-        outline: editable
-            ? "1px dashed #9ca3af"
-            : "none",
+    padding: editable ? 8 : 0,
 
-        padding: editable ? 8 : 0,
-
-        minHeight: "600px",
-    }}
+    minHeight: editable ? "600px" : undefined,
+  }}
 >
+  {editable && editor ? (
+    <EditorContent editor={editor} />
+  ) : (
     <div
-        dangerouslySetInnerHTML={{
-            __html: content,
-        }}
+      dangerouslySetInnerHTML={{
+        __html: content,
+      }}
     />
+  )}
 </div>
 
       {/* ===================== TANDA TANGAN ===================== */}

@@ -31,7 +31,8 @@ export default function TandaTangan({
       style={{
         width: "280px",
         marginLeft: "auto",
-        marginTop: "24px",
+        marginTop: "70px",
+        transform: "translateX(50px)", // geser ke kanan
         fontFamily: '"Times New Roman", serif',
         fontSize: "12pt",
         lineHeight: 1.3,

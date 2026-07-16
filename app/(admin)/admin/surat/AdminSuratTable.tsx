@@ -13,22 +13,39 @@ export type SuratRow = {
   created_at: string;
 };
 
-export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
+export default function AdminSuratTable({
+  surat,
+}: {
+  surat: SuratRow[];
+}) {
   const router = useRouter();
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const approveSurat = async (id: number) => {
+  const [loadingId, setLoadingId] =
+    useState<number | null>(null);
+
+  const [deleteId, setDeleteId] =
+    useState<number | null>(null);
+
+  const approveSurat = async (
+    id: number
+  ) => {
     setLoadingId(id);
 
     try {
-      const res = await fetch(`/api/admin/surat/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: "menunggu_persetujuan" }),
-      });
+      const res = await fetch(
+        `/api/admin/surat/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            status:
+              "menunggu_persetujuan",
+          }),
+        }
+      );
 
       if (!res.ok) {
         alert("Gagal approve surat");
@@ -37,26 +54,34 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
 
       router.refresh();
     } catch (error) {
-      console.error("ERROR APPROVE:", error);
+      console.error(
+        "ERROR APPROVE:",
+        error
+      );
       alert("Terjadi kesalahan");
     } finally {
       setLoadingId(null);
     }
   };
 
-  const hapusSurat = async (id: number) => {
-    const yakin = confirm("Yakin ingin menghapus surat ini?");
+  const hapusSurat = async (
+    id: number
+  ) => {
+    const yakin = confirm(
+      "Yakin ingin menghapus surat ini?"
+    );
 
-    if (!yakin) {
-      return;
-    }
+    if (!yakin) return;
 
     setDeleteId(id);
 
     try {
-      const res = await fetch(`/api/admin/surat/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/admin/surat/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!res.ok) {
         alert("Gagal menghapus surat");
@@ -65,7 +90,10 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
 
       router.refresh();
     } catch (error) {
-      console.error("ERROR DELETE:", error);
+      console.error(
+        "ERROR DELETE:",
+        error
+      );
       alert("Terjadi kesalahan");
     } finally {
       setDeleteId(null);
@@ -82,7 +110,11 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
         }}
       >
         <thead>
-          <tr style={{ backgroundColor: "#f9fafb" }}>
+          <tr
+            style={{
+              backgroundColor: "#f9fafb",
+            }}
+          >
             <Th>Kode Tracking</Th>
             <Th>Nama Pemohon</Th>
             <Th>Jenis Surat</Th>
@@ -91,6 +123,7 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
             <Th>Aksi</Th>
           </tr>
         </thead>
+
         <tbody>
           {surat.length === 0 ? (
             <tr>
@@ -107,28 +140,49 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
             </tr>
           ) : (
             surat.map((item) => (
-              <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                <Td label="Kode Tracking">{item.kode_tracking}</Td>
-                <Td label="Nama Pemohon">{item.nama || "-"}</Td>
-                <Td label="Jenis Surat">{item.nama_surat || "-"}</Td>
+              <tr
+                key={item.id}
+                style={{
+                  borderTop:
+                    "1px solid #e5e7eb",
+                }}
+              >
+                <Td label="Kode Tracking">
+                  {item.kode_tracking}
+                </Td>
+
+                <Td label="Nama Pemohon">
+                  {item.nama || "-"}
+                </Td>
+
+                <Td label="Jenis Surat">
+                  {item.nama_surat || "-"}
+                </Td>
+
                 <Td label="Status">
                   <span
                     style={{
-                      display: "inline-block",
+                      display:
+                        "inline-block",
                       padding: "5px 10px",
-                      borderRadius: "999px",
+                      borderRadius:
+                        "999px",
                       backgroundColor:
-                        item.status === "selesai"
+                        item.status ===
+                        "selesai"
                           ? "#dcfce7"
-                          : item.status === "menunggu_persetujuan"
-                            ? "#dbeafe"
-                            : "#fef3c7",
+                          : item.status ===
+                            "menunggu_persetujuan"
+                          ? "#dbeafe"
+                          : "#fef3c7",
                       color:
-                        item.status === "selesai"
+                        item.status ===
+                        "selesai"
                           ? "#166534"
-                          : item.status === "menunggu_persetujuan"
-                            ? "#1e40af"
-                            : "#92400e",
+                          : item.status ===
+                            "menunggu_persetujuan"
+                          ? "#1e40af"
+                          : "#92400e",
                       fontSize: "13px",
                       fontWeight: 700,
                     }}
@@ -136,33 +190,76 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
                     {item.status}
                   </span>
                 </Td>
-                <Td label="Tanggal">{formatTanggal(item.created_at)}</Td>
+
+                <Td label="Tanggal">
+                  {formatTanggal(
+                    item.created_at
+                  )}
+                </Td>
+
                 <Td label="Aksi">
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    <ActionLink href={`/admin/surat/${item.id}`} label="Lihat" />
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     <ActionLink
-                      href={`/admin/surat/${item.id}/edit`}
-                      label="Edit"
+                      href={`/admin/surat/${item.id}`}
+                      label="Lihat"
                     />
+
+                    {/* Edit hanya selain status selesai */}
+                    {item.status !==
+                      "selesai" && (
+                      <ActionLink
+                        href={`/admin/surat/${item.id}/edit`}
+                        label="Edit"
+                      />
+                    )}
+
                     <ActionLink
                       href={`/admin/preview/${item.id}`}
                       label="Preview"
                     />
-                    <button
-                      onClick={() => hapusSurat(item.id)}
-                      disabled={deleteId === item.id}
-                      style={{
-                        padding: "8px 10px",
-                        border: "none",
-                        borderRadius: "5px",
-                        backgroundColor: "#dc2626",
-                        color: "white",
-                        cursor: deleteId === item.id ? "not-allowed" : "pointer",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {deleteId === item.id ? "..." : "Hapus"}
-                    </button>
+
+                    {/* Hapus hanya selain status selesai */}
+                    {item.status !==
+                      "selesai" && (
+                      <button
+                        onClick={() =>
+                          hapusSurat(
+                            item.id
+                          )
+                        }
+                        disabled={
+                          deleteId ===
+                          item.id
+                        }
+                        style={{
+                          padding:
+                            "8px 10px",
+                          border: "none",
+                          borderRadius:
+                            "5px",
+                          backgroundColor:
+                            "#dc2626",
+                          color: "white",
+                          cursor:
+                            deleteId ===
+                            item.id
+                              ? "not-allowed"
+                              : "pointer",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {deleteId ===
+                        item.id
+                          ? "..."
+                          : "Hapus"}
+                      </button>
+                    )}
                   </div>
                 </Td>
               </tr>
@@ -174,7 +271,11 @@ export default function AdminSuratTable({ surat }: { surat: SuratRow[] }) {
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
+function Th({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <th
       style={{
@@ -182,7 +283,8 @@ function Th({ children }: { children: React.ReactNode }) {
         textAlign: "left",
         color: "#374151",
         fontSize: "14px",
-        borderBottom: "1px solid #e5e7eb",
+        borderBottom:
+          "1px solid #e5e7eb",
       }}
     >
       {children}
@@ -190,24 +292,41 @@ function Th({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Td({ children, label }: { children: React.ReactNode; label: string }) {
+function Td({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) {
   return (
     <td
       data-label={label}
-      style={{ padding: "14px", color: "#111827", verticalAlign: "top" }}
+      style={{
+        padding: "14px",
+        color: "#111827",
+        verticalAlign: "top",
+      }}
     >
       {children}
     </td>
   );
 }
 
-function ActionLink({ href, label }: { href: string; label: string }) {
+function ActionLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}) {
   return (
     <Link href={href}>
       <button
         style={{
           padding: "8px 10px",
-          border: "1px solid #d1d5db",
+          border:
+            "1px solid #d1d5db",
           borderRadius: "5px",
           backgroundColor: "white",
           color: "#111827",
@@ -221,8 +340,12 @@ function ActionLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-function formatTanggal(value: string) {
-  return new Date(value).toLocaleDateString("id-ID", {
+function formatTanggal(
+  value: string
+) {
+  return new Date(
+    value
+  ).toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "long",
     year: "numeric",

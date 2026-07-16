@@ -41,7 +41,7 @@ const [tanggalSurat, setTanggalSurat] = useState("");
         setUseKop(res.use_kop);
         setStatus(res.status || "");
         setProfil(res.profil ?? null);
-        setTanggalSurat(res.tanggal_surat || "");
+        setTanggalSurat(res.tanggalSurat || "");
       });
   }, [id]);
 
