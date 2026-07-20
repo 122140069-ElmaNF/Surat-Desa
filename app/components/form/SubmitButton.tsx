@@ -8,7 +8,7 @@ export default function SubmitButton({
   return (
     <button
       type="submit"
-      className="submit-button"
+      className="btn btn-primary btn-block"
     >
       {children}
     </button>

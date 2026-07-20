@@ -1,8 +1,10 @@
 import db from "@/lib/db";
-import { writeFile } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { writeFile } from "fs/promises";
+import { randomUUID } from "crypto";
+import path from "path";
+import { generateSurat } from "@/lib/surat/generateSurat";
+import getJenisSurat from "@/lib/surat/getJenisSurat";
 
 export async function POST(request: Request) {
   const conn = await db.getConnection();
@@ -15,13 +17,16 @@ export async function POST(request: Request) {
     const nama = formData.get("nama") as string;
     const ttl = formData.get("ttl") as string;
     const nik = formData.get("nik") as string;
-    const agama = formData.get("agama") as string;
-    const jenis_kelamin = formData.get("jenis_kelamin") as string;
+    const status_perkawinan = formData.get("status_perkawinan") as string;
     const pekerjaan = formData.get("pekerjaan") as string;
     const alamat = formData.get("alamat") as string;
     const dusun = formData.get("dusun") as string;
     const rt = formData.get("rt") as string;
     const rw = formData.get("rw") as string;
+
+    const idpel = formData.get("idpel") as string;
+    const jenis_meteran = formData.get("jenis_meteran") as string;
+    const keperluan = formData.get("keperluan") as string;
 
     const fileKtp = formData.get("file_ktp") as File | null;
 
@@ -37,50 +42,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validasi tipe file
-const allowedTypes = [
-  "image/jpeg",
-  "image/png",
-];
-
-if (!allowedTypes.includes(fileKtp.type)) {
-  return NextResponse.json(
-    {
-      success: false,
-      message: "File harus berupa JPG atau PNG.",
-    },
-    {
-      status: 400,
-    }
-  );
-}
-
-// Validasi ukuran maksimal 5 MB
-const maxSize = 5 * 1024 * 1024;
-
-if (fileKtp.size > maxSize) {
-  return NextResponse.json(
-    {
-      success: false,
-      message: "Ukuran file maksimal 5 MB.",
-    },
-    {
-      status: 400,
-    }
-  );
-}
-
-    // ===============================
-    // Upload File
-    // ===============================
-
     const bytes = await fileKtp.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-   const ext = fileKtp.name
-  .split(".")
-  .pop()
-  ?.toLowerCase();
+    const ext = fileKtp.name.split(".").pop();
 
     const fileName = `${randomUUID()}.${ext}`;
 
@@ -94,34 +59,20 @@ if (fileKtp.size > maxSize) {
 
     await writeFile(uploadPath, buffer);
 
-    // ===============================
-    // Ambil kode surat
-    // ===============================
+    // Ambil jenis surat
+    const jenis = await getJenisSurat("SKL");
 
-    const [jenisRows]: any = await conn.query(
-      `
-      SELECT id,
-      kode_surat
-      FROM jenis_surat
-      WHERE kode_surat = 'SD'
-      `
-    );
+    const jenisSuratId = jenis.id;
+    const kodeSurat = jenis.kode_surat;
+    const templateSurat = jenis.template_surat ?? "";
 
-    const kodeSurat = jenisRows[0].kode_surat;
-    const jenisSuratId = jenisRows[0].id;
-    // ===============================
     // Generate Tracking
-    // ===============================
-
     const sekarang = new Date();
 
-    const tanggal = `${String(
-      sekarang.getDate()
-    ).padStart(2, "0")}${String(
-      sekarang.getMonth() + 1
-    ).padStart(2, "0")}${String(
-      sekarang.getFullYear()
-    ).slice(-2)}`;
+    const tanggal =
+      `${String(sekarang.getDate()).padStart(2, "0")}` +
+      `${String(sekarang.getMonth() + 1).padStart(2, "0")}` +
+      `${String(sekarang.getFullYear()).slice(-2)}`;
 
     const [countRows]: any = await conn.query(
       `
@@ -132,17 +83,11 @@ if (fileKtp.size > maxSize) {
       [jenisSuratId]
     );
 
-    const urut = String(
-      countRows[0].total + 1
-    ).padStart(4, "0");
+    const urut = String(countRows[0].total + 1).padStart(4, "0");
 
-    const kode_tracking =
-      `${kodeSurat}-${tanggal}-${urut}`;
+    const kode_tracking = `${kodeSurat}-${tanggal}-${urut}`;
 
-    // ===============================
-    // Insert pengajuan
-    // ===============================
-
+    // Insert Pengajuan
     const [result]: any = await conn.query(
       `
       INSERT INTO pengajuan_surat
@@ -156,50 +101,95 @@ if (fileKtp.size > maxSize) {
       `,
       [
         jenisSuratId,
-        "pending",
+        "draft",
         kode_tracking,
       ]
     );
 
     const pengajuan_id = result.insertId;
 
-    // ===============================
-    // Insert domisili
-    // ===============================
-
+    // Insert Listrik
     await conn.query(
       `
-      INSERT INTO domisili
+      INSERT INTO listrik
       (
         pengajuan_id,
         nama,
         ttl,
         nik,
-        agama,
-        jenis_kelamin,
+        status_perkawinan,
         pekerjaan,
         alamat,
         dusun,
         rt,
         rw,
+        idpel,
+        jenis_meteran,
+        keperluan,
         file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         pengajuan_id,
         nama,
         ttl,
         nik,
-        agama,
-        jenis_kelamin,
+        status_perkawinan,
         pekerjaan,
         alamat,
         dusun,
         rt,
         rw,
-        fileName
+        idpel,
+        jenis_meteran,
+        keperluan,
+        fileName,
+      ]
+    );
+
+    // Generate Surat
+
+    const replaceFields: Record<string, string> = {
+      nomor_surat: "",
+      tanggal: new Date().toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
+
+      nama,
+      ttl,
+      nik,
+      status_perkawinan,
+      pekerjaan,
+      alamat,
+      dusun,
+      rt,
+      rw,
+      idpel,
+      jenis_meteran,
+      keperluan,
+    };
+
+    const isiSurat = generateSurat(
+      templateSurat,
+      replaceFields,
+      {
+        preserveSystemFields: true,
+      }
+    );
+
+    await conn.query(
+      `
+      UPDATE pengajuan_surat
+      SET isi_surat = ?
+      WHERE id = ?
+      `,
+      [
+        isiSurat,
+        pengajuan_id,
       ]
     );
 
@@ -207,15 +197,16 @@ if (fileKtp.size > maxSize) {
 
     return NextResponse.json({
       success: true,
+      pengajuan_id,
       kode_tracking,
-      message: "Pengajuan berhasil.",
+      message: "Surat berhasil dibuat.",
     });
 
-  } catch (error) {
+  } catch (err) {
 
     await conn.rollback();
 
-    console.error(error);
+    console.error(err);
 
     return NextResponse.json(
       {

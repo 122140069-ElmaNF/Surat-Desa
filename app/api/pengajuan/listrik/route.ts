@@ -15,13 +15,16 @@ export async function POST(request: Request) {
     const nama = formData.get("nama") as string;
     const ttl = formData.get("ttl") as string;
     const nik = formData.get("nik") as string;
-    const agama = formData.get("agama") as string;
-    const jenis_kelamin = formData.get("jenis_kelamin") as string;
+    const status_perkawinan = formData.get("status_perkawinan") as string;
     const pekerjaan = formData.get("pekerjaan") as string;
     const alamat = formData.get("alamat") as string;
     const dusun = formData.get("dusun") as string;
     const rt = formData.get("rt") as string;
     const rw = formData.get("rw") as string;
+
+    const idpel = formData.get("idpel") as string;
+    const jenis_meteran = formData.get("jenis_meteran") as string;
+    const keperluan = formData.get("keperluan") as string;
 
     const fileKtp = formData.get("file_ktp") as File | null;
 
@@ -37,38 +40,40 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validasi tipe file
-const allowedTypes = [
-  "image/jpeg",
-  "image/png",
-];
+    // ===============================
+    // Validasi File
+    // ===============================
 
-if (!allowedTypes.includes(fileKtp.type)) {
-  return NextResponse.json(
-    {
-      success: false,
-      message: "File harus berupa JPG atau PNG.",
-    },
-    {
-      status: 400,
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+    ];
+
+    if (!allowedTypes.includes(fileKtp.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "File harus berupa JPG atau PNG.",
+        },
+        {
+          status: 400,
+        }
+      );
     }
-  );
-}
 
-// Validasi ukuran maksimal 5 MB
-const maxSize = 5 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024;
 
-if (fileKtp.size > maxSize) {
-  return NextResponse.json(
-    {
-      success: false,
-      message: "Ukuran file maksimal 5 MB.",
-    },
-    {
-      status: 400,
+    if (fileKtp.size > maxSize) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Ukuran file maksimal 5 MB.",
+        },
+        {
+          status: 400,
+        }
+      );
     }
-  );
-}
 
     // ===============================
     // Upload File
@@ -77,10 +82,10 @@ if (fileKtp.size > maxSize) {
     const bytes = await fileKtp.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-   const ext = fileKtp.name
-  .split(".")
-  .pop()
-  ?.toLowerCase();
+    const ext = fileKtp.name
+      .split(".")
+      .pop()
+      ?.toLowerCase();
 
     const fileName = `${randomUUID()}.${ext}`;
 
@@ -95,33 +100,32 @@ if (fileKtp.size > maxSize) {
     await writeFile(uploadPath, buffer);
 
     // ===============================
-    // Ambil kode surat
+    // Ambil Jenis Surat
     // ===============================
 
     const [jenisRows]: any = await conn.query(
       `
-      SELECT id,
-      kode_surat
+      SELECT
+        id,
+        kode_surat
       FROM jenis_surat
-      WHERE kode_surat = 'SD'
+      WHERE kode_surat = 'SKL'
       `
     );
 
-    const kodeSurat = jenisRows[0].kode_surat;
     const jenisSuratId = jenisRows[0].id;
+    const kodeSurat = jenisRows[0].kode_surat;
+
     // ===============================
     // Generate Tracking
     // ===============================
 
     const sekarang = new Date();
 
-    const tanggal = `${String(
-      sekarang.getDate()
-    ).padStart(2, "0")}${String(
-      sekarang.getMonth() + 1
-    ).padStart(2, "0")}${String(
-      sekarang.getFullYear()
-    ).slice(-2)}`;
+    const tanggal =
+      `${String(sekarang.getDate()).padStart(2, "0")}` +
+      `${String(sekarang.getMonth() + 1).padStart(2, "0")}` +
+      `${String(sekarang.getFullYear()).slice(-2)}`;
 
     const [countRows]: any = await conn.query(
       `
@@ -140,7 +144,7 @@ if (fileKtp.size > maxSize) {
       `${kodeSurat}-${tanggal}-${urut}`;
 
     // ===============================
-    // Insert pengajuan
+    // Insert Pengajuan
     // ===============================
 
     const [result]: any = await conn.query(
@@ -164,42 +168,46 @@ if (fileKtp.size > maxSize) {
     const pengajuan_id = result.insertId;
 
     // ===============================
-    // Insert domisili
+    // Insert Tabel Listrik
     // ===============================
 
     await conn.query(
       `
-      INSERT INTO domisili
+      INSERT INTO listrik
       (
         pengajuan_id,
         nama,
         ttl,
         nik,
-        agama,
-        jenis_kelamin,
+        status_perkawinan,
         pekerjaan,
         alamat,
         dusun,
         rt,
         rw,
+        idpel,
+        jenis_meteran,
+        keperluan,
         file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         pengajuan_id,
         nama,
         ttl,
         nik,
-        agama,
-        jenis_kelamin,
+        status_perkawinan,
         pekerjaan,
         alamat,
         dusun,
         rt,
         rw,
-        fileName
+        idpel,
+        jenis_meteran,
+        keperluan,
+        fileName,
       ]
     );
 

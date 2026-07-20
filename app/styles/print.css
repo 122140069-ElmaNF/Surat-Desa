@@ -1,0 +1,42 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #f3f4f6;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+
+  html,
+  body {
+    width: 210mm;
+    height: 297mm;
+
+    margin: 0;
+    padding: 0;
+
+    background: white !important;
+
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    overflow: hidden;
+  }
+
+  .surat-wrapper {
+    background: white !important;
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+
+  .surat-paper {
+    margin: 0;
+    box-shadow: none !important;
+  }
+}

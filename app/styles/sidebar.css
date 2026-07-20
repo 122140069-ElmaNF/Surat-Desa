@@ -1,0 +1,149 @@
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  width: 270px;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: linear-gradient(
+    180deg,
+    #dbeafe,
+    #60a5fa
+  );
+
+  padding: 30px 20px;
+  z-index: 100;
+}
+
+/* =====================================================
+   LOGO
+===================================================== */
+
+.sidebar-logo {
+  margin-bottom: 40px;
+}
+
+.sidebar-logo h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sidebar-logo p {
+  margin-top: 8px;
+  color: #475569;
+  font-size: 15px;
+}
+
+/* =====================================================
+   MENU
+===================================================== */
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  flex: 1;
+}
+
+.sidebar-menu a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 14px 16px;
+
+  border-radius: 16px;
+
+  text-decoration: none;
+
+  color: #0f172a;
+  font-weight: 600;
+
+  transition: .25s;
+}
+
+.sidebar-menu a:hover {
+  background: rgba(255,255,255,.35);
+}
+
+.sidebar-menu a.active {
+  background: white;
+  color: #2563eb;
+
+  box-shadow:
+    0 8px 20px rgba(37,99,235,.15);
+}
+
+/* =====================================================
+   ICON
+===================================================== */
+
+.sidebar-menu svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 20px;
+
+  border-top: 1px solid rgba(255,255,255,.35);
+}
+
+.sidebar-footer a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 14px 16px;
+
+  border-radius: 16px;
+
+  text-decoration: none;
+
+  color: #0f172a;
+  font-weight: 600;
+
+  transition: .25s;
+}
+
+.sidebar-footer a:hover {
+  background: rgba(255,255,255,.35);
+}
+
+/* =====================================================
+   USER MINI AVATAR
+===================================================== */
+
+.sidebar-avatar {
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #1f2937;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 700;
+}

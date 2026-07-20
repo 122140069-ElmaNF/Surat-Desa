@@ -6,6 +6,15 @@ import { useRouter, useSearchParams, } from "next/navigation";
 import { useEffect, useState } from "react";
 import ApprovalModal from "@/app/components/approval/ApprovalModal";
 
+import {
+  ArrowLeft,
+  Eye,
+  SquarePen,
+  BadgeCheck,
+  CircleX,
+  Printer,
+} from "lucide-react";
+
 type Props = {
   pengajuan: any;
   detail: any[];
@@ -135,15 +144,12 @@ console.log("previewTanggal =", previewTanggal);
             </p>
 
         </div>
-
-        <Link href="/admin/surat">
-
-            <button className="secondary-btn">
-            Kembali
+          <Link href="/admin/surat">
+            <button className="btn btn-outline">
+              <ArrowLeft size={18} />
+              Kembali
             </button>
-
-        </Link>
-
+          </Link>
         </div>
 
 
@@ -297,35 +303,27 @@ console.log("previewTanggal =", previewTanggal);
       {/* ================= DOKUMEN ================= */}
 
 <section className="detail-card">
-
   <h2 className="detail-title">
     Dokumen Persyaratan
   </h2>
-
   {dokumen.length === 0 && (
-
     <p className="empty-text">
       Tidak ada dokumen.
     </p>
-
   )}
 
   <div className="dokumen-grid">
-
     {dokumen.map((file) => {
-
       const isImage =
         /\.(jpg|jpeg|png|webp)$/i.test(
           file.file
         );
 
       return (
-
         <div
           key={file.key}
           className="dokumen-item"
         >
-
           {isImage ? (
 
             <Image
@@ -337,21 +335,16 @@ console.log("previewTanggal =", previewTanggal);
             />
 
           ) : (
-
             <div className="dokumen-file">
               📄
             </div>
-
           )}
-
           <div className="dokumen-footer">
 
             <strong>
               {file.label}
             </strong>
-
             <br />
-
             <a
               href={file.url}
               target="_blank"
@@ -360,17 +353,11 @@ console.log("previewTanggal =", previewTanggal);
             >
               Lihat Dokumen
             </a>
-
           </div>
-
         </div>
-
       );
-
     })}
-
   </div>
-
 </section>
 
         {/* ================= ACTION ================= */}
@@ -380,46 +367,45 @@ console.log("previewTanggal =", previewTanggal);
   <h2 className="detail-title">
     Aksi
   </h2>
-
   <div className="action-group">
 
     <button
-      className="print-btn"
+      className="btn btn-outline btn-block"
       onClick={() =>
         router.push(`/admin/preview/${pengajuan.id}`)
       }
     >
+      <Eye size={18} />
       Preview Surat
     </button>
 
     {["draft", "pending"].includes(pengajuan.status) && (
       <>
         <button
-          className="approval-btn"
+          className="btn btn-primary btn-block"
           onClick={() =>
-            router.push(
-              `/admin/surat/${pengajuan.id}/edit`
-            )
+            router.push(`/admin/surat/${pengajuan.id}/edit`)
           }
         >
+          <SquarePen size={18} />
           Edit Surat
         </button>
 
         <button
-          className="approval-btn"
+          className="btn btn-success btn-block"
           onClick={handleOpenApproval}
         >
+          <BadgeCheck size={18} />
           Kirim Approval
         </button>
 
         <button
-          className="reject-btn"
+          className="btn btn-danger btn-block"
           onClick={() =>
-            router.push(
-              `/admin/surat/${pengajuan.id}/tolak`
-            )
+            router.push(`/admin/surat/${pengajuan.id}/tolak`)
           }
         >
+          <CircleX size={18} />
           Tolak Surat
         </button>
       </>
@@ -435,53 +421,36 @@ console.log("previewTanggal =", previewTanggal);
     {pengajuan.status ==="disetujui" && (
       <>
         <button
-          className="approval-btn"
+          className="btn btn-primary btn-block"
           onClick={() =>
-            router.push(
-              `/admin/preview/${pengajuan.id}`
-            )
+            router.push(`/admin/preview/${pengajuan.id}`)
           }
         >
+          <Printer size={18} />
           Cetak PDF
         </button>
 
         <div className="status-success">
-
           Surat telah disetujui.
-
         </div>
-
       </>
-
     )}
 
     {pengajuan.status ===
       "ditolak" && (
-
       <div className="status-reject">
-
         <strong>
           Surat Ditolak
         </strong>
-
         <br />
-
         <br />
-
         {pengajuan.alasan_penolakan}
-
       </div>
-
     )}
-
   </div>
-
 </section>
-
 </div>
-
 </div>
-
   <ApprovalModal
   open={showModal}
   suratId={pengajuan.id}
@@ -492,7 +461,6 @@ console.log("previewTanggal =", previewTanggal);
     router.refresh();
   }}
 />
-
     </div>
   );
 }

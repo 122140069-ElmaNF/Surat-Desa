@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SuratPreview from "@/app/components/surat/SuratPreview";
 import {
   useParams,
   useRouter,
   useSearchParams,
 } from "next/navigation";
-
-import DomisiliTemplate from "@/app/components/surat/templates/DomisiliTemplate";
-import SuratPaper from "@/app/components/surat/SuratPaper";
 
 type Profil = {
   nama_kepala_desa: string;
@@ -21,7 +19,7 @@ export default function AdminPreviewPage() {
   const [useKop, setUseKop] = useState(true);
   const [status, setStatus] = useState("");
   const [profil, setProfil] = useState<Profil | null>(null);
-const [tanggalSurat, setTanggalSurat] = useState("");
+  const [tanggalSurat, setTanggalSurat] = useState("");
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,7 +44,10 @@ const [tanggalSurat, setTanggalSurat] = useState("");
   }, [id]);
 
   function handlePrint() {
-    window.print();
+    window.open(
+      `/print/${id}`,
+      "_blank"
+    );
   }
 
   return (
@@ -84,17 +85,14 @@ const [tanggalSurat, setTanggalSurat] = useState("");
         </div>
       )}
 
-      <SuratPaper>
-
-        <DomisiliTemplate
+        <SuratPreview
+        mode="preview"
           content={data}
           useKop={useKop}
           status={status}
           profil={profil}
           tanggalSurat={tanggalSurat}
         />
-
-      </SuratPaper>
 
     </div>
   );

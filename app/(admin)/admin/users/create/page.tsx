@@ -158,26 +158,21 @@ async function handleSubmit() {
         </div>
 
         <div className="form-action">
-
           <button
-            className="secondary-btn"
-            onClick={() =>
-              router.back()
-            }
+            className="btn btn-outline"
+            onClick={() => router.back()}
           >
             Batal
           </button>
 
           <button
-            className="primary-btn"
+            className="btn btn-primary"
             onClick={handleSubmit}
             disabled={loading}
-        >
+          >
             {loading ? "Menyimpan..." : "Simpan"}
-        </button>
-
+          </button>
         </div>
-
       </section>
     </div>
   );

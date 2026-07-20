@@ -1,0 +1,307 @@
+/* =====================================================
+   DETAIL LAYOUT
+===================================================== */
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.detail-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.detail-column:last-child {
+  min-width: 340px;
+}
+
+/* =====================================================
+   CARD
+===================================================== */
+
+.detail-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px;
+
+  box-shadow:
+    0 8px 24px
+    rgba(15,23,42,.06);
+}
+
+.detail-title {
+  margin: 0 0 24px;
+
+  font-size: 22px;
+  font-weight: 700;
+
+  color: #0f172a;
+}
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.detail-table tr {
+  border-bottom: 1px solid #eef2f7;
+}
+
+.detail-table tr:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  width: 220px;
+
+  padding: 14px 0;
+
+  color: #64748b;
+
+  font-weight: 600;
+
+  vertical-align: top;
+}
+
+.detail-colon {
+  width: 20px;
+  color: #64748b;
+}
+
+.detail-value {
+  padding: 14px 0;
+
+  color: #0f172a;
+
+  word-break: break-word;
+}
+
+/* =====================================================
+   DOKUMEN
+===================================================== */
+
+.dokumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+  gap: 20px;
+}
+
+.dokumen-item {
+  border: 1px solid #e2e8f0;
+
+  border-radius: 16px;
+
+  padding: 14px;
+
+  background: white;
+
+  transition: .25s;
+}
+
+.dokumen-item:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 10px 26px
+    rgba(15,23,42,.08);
+}
+
+.dokumen-preview {
+  width: 100%;
+  height: 200px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  border-radius: 12px;
+
+  background: #f8fafc;
+}
+
+.dokumen-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dokumen-image {
+  width: 100%;
+  height: 180px;
+
+  object-fit: cover;
+
+  border-radius: 10px;
+}
+
+.dokumen-file {
+  width: 100%;
+  height: 180px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  font-size: 60px;
+}
+
+.dokumen-footer {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.dokumen-link {
+  display: inline-block;
+
+  margin-top: 8px;
+
+  color: #2563eb;
+
+  text-decoration: none;
+
+  font-weight: 600;
+}
+
+.dokumen-link:hover {
+  text-decoration: underline;
+}
+
+.empty-text {
+  color: #64748b;
+}
+
+/* =====================================================
+   ACTION PANEL
+===================================================== */
+
+.action-panel,
+.action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.approval-btn,
+.print-btn,
+.reject-btn {
+  width: 100%;
+
+  padding: 15px;
+
+  border: none;
+  border-radius: 14px;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: .2s;
+}
+
+.approval-btn {
+  background: #2563eb;
+  color: white;
+}
+
+.approval-btn:hover {
+  background: #1d4ed8;
+}
+
+.print-btn {
+  background: #f8fafc;
+  color: #2563eb;
+
+  border: 1px solid #dbeafe;
+}
+
+.print-btn:hover {
+  background: #eff6ff;
+}
+
+.reject-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.reject-btn:hover {
+  background: #fecaca;
+}
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.status-info,
+.status-success,
+.status-reject {
+  padding: 16px;
+
+  border-radius: 12px;
+
+  font-weight: 600;
+
+  line-height: 1.7;
+}
+
+.status-info {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-reject {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* =====================================================
+   BREADCRUMB
+===================================================== */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 24px;
+
+  color: #64748b;
+}
+
+.breadcrumb strong {
+  color: #0f172a;
+}
+
+/* =====================================================
+   APPROVAL TEXT
+===================================================== */
+
+.approval-text {
+  margin-top: 18px;
+
+  color: #64748b;
+
+  text-align: center;
+
+  line-height: 1.7;
+}

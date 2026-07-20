@@ -1,6 +1,13 @@
 import AdminSidebar from "@/app/components/AdminSidebar";
 import "@/app/styles/admin.css";
 import { cookies } from "next/headers";
+import "@/app/styles/sidebar.css";
+import "@/app/styles/table.css";
+import "@/app/styles/dashboard.css";
+import "@/app/styles/detail.css";
+import "@/app/styles/form.css";
+import "@/app/styles/responsive.css";
+import "@/app/styles/button.css";
 
 export default  async function AdminLayout({
   children,

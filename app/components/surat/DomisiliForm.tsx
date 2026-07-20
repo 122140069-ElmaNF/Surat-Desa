@@ -244,7 +244,7 @@ try {
   const url =
     mode === "edit"
       ? `/api/pengajuan/domisili/${initialData.id}`
-      : "/api/surat/domisili";
+      : "/api/pengajuan/domisili";
 
   const method =
     mode === "edit"
@@ -270,7 +270,7 @@ try {
     alert("Perbaikan berhasil dikirim.");
     window.location.href = `/tracking/${initialData.kode_tracking}`;
   } else {
-    alert("Pengajuan berhasil.");
+    window.location.href = `/success/${json.kode_tracking}`;
   }
 } catch (err) {
   console.error(err);
@@ -319,219 +319,219 @@ try {
           <form onSubmit={handleSubmit}>
 
             <InputField
-  label="Nama Lengkap"
-  name="nama"
-  value={form.nama}
-  onChange={handleChange}
-  placeholder="Masukkan nama lengkap"
-/>
+              label="Nama Lengkap"
+              name="nama"
+              value={form.nama}
+              onChange={handleChange}
+              placeholder="Masukkan nama lengkap"
+            />
 
-{errors.nama && (
-  <p className="form-error">
-    {errors.nama}
-  </p>
-)}
+            {errors.nama && (
+              <p className="form-error">
+                {errors.nama}
+              </p>
+            )}
 
-<div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
 
-  <InputField
-    label="Tempat Lahir"
-    name="tempat_lahir"
-    value={form.tempat_lahir}
-    onChange={handleChange}
-    placeholder="Masukkan tempat lahir"
-  />
+              <InputField
+                label="Tempat Lahir"
+                name="tempat_lahir"
+                value={form.tempat_lahir}
+                onChange={handleChange}
+                placeholder="Masukkan tempat lahir"
+              />
 
-  <InputField
-    label="Tanggal Lahir"
-    name="tanggal_lahir"
-    type="date"
-    value={form.tanggal_lahir}
-    onChange={handleChange}
-  />
+              <InputField
+                label="Tanggal Lahir"
+                name="tanggal_lahir"
+                type="date"
+                value={form.tanggal_lahir}
+                onChange={handleChange}
+              />
 
-</div>
+            </div>
 
-{errors.tanggal_lahir && (
-  <p className="form-error">
-    {errors.tanggal_lahir}
-  </p>
-)}
+            {errors.tanggal_lahir && (
+              <p className="form-error">
+                {errors.tanggal_lahir}
+              </p>
+            )}
 
-<InputField
-  label="NIK"
-  name="nik"
-  value={form.nik}
-  onChange={handleChange}
-  placeholder="Masukkan NIK"
-/>
+            <InputField
+              label="NIK"
+              name="nik"
+              value={form.nik}
+              onChange={handleChange}
+              placeholder="Masukkan NIK"
+            />
 
-{errors.nik && (
-  <p className="form-error">
-    {errors.nik}
-  </p>
-)}
+            {errors.nik && (
+              <p className="form-error">
+                {errors.nik}
+              </p>
+            )}
 
-<SelectField
-  label="Agama"
-  name="agama"
-  value={form.agama}
-  onChange={handleChange}
-  options={[
-    "Islam",
-    "Kristen",
-    "Katolik",
-    "Hindu",
-    "Buddha",
-    "Konghucu",
-  ]}
-/>
+            <SelectField
+              label="Agama"
+              name="agama"
+              value={form.agama}
+              onChange={handleChange}
+              options={[
+                "Islam",
+                "Kristen",
+                "Katolik",
+                "Hindu",
+                "Buddha",
+                "Konghucu",
+              ]}
+            />
 
-{errors.agama && (
-  <p className="form-error">
-    {errors.agama}
-  </p>
-)}
+            {errors.agama && (
+              <p className="form-error">
+                {errors.agama}
+              </p>
+            )}
 
-<SelectField
-  label="Jenis Kelamin"
-  name="jenis_kelamin"
-  value={form.jenis_kelamin}
-  onChange={handleChange}
-  options={[
-    "Laki-laki",
-    "Perempuan",
-  ]}
-/>
+            <SelectField
+              label="Jenis Kelamin"
+              name="jenis_kelamin"
+              value={form.jenis_kelamin}
+              onChange={handleChange}
+              options={[
+                "Laki-laki",
+                "Perempuan",
+              ]}
+            />
 
-{errors.jenis_kelamin && (
-  <p className="form-error">
-    {errors.jenis_kelamin}
-  </p>
-)}
+            {errors.jenis_kelamin && (
+              <p className="form-error">
+                {errors.jenis_kelamin}
+              </p>
+            )}
 
-<InputField
-  label="Pekerjaan"
-  name="pekerjaan"
-  value={form.pekerjaan}
-  onChange={handleChange}
-  placeholder="Masukkan pekerjaan"
-/>
+            <InputField
+              label="Pekerjaan"
+              name="pekerjaan"
+              value={form.pekerjaan}
+              onChange={handleChange}
+              placeholder="Masukkan pekerjaan"
+            />
 
-{errors.pekerjaan && (
-  <p className="form-error">
-    {errors.pekerjaan}
-  </p>
-)}
+            {errors.pekerjaan && (
+              <p className="form-error">
+                {errors.pekerjaan}
+              </p>
+            )}
 
-<InputField
-  label="Alamat"
-  name="alamat"
-  value={form.alamat}
-  onChange={handleChange}
-  placeholder="Masukkan alamat lengkap"
-  textarea
-/>
+            <InputField
+              label="Alamat"
+              name="alamat"
+              value={form.alamat}
+              onChange={handleChange}
+              placeholder="Masukkan alamat lengkap"
+              textarea
+            />
 
-{errors.alamat && (
-  <p className="form-error">
-    {errors.alamat}
-  </p>
-)}
+            {errors.alamat && (
+              <p className="form-error">
+                {errors.alamat}
+              </p>
+            )}
 
-<InputField
-  label="Dusun"
-  name="dusun"
-  value={form.dusun}
-  onChange={handleChange}
-  placeholder="Contoh: Dusun I"
-/>
+            <InputField
+              label="Dusun"
+              name="dusun"
+              value={form.dusun}
+              onChange={handleChange}
+              placeholder="Contoh: Dusun I"
+            />
 
-{errors.dusun && (
-  <p className="form-error">
-    {errors.dusun}
-  </p>
-)}
+            {errors.dusun && (
+              <p className="form-error">
+                {errors.dusun}
+              </p>
+            )}
 
-  <FileUploadField
-    label="Upload KTP"
-    accept="image/*,.pdf"
-    onChange={(file: File | null) =>
-      setFileKtp(file)
-    }
-  />
+              <FileUploadField
+                label="Upload KTP"
+                accept="image/jpeg,image/png"
+                onChange={(file: File | null) =>
+                  setFileKtp(file)
+                }
+              />
 
-{mode === "edit" &&
-  initialData?.dokumen?.file_ktp && (
+            {mode === "edit" &&
+              initialData?.dokumen?.file_ktp && (
 
-  <div
-    style={{
-      marginTop: 8,
-      marginBottom: 16,
-      fontSize: 14,
-    }}
-  >
-    File saat ini :
-    <a
-      href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
-      target="_blank"
-      rel="noreferrer"
-      style={{
-        marginLeft: 8,
-      }}
-    >
-      Lihat KTP
-    </a>
-  </div>
-)}
+              <div
+                style={{
+                  marginTop: 8,
+                  marginBottom: 16,
+                  fontSize: 14,
+                }}
+              >
+                File saat ini :
+                <a
+                  href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    marginLeft: 8,
+                  }}
+                >
+                  Lihat KTP
+                </a>
+              </div>
+            )}
 
-{errors.file_ktp && (
-  <p className="form-error">
-    {errors.file_ktp}
-  </p>
-)}
+            {errors.file_ktp && (
+              <p className="form-error">
+                {errors.file_ktp}
+              </p>
+            )}
 
-<div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
 
-  <InputField
-    label="RT"
-    name="rt"
-    value={form.rt}
-    onChange={handleChange}
-    placeholder="001"
-  />
-  <InputField
-    label="RW"
-    name="rw"
-    value={form.rw}
-    onChange={handleChange}
-    placeholder="002"
-  />
-</div>
+              <InputField
+                label="RT"
+                name="rt"
+                value={form.rt}
+                onChange={handleChange}
+                placeholder="001"
+              />
+              <InputField
+                label="RW"
+                name="rw"
+                value={form.rw}
+                onChange={handleChange}
+                placeholder="002"
+              />
+            </div>
 
-{errors.rt && (
-  <p className="form-error">
-    {errors.rt}
-  </p>
-)}
+            {errors.rt && (
+              <p className="form-error">
+                {errors.rt}
+              </p>
+            )}
 
-{errors.rw && (
-  <p className="form-error">
-    {errors.rw}
-  </p>
-)}
+            {errors.rw && (
+              <p className="form-error">
+                {errors.rw}
+              </p>
+            )}
 
-<SubmitButton>
-  {submitLabel ??
-    (role === "admin"
-      ? "Buat Surat"
-      : mode === "edit"
-      ? "Perbaiki Pengajuan"
-      : "Ajukan Surat")}
-</SubmitButton>
-</form>
-</div>
-</section>
-</div>
-);
+            <SubmitButton>
+              {submitLabel ??
+                (role === "admin"
+                  ? "Buat Surat"
+                  : mode === "edit"
+                  ? "Perbaiki Pengajuan"
+                  : "Ajukan Surat")}
+            </SubmitButton>
+          </form>
+        </div>
+      </section>
+    </div>
+  );
 }

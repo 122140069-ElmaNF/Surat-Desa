@@ -1,0 +1,228 @@
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media (max-width: 1024px) {
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-column:last-child {
+    min-width: 0;
+  }
+
+  .admin-content {
+    padding: 24px;
+  }
+
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+
+  /* ---------- Layout ---------- */
+
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-content {
+    margin-left: 0;
+    padding: 18px;
+  }
+
+  /* ---------- Sidebar ---------- */
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    padding: 20px;
+  }
+
+  .sidebar-menu {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 10px;
+    padding-bottom: 6px;
+  }
+
+  .sidebar-menu a {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .sidebar-footer {
+    margin-top: 20px;
+  }
+
+  /* ---------- Topbar ---------- */
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+
+    padding: 20px;
+  }
+
+  .topbar-user {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .topbar-title,
+  .page-title {
+    font-size: 24px;
+  }
+
+  /* ---------- Dashboard ---------- */
+
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 18px;
+  }
+
+  .stat-value {
+    font-size: 32px;
+  }
+
+  .stat-label {
+    font-size: 14px;
+  }
+
+  .stat-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .stat-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* ---------- Table ---------- */
+
+  .responsive-table-wrap {
+    border-radius: 18px;
+  }
+
+  .responsive-table {
+    min-width: 850px;
+  }
+
+  .responsive-table th,
+  .responsive-table td {
+    padding: 14px;
+  }
+
+  .table-actions {
+    flex-wrap: nowrap;
+  }
+
+  /* ---------- Detail ---------- */
+
+  .detail-card {
+    padding: 20px;
+  }
+
+  .detail-label {
+    width: 150px;
+  }
+
+  .dokumen-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* ---------- Form ---------- */
+
+  .admin-form {
+    max-width: 100%;
+  }
+
+  .form-action {
+    flex-direction: column;
+  }
+
+  .form-btn {
+    width: 100%;
+  }
+
+  /* ---------- Page Header ---------- */
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+}
+
+/* =====================================================
+   SMALL PHONE
+===================================================== */
+
+@media (max-width: 480px) {
+
+  .admin-content {
+    padding: 14px;
+  }
+
+  .topbar {
+    padding: 18px;
+  }
+
+  .card,
+  .detail-card,
+  .stat-card {
+    padding: 18px;
+  }
+
+  .page-title,
+  .topbar-title {
+    font-size: 22px;
+  }
+
+  .detail-title {
+    font-size: 20px;
+  }
+
+  .user-avatar {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+
+}
+
+/* ==========================================
+   PUBLIC FORM
+========================================== */
+@media (max-width:768px){
+    .pengajuan-hero{
+        padding:45px 20px 90px;
+    }
+
+    .pengajuan-hero h1{
+        font-size:34px;
+    }
+
+    .pengajuan-hero p{
+        font-size:16px;
+    }
+
+    .pengajuan-content{
+        margin-top:-50px;
+    }
+
+    .pengajuan-card{
+        padding:24px;
+        border-radius:20px;
+    }
+}

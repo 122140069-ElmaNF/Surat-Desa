@@ -271,16 +271,15 @@
 }
 
 /* HERO */
+.pengajuan-hero{
+    background:linear-gradient(
+        180deg,
+        #60a5fa,
+        #dbeafe
+    );
 
-.pengajuan-hero {
-  background: linear-gradient(
-    180deg,
-    #60a5fa,
-    #dbeafe
-  );
-
-  padding: 80px 20px;
-  text-align: center;
+    padding:60px 20px 120px;
+    text-align:center;
 }
 
 .pengajuan-hero-content {
@@ -288,84 +287,88 @@
   margin: auto;
 }
 
-.pengajuan-hero h1 {
-  font-size: 46px;
-  font-weight: 800;
-  color: white;
-  margin-bottom: 20px;
+.pengajuan-hero h1{
+    font-size:48px;
+    font-weight:800;
+    color:white;
+    margin-bottom:16px;
+    line-height:1.2;
 }
 
-.pengajuan-hero p {
-  font-size: 20px;
-  color: rgba(
-    255,
-    255,
-    255,
-    0.95
-  );
-  line-height: 1.7;
+.pengajuan-hero p{
+    color:white;
+    opacity:.95;
+    font-size:20px;
+    line-height:1.8;
+    max-width:700px;
+    margin:auto;
 }
 
 /* CONTENT */
 
-.pengajuan-content {
-  padding: 60px 20px;
+.pengajuan-content{
+    margin-top:-70px;
+    position:relative;
+    z-index:10;
+    padding:0 20px 70px;
 }
 
-.pengajuan-card {
-  max-width: 900px;
-  margin: auto;
-  background: white;
-  border-radius: 28px;
-  padding: 40px;
-  box-shadow:
-    0 15px 40px
-      rgba(37, 99, 235, 0.08),
-    0 3px 12px
-      rgba(0, 0, 0, 0.05);
+.pengajuan-card{
+    width:100%;
+    max-width:760px;
+    margin:auto;
+    background:#fff;
+    border-radius:24px; 
+    padding:40px;
+    box-shadow:
+        0 15px 40px rgba(15,23,42,.08);
 }
 
 .pengajuan-header {
-  margin-bottom: 35px;
+  margin-bottom: 38px;
 }
 
 .pengajuan-header h2 {
-  font-size: 32px;
+  font-size: 30px;
   color: #0f172a;
   margin-bottom: 10px;
 }
 
 .pengajuan-header p {
   color: #64748b;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 
 /* FORM */
 
 .form-group {
-  margin-bottom: 30px;
+  margin-bottom: 34px;
 }
 
-.form-group label {
-  display: block;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #334155;
+.form-group label{
+    display:block;
+    font-weight:700;
+    font-size:15px;
+    margin-bottom:10px;
+    color:#1e293b;
 }
 
-.input-control {
-  width: 100%;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  padding: 14px 18px;
-  font-size: 16px;
-  background: #f8fafc;
+.input-control{
+    height:54px;
+    width:100%;
+    padding:0 18px;
+    border-radius:14px;
+    border:1px solid #cbd5e1;
+    background:#fff;
+    transition:.25s;
 }
 
-.input-control:focus {
-  outline: none;
-  border-color: #3b82f6;
-  background: white;
+.input-control:focus{
+    outline:none;
+    border-color:#2563eb;
+    box-shadow:
+        0 0 0 4px
+        rgba(37,99,235,.12);
 }
 
 .form-grid {
@@ -385,48 +388,55 @@
   gap: 14px;
 }
 
-.submit-btn {
-  margin-top: 40px;
-  border: none;
-  border-radius: 16px;
-  background: linear-gradient(
-    90deg,
-    #3b82f6,
-    #2563eb
-  );
-  color: white;
-  font-size: 17px;
-  font-weight: 700;
-  padding: 16px 32px;
-  cursor: pointer;
-  box-shadow:
-    0 10px 25px
-      rgba(37, 99, 235, 0.25);
-  transition: 0.2s;
+.submit-btn{
+    width:100%;
+    margin-top:45px;
+    height:56px;
+    border:none;
+    border-radius:16px;
+    background:linear-gradient(
+        135deg,
+        #3b82f6,
+        #2563eb
+    );
+    color:white;
+    font-size:17px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.25s;
 }
 
-.submit-btn:hover {
-  transform: translateY(-2px);
+.submit-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:
+        0 12px 30px
+        rgba(37,99,235,.25);
 }
 
-@media (max-width: 768px) {
-  .pengajuan-hero h1 {
-    font-size: 34px;
-  }
-
-  .pengajuan-card {
-    padding: 28px;
-  }
-
-  .split-field {
-    grid-template-columns: 1fr;
-  }
-
-  .submit-btn {
-    width: 100%;
-  }
+@media(max-width:768px){
+    .pengajuan-hero{
+        padding:50px 20px 100px;
+    }
+    .pengajuan-hero h1{
+        font-size:34px;
+    }
+    .pengajuan-hero p{
+        font-size:17px;
+    }
+    .pengajuan-content{
+        margin-top:-60px;
+    }
+    .pengajuan-card{
+        padding:24px;
+        border-radius:20px;
+    }
+    .split-field{
+        grid-template-columns:1fr;
+    }
+    .submit-btn{
+        width:100%;
+    }
 }
-
 /* =====================
    TRACKING
 ===================== */

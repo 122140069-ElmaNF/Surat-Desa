@@ -1,0 +1,66 @@
+/* =========================
+   Wrapper
+========================= */
+
+.surat-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: auto;
+}
+
+/* =========================
+   Preview Mode
+========================= */
+
+.surat-wrapper.preview {
+  background: #e5e7eb;
+  padding: 32px;
+}
+
+/* =========================
+   Print Mode
+========================= */
+
+.surat-wrapper.print {
+  background: white;
+  padding: 0;
+}
+
+/* =========================
+   Paper
+========================= */
+
+.surat-paper {
+  width: 210mm;
+  min-height: 297mm;
+
+  background: white;
+
+  box-sizing: border-box;
+
+  padding: 2.54cm;
+
+  position: relative;
+
+  overflow: hidden;
+
+  flex-shrink: 0;
+}
+
+/* =========================
+   Preview Shadow
+========================= */
+
+.surat-paper.preview {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .15);
+}
+
+/* =========================
+   Print
+========================= */
+
+.surat-paper.print {
+  box-shadow: none;
+}

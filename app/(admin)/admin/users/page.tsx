@@ -18,12 +18,9 @@ export default async function AdminUsersPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="page-header">
+      <div className="page-header" style={{ marginBottom: 24 }}>
         <div>
-          <h1 className="page-title">
-            Manajemen Admin
-          </h1>
+          <h1 className="page-title">Manajemen Admin</h1>
 
           <p className="page-subtitle">
             Kelola akun Admin dan Pimpinan
@@ -37,31 +34,23 @@ export default async function AdminUsersPage() {
         </Link>
       </div>
 
-      {/* Card */}
-      <section className="card">
-        <table className="admin-table">
+      <div className="responsive-table-wrap">
+        <table className="responsive-table">
           <thead>
             <tr>
-              <th>No</th>
+              <th style={{ width: 70 }}>No</th>
               <th>Nama</th>
               <th>Username</th>
               <th>Role</th>
               <th>Dibuat</th>
-              <th>Aksi</th>
+              <th style={{ width: 180 }}>Aksi</th>
             </tr>
           </thead>
 
           <tbody>
             {users.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  style={{
-                    textAlign: "center",
-                    padding: "30px",
-                    color: "#64748b",
-                  }}
-                >
+                <td colSpan={6} className="table-empty">
                   Belum ada data admin.
                 </td>
               </tr>
@@ -75,40 +64,36 @@ export default async function AdminUsersPage() {
                   <td>{user.username}</td>
 
                   <td>
-                    <span
-                      className={`role-badge ${user.role}`}
-                    >
+                    <span className={`status-badge status-${user.role}`}>
                       {user.role}
                     </span>
                   </td>
 
                   <td>
-                    {new Date(
-                      user.created_at
-                    ).toLocaleDateString("id-ID")}
+                    {new Date(user.created_at).toLocaleDateString("id-ID")}
                   </td>
 
                   <td>
-                    <div className="table-action">
-                      <Link
-                        href={`/admin/users/edit/${user.id}`}
-                      >
-                        <button className="edit-btn">
-                          Edit
-                        </button>
+                    <div className="table-actions">
+
+                      <Link href={`/admin/users/edit/${user.id}`}>
+                          <button className="btn btn-primary btn-sm">
+                              Edit
+                          </button>
                       </Link>
 
                       <DeleteUserButton
                           id={user.id}
                       />
-                    </div>
+
+                  </div>
                   </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
-      </section>
+      </div>
     </div>
   );
 }

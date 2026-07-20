@@ -12,15 +12,11 @@ export default function TolakSuratPage() {
   }>();
 
   const [alasan, setAlasan] = useState("");
-
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
     if (!alasan.trim()) {
-      alert(
-        "Alasan penolakan wajib diisi."
-      );
+      alert("Alasan penolakan wajib diisi.");
       return;
     }
 
@@ -32,8 +28,7 @@ export default function TolakSuratPage() {
         {
           method: "PATCH",
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             alasan,
@@ -41,44 +36,31 @@ export default function TolakSuratPage() {
         }
       );
 
-      const result =
-        await res.json();
+      const result = await res.json();
 
       if (!result.success) {
         alert(result.message);
         return;
       }
 
-      alert(
-        "Surat berhasil ditolak."
-      );
+      alert("Surat berhasil ditolak.");
 
       router.push("/admin/surat");
-
     } catch (err) {
-
       console.error(err);
 
-      alert(
-        "Terjadi kesalahan."
-      );
-
+      alert("Terjadi kesalahan.");
     } finally {
-
       setLoading(false);
-
     }
   }
 
   return (
     <div>
-
       {/* Header */}
 
       <div className="page-header">
-
         <div>
-
           <h1 className="page-title">
             Tolak Surat
           </h1>
@@ -86,21 +68,15 @@ export default function TolakSuratPage() {
           <p className="page-subtitle">
             Berikan alasan penolakan pengajuan surat.
           </p>
-
         </div>
-
       </div>
 
       {/* Breadcrumb */}
 
       <div className="breadcrumb">
-
         <span>Detail Surat</span>
-
         <span>›</span>
-
         <strong>Tolak Surat</strong>
-
       </div>
 
       {/* Card */}
@@ -109,7 +85,7 @@ export default function TolakSuratPage() {
 
         <div className="form-group">
 
-          <label>
+          <label className="form-label">
             Keterangan Penolakan
           </label>
 
@@ -117,30 +93,37 @@ export default function TolakSuratPage() {
             className="reject-textarea"
             placeholder="Tuliskan alasan mengapa surat ditolak..."
             value={alasan}
+            rows={6}
+            maxLength={500}
             onChange={(e) =>
-              setAlasan(
-                e.target.value
-              )
+              setAlasan(e.target.value)
             }
           />
+
+          <small className="helper-text">
+            Jelaskan alasan penolakan agar pemohon
+            mengetahui apa yang perlu diperbaiki.
+          </small>
 
         </div>
 
         <div className="form-action">
 
-          <Link
-            href={`/admin/surat/${id}`}
-          >
+          <Link href={`/admin/surat/${id}`}>
+
             <button
+              type="button"
               className="secondary-btn"
               disabled={loading}
             >
               Batal
             </button>
+
           </Link>
 
           <button
-            className="delete-btn"
+            type="button"
+            className="danger-btn"
             onClick={handleSubmit}
             disabled={loading}
           >

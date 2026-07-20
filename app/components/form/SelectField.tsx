@@ -17,17 +17,21 @@ export default function SelectField({
 }: Props) {
   return (
     <div className="form-group">
-      <label className="form-label">
+      <label
+        htmlFor={name}
+        className="form-label"
+      >
         {label}
       </label>
 
       <select
-        className="form-control"
+        id={name}
         name={name}
+        className="form-control"
         value={value}
         onChange={onChange}
       >
-        <option value="">
+        <option value="" disabled>
           -- Pilih --
         </option>
 
