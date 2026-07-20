@@ -11,6 +11,7 @@ type Props = {
   initialData?: any;
   submitLabel?: string;
   role?: "user" | "admin";
+  onSubmit?: (formData: FormData) => Promise<void>;
 };
 
 export default function ListrikForm({
@@ -18,7 +19,9 @@ export default function ListrikForm({
   initialData,
   submitLabel,
   role = "user",
+  onSubmit,
 }: Props) {
+
   const [form, setForm] = useState({
     nama: "",
     tempat_lahir: "",
@@ -112,6 +115,11 @@ export default function ListrikForm({
       : "/api/pengajuan/listrik";
 
     const method = mode === "edit" ? "PUT" : "POST";
+
+    if (role === "admin" && onSubmit) {
+    await onSubmit(formData);
+    return;
+    }
 
     try {
       const res = await fetch(url, { method, body: formData });

@@ -14,15 +14,13 @@ type Props = {
   onSubmit?: (formData: FormData) => Promise<void>;
 };
 
-export default function DomisiliForm({
+export default function ListrikForm({
   mode,
   initialData,
   submitLabel,
   role = "user",
   onSubmit,
 }: Props) {
-
-  console.log(initialData);
 
   const [form, setForm] = useState({
     nama: "",
@@ -31,20 +29,24 @@ export default function DomisiliForm({
     nik: "",
     agama: "",
     jenis_kelamin: "",
+    status_perkawinan: "",
     pekerjaan: "",
     alamat: "",
-    dusun: "",
-    rt: "",
-    rw: "",
+    nama_usaha: "",
   });
 
   const [fileKtp, setFileKtp] =
     useState<File | null>(null);
+
   const [errors, setErrors] =
     useState<Record<string, string>>({});
 
-  // LOAD DATA SAAT MODE EDIT
+  // ===========================
+  // LOAD DATA SAAT EDIT
+  // ===========================
+
   useEffect(() => {
+
     if (
       mode !== "edit" ||
       !initialData
@@ -56,32 +58,45 @@ export default function DomisiliForm({
       initialData.ttl?.split(",") ?? [];
 
     setForm({
+
       nama:
         initialData.nama ?? "",
+
       tempat_lahir:
         ttl[0]?.trim() ?? "",
+
       tanggal_lahir:
         ttl[1]?.trim() ?? "",
+
       nik:
         initialData.nik ?? "",
+
       agama:
         initialData.agama ?? "",
+
       jenis_kelamin:
         initialData.jenis_kelamin ?? "",
+
+      status_perkawinan:
+        initialData.status_perkawinan ?? "",
+
       pekerjaan:
         initialData.pekerjaan ?? "",
+
       alamat:
         initialData.alamat ?? "",
-      dusun:
-        initialData.dusun ?? "",
-      rt:
-        initialData.rt ?? "",
-      rw:
-        initialData.rw ?? "",
+
+      nama_usaha:
+        initialData.nama_usaha ?? "",
+
     });
+
   }, [mode, initialData]);
 
+  // ===========================
   // HANDLE INPUT
+  // ===========================
+
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement |
@@ -89,14 +104,19 @@ export default function DomisiliForm({
       HTMLSelectElement
     >
   ) {
+
     setForm((prev) => ({
       ...prev,
       [e.target.name]:
         e.target.value,
     }));
+
   }
 
-  // VALIDASI FORM
+  // ===========================
+  // VALIDASI
+  // ===========================
+
   function validateForm() {
 
     const newErrors:
@@ -104,10 +124,10 @@ export default function DomisiliForm({
 
     if (!form.nama.trim()) {
       newErrors.nama =
-        "Nama wajib diisi."
+        "Nama wajib diisi.";
     }
-    if (!form.tempat_lahir.trim()) {
 
+    if (!form.tempat_lahir.trim()) {
       newErrors.tempat_lahir =
         "Tempat lahir wajib diisi.";
     }
@@ -137,6 +157,11 @@ export default function DomisiliForm({
         "Pilih jenis kelamin.";
     }
 
+    if (!form.status_perkawinan) {
+      newErrors.status_perkawinan =
+        "Pilih status perkawinan.";
+    }
+
     if (!form.pekerjaan.trim()) {
       newErrors.pekerjaan =
         "Pekerjaan wajib diisi.";
@@ -147,38 +172,38 @@ export default function DomisiliForm({
         "Alamat wajib diisi.";
     }
 
-    if (!form.dusun.trim()) {
-      newErrors.dusun =
-        "Dusun wajib diisi.";
+    if (!form.nama_usaha.trim()) {
+      newErrors.nama_usaha =
+        "Nama usaha wajib diisi.";
     }
 
-    if (!form.rt.trim()) {
-      newErrors.rt =
-        "RT wajib diisi.";
-    }
-
-    if (!form.rw.trim()) {
-      newErrors.rw =
-        "RW wajib diisi.";
-    }
-
-    // Upload KTP hanya wajib saat create
-    if (mode === "create" && !fileKtp) {
-      newErrors.file_ktp = "Silakan upload KTP.";
+    if (
+      mode === "create" &&
+      !fileKtp
+    ) {
+      newErrors.file_ktp =
+        "Silakan upload KTP.";
     }
 
     setErrors(newErrors);
+
     return (
       Object.keys(newErrors)
         .length === 0
     );
+
   }
 
+  // ===========================
   // HANDLE SUBMIT
+  // ===========================
+
   async function handleSubmit(
     e: React.FormEvent
   ) {
+
     e.preventDefault();
+
     if (!validateForm())
       return;
 
@@ -211,6 +236,11 @@ export default function DomisiliForm({
     );
 
     formData.append(
+      "status_perkawinan",
+      form.status_perkawinan
+    );
+
+    formData.append(
       "pekerjaan",
       form.pekerjaan
     );
@@ -221,79 +251,101 @@ export default function DomisiliForm({
     );
 
     formData.append(
-      "dusun",
-      form.dusun
-    );
-
-    formData.append(
-      "rt",
-      form.rt
-    );
-
-    formData.append(
-      "rw",
-      form.rw
+      "nama_usaha",
+      form.nama_usaha
     );
 
     if (fileKtp) {
+
       formData.append(
         "file_ktp",
         fileKtp
       );
+
     }
 
     if (role === "admin" && onSubmit) {
-      await onSubmit(formData);
-      return;
+    await onSubmit(formData);
+    return;
     }
 
-try {
-  const url =
-    mode === "edit"
-      ? `/api/pengajuan/domisili/${initialData.id}`
-      : "/api/pengajuan/domisili";
+    try {
 
-  const method =
-    mode === "edit"
-      ? "PUT"
-      : "POST";
+      const url =
+        mode === "edit"
+          ? `/api/pengajuan/usaha/${initialData.id}`
+          : "/api/pengajuan/usaha";
 
-  const res = await fetch(url, {
-    method,
-    body: formData,
-  });
+      const method =
+        mode === "edit"
+          ? "PUT"
+          : "POST";
 
-  const json = await res.json();
+      const res =
+        await fetch(url, {
+          method,
+          body: formData,
+        });
 
-  if (!json.success) {
-    alert(json.message ?? "Gagal menyimpan.");
-    return;
+      const json =
+        await res.json();
+
+      if (!json.success) {
+
+        alert(
+          json.message ??
+            "Gagal menyimpan."
+        );
+
+        return;
+
+      }
+
+      setErrors({});
+      setFileKtp(null);
+
+      if (mode === "edit") {
+
+        alert(
+          "Perbaikan berhasil dikirim."
+        );
+
+        window.location.href =
+          `/tracking/${initialData.kode_tracking}`;
+
+      } else {
+
+        window.location.href =
+          `/success/${json.kode_tracking}`;
+
+      }
+
+    } catch (err) {
+
+      console.error(err);
+
+      alert(
+        "Terjadi kesalahan server."
+      );
+
+    }
+
   }
 
-  setErrors({});
-  setFileKtp(null);
-
-  if (mode === "edit") {
-    alert("Perbaikan berhasil dikirim.");
-    window.location.href = `/tracking/${initialData.kode_tracking}`;
-  } else {
-    window.location.href = `/success/${json.kode_tracking}`;
-  }
-} catch (err) {
-  console.error(err);
-  alert("Terjadi kesalahan server.");
-}}
-
+    // ===========================
   // RENDER
+  // ===========================
+
   return (
     <div className="pengajuan-page">
       <section className="pengajuan-hero">
         <div className="pengajuan-hero-content">
           <h1>
             {mode === "create"
-              ? "Surat Keterangan Domisili"
-              : "Perbaiki Pengajuan Surat Domisili"}
+              ? "Surat Keterangan Usaha"
+              : "Perbaiki Pengajuan Surat Keterangan Usaha"}
           </h1>
+
           <p>
             {mode === "create"
               ? "Lengkapi data di bawah ini dengan benar sebelum mengajukan surat."
@@ -305,24 +357,22 @@ try {
       <section className="pengajuan-content">
         <div className="pengajuan-card">
 
-          {/* ALASAN PENOLAKAN */}
-
           {mode === "edit" && (
             <div className="reject-alert">
-              <h3>
-                Pengajuan Ditolak
-              </h3>
+              <h3>Pengajuan Ditolak</h3>
+
               <p>
                 <strong>
                   Alasan Penolakan :
                 </strong>
               </p>
+
               <p>
                 {initialData.alasan_penolakan}
               </p>
             </div>
           )}
-          
+
           <form onSubmit={handleSubmit}>
 
             <InputField
@@ -417,6 +467,25 @@ try {
               </p>
             )}
 
+            <SelectField
+              label="Status Perkawinan"
+              name="status_perkawinan"
+              value={form.status_perkawinan}
+              onChange={handleChange}
+              options={[
+                "Belum Kawin",
+                "Kawin",
+                "Cerai Hidup",
+                "Cerai Mati",
+              ]}
+            />
+
+            {errors.status_perkawinan && (
+              <p className="form-error">
+                {errors.status_perkawinan}
+              </p>
+            )}
+
             <InputField
               label="Pekerjaan"
               name="pekerjaan"
@@ -447,26 +516,26 @@ try {
             )}
 
             <InputField
-              label="Dusun"
-              name="dusun"
-              value={form.dusun}
+              label="Nama Usaha"
+              name="nama_usaha"
+              value={form.nama_usaha}
               onChange={handleChange}
-              placeholder="Contoh: Dusun I"
+              placeholder="Contoh : Warung Sembako"
             />
 
-            {errors.dusun && (
+            {errors.nama_usaha && (
               <p className="form-error">
-                {errors.dusun}
+                {errors.nama_usaha}
               </p>
             )}
 
-              <FileUploadField
-                label="Upload KTP"
-                accept="image/jpeg,image/png"
-                onChange={(file: File | null) =>
-                  setFileKtp(file)
-                }
-              />
+            <FileUploadField
+              label="Upload KTP"
+              accept="image/jpeg,image/png"
+              onChange={(file: File | null) =>
+                setFileKtp(file)
+              }
+            />
 
             {mode === "edit" &&
               initialData?.dokumen?.file_ktp && (
@@ -498,36 +567,6 @@ try {
               </p>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-
-              <InputField
-                label="RT"
-                name="rt"
-                value={form.rt}
-                onChange={handleChange}
-                placeholder="001"
-              />
-              <InputField
-                label="RW"
-                name="rw"
-                value={form.rw}
-                onChange={handleChange}
-                placeholder="002"
-              />
-            </div>
-
-            {errors.rt && (
-              <p className="form-error">
-                {errors.rt}
-              </p>
-            )}
-
-            {errors.rw && (
-              <p className="form-error">
-                {errors.rw}
-              </p>
-            )}
-
             <SubmitButton>
               {submitLabel ??
                 (role === "admin"
@@ -536,7 +575,9 @@ try {
                   ? "Perbaiki Pengajuan"
                   : "Ajukan Surat")}
             </SubmitButton>
+
           </form>
+
         </div>
       </section>
     </div>

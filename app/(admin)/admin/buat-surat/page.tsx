@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import DomisiliForm from "@/app/components/surat/DomisiliForm";
+import ListrikForm from "@/app/components/surat/ListrikForm";
+import JalanForm from "@/app/components/surat/JalanForm";
+import UsahaForm from "@/app/components/surat/UsahaForm";
+import KebenaranDataForm from "@/app/components/surat/KebenaranDataForm";
+
 
 type JenisSurat = {
   id: number;
@@ -34,42 +39,61 @@ export default function AdminBuatSuratPage() {
     loadJenisSurat();
   }, []);
 
-  async function handleAdminSubmit(formData: FormData) {
+  async function handleAdminSubmit(
+    formData: FormData
+  ) {
     try {
+
+      const endpointMap: Record<
+        string,
+        string
+      > = {
+        SD: "domisili",
+        SKJ: "jalan",
+        SKL: "listrik",
+        SKU: "usaha",
+        SKKD: "kebenaran_data",
+        SKPHS: "penghasilan",
+      };
+
+      const endpoint =
+        endpointMap[selectedKode];
+
       const res = await fetch(
-        "/api/admin/buat-surat/domisili",
+        `/api/admin/buat-surat/${endpoint}`,
         {
           method: "POST",
           body: formData,
         }
       );
 
-      const result = await res.json();
-
-      console.log("RESULT =", result);
-      console.log("ID =", result.pengajuan_id);
+      const result =
+        await res.json();
 
       if (!res.ok) {
         alert(result.message);
         return;
       }
 
-      console.log("PENGAJUAN =", result.pengajuan_id);
-
-      // Langsung buka halaman detail surat
-      // agar modal approval otomatis muncul
       router.push(
         `/admin/surat/${result.pengajuan_id}?autoApproval=1`
       );
 
     } catch (err) {
+
       console.error(err);
-      alert("Terjadi kesalahan server.");
+
+      alert(
+        "Terjadi kesalahan server."
+      );
+
     }
   }
 
   function renderForm() {
+
     switch (selectedKode) {
+
       case "SD":
         return (
           <DomisiliForm
@@ -79,9 +103,56 @@ export default function AdminBuatSuratPage() {
           />
         );
 
+      case "SKL":
+        return (
+          <ListrikForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+      case "SKJ":
+        return (
+          <JalanForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+      case "SKU":
+        return (
+          <UsahaForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+      case "SKKD":
+        return (
+          <KebenaranDataForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+        case "SKPHS":
+        return (
+          <KebenaranDataForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
       default:
         return null;
+
     }
+
   }
 
   return (

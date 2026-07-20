@@ -14,7 +14,7 @@ type Props = {
   onSubmit?: (formData: FormData) => Promise<void>;
 };
 
-export default function DomisiliForm({
+export default function KebenaranDataForm({
   mode,
   initialData,
   submitLabel,
@@ -22,29 +22,34 @@ export default function DomisiliForm({
   onSubmit,
 }: Props) {
 
-  console.log(initialData);
-
   const [form, setForm] = useState({
     nama: "",
     tempat_lahir: "",
     tanggal_lahir: "",
     nik: "",
-    agama: "",
     jenis_kelamin: "",
-    pekerjaan: "",
+    status_perkawinan: "",
     alamat: "",
-    dusun: "",
-    rt: "",
-    rw: "",
+    no_hp: "",
+    nomor_porsi: "",
+    bin_binti: "",
   });
 
   const [fileKtp, setFileKtp] =
     useState<File | null>(null);
+
+  const [fileKk, setFileKk] =
+    useState<File | null>(null);
+
   const [errors, setErrors] =
     useState<Record<string, string>>({});
 
-  // LOAD DATA SAAT MODE EDIT
+  // ==========================
+  // LOAD DATA EDIT
+  // ==========================
+
   useEffect(() => {
+
     if (
       mode !== "edit" ||
       !initialData
@@ -56,32 +61,45 @@ export default function DomisiliForm({
       initialData.ttl?.split(",") ?? [];
 
     setForm({
+
       nama:
         initialData.nama ?? "",
+
       tempat_lahir:
         ttl[0]?.trim() ?? "",
+
       tanggal_lahir:
         ttl[1]?.trim() ?? "",
+
       nik:
         initialData.nik ?? "",
-      agama:
-        initialData.agama ?? "",
+
       jenis_kelamin:
         initialData.jenis_kelamin ?? "",
-      pekerjaan:
-        initialData.pekerjaan ?? "",
+
+      status_perkawinan:
+        initialData.status_perkawinan ?? "",
+
       alamat:
         initialData.alamat ?? "",
-      dusun:
-        initialData.dusun ?? "",
-      rt:
-        initialData.rt ?? "",
-      rw:
-        initialData.rw ?? "",
+
+      no_hp:
+        initialData.no_hp ?? "",
+
+      nomor_porsi:
+        initialData.nomor_porsi ?? "",
+
+      bin_binti:
+        initialData.bin_binti ?? "",
+
     });
+
   }, [mode, initialData]);
 
+  // ==========================
   // HANDLE INPUT
+  // ==========================
+
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement |
@@ -89,14 +107,19 @@ export default function DomisiliForm({
       HTMLSelectElement
     >
   ) {
+
     setForm((prev) => ({
       ...prev,
       [e.target.name]:
         e.target.value,
     }));
+
   }
 
-  // VALIDASI FORM
+  // ==========================
+  // VALIDASI
+  // ==========================
+
   function validateForm() {
 
     const newErrors:
@@ -104,10 +127,10 @@ export default function DomisiliForm({
 
     if (!form.nama.trim()) {
       newErrors.nama =
-        "Nama wajib diisi."
+        "Nama wajib diisi.";
     }
-    if (!form.tempat_lahir.trim()) {
 
+    if (!form.tempat_lahir.trim()) {
       newErrors.tempat_lahir =
         "Tempat lahir wajib diisi.";
     }
@@ -127,19 +150,14 @@ export default function DomisiliForm({
         "NIK harus terdiri dari 16 digit.";
     }
 
-    if (!form.agama) {
-      newErrors.agama =
-        "Pilih agama.";
-    }
-
     if (!form.jenis_kelamin) {
       newErrors.jenis_kelamin =
         "Pilih jenis kelamin.";
     }
 
-    if (!form.pekerjaan.trim()) {
-      newErrors.pekerjaan =
-        "Pekerjaan wajib diisi.";
+    if (!form.status_perkawinan) {
+      newErrors.status_perkawinan =
+        "Pilih status perkawinan.";
     }
 
     if (!form.alamat.trim()) {
@@ -147,40 +165,59 @@ export default function DomisiliForm({
         "Alamat wajib diisi.";
     }
 
-    if (!form.dusun.trim()) {
-      newErrors.dusun =
-        "Dusun wajib diisi.";
+    if (!form.no_hp.trim()) {
+      newErrors.no_hp =
+        "Nomor HP wajib diisi.";
     }
 
-    if (!form.rt.trim()) {
-      newErrors.rt =
-        "RT wajib diisi.";
+    if (!form.nomor_porsi.trim()) {
+      newErrors.nomor_porsi =
+        "Nomor porsi wajib diisi.";
     }
 
-    if (!form.rw.trim()) {
-      newErrors.rw =
-        "RW wajib diisi.";
+    if (!form.bin_binti.trim()) {
+      newErrors.bin_binti =
+        "Bin / Binti wajib diisi.";
     }
 
-    // Upload KTP hanya wajib saat create
-    if (mode === "create" && !fileKtp) {
-      newErrors.file_ktp = "Silakan upload KTP.";
+    if (
+      mode === "create" &&
+      !fileKtp
+    ) {
+      newErrors.file_ktp =
+        "Silakan upload KTP.";
+    }
+
+    if (
+      mode === "create" &&
+      !fileKk
+    ) {
+      newErrors.file_kk =
+        "Silakan upload KK.";
     }
 
     setErrors(newErrors);
+
     return (
       Object.keys(newErrors)
         .length === 0
     );
+
   }
 
+    // ==========================
   // HANDLE SUBMIT
+  // ==========================
+
   async function handleSubmit(
     e: React.FormEvent
   ) {
+
     e.preventDefault();
-    if (!validateForm())
+
+    if (!validateForm()) {
       return;
+    }
 
     const formData =
       new FormData();
@@ -201,18 +238,13 @@ export default function DomisiliForm({
     );
 
     formData.append(
-      "agama",
-      form.agama
-    );
-
-    formData.append(
       "jenis_kelamin",
       form.jenis_kelamin
     );
 
     formData.append(
-      "pekerjaan",
-      form.pekerjaan
+      "status_perkawinan",
+      form.status_perkawinan
     );
 
     formData.append(
@@ -221,18 +253,18 @@ export default function DomisiliForm({
     );
 
     formData.append(
-      "dusun",
-      form.dusun
+      "no_hp",
+      form.no_hp
     );
 
     formData.append(
-      "rt",
-      form.rt
+      "nomor_porsi",
+      form.nomor_porsi
     );
 
     formData.append(
-      "rw",
-      form.rw
+      "bin_binti",
+      form.bin_binti
     );
 
     if (fileKtp) {
@@ -242,87 +274,135 @@ export default function DomisiliForm({
       );
     }
 
-    if (role === "admin" && onSubmit) {
+    if (fileKk) {
+      formData.append(
+        "file_kk",
+        fileKk
+      );
+    }
+
+    if (
+      role === "admin" &&
+      onSubmit
+    ) {
       await onSubmit(formData);
       return;
     }
 
-try {
-  const url =
-    mode === "edit"
-      ? `/api/pengajuan/domisili/${initialData.id}`
-      : "/api/pengajuan/domisili";
+    try {
 
-  const method =
-    mode === "edit"
-      ? "PUT"
-      : "POST";
+      const url =
+        mode === "edit"
+          ? `/api/pengajuan/kebenaran-data/${initialData.id}`
+          : "/api/pengajuan/kebenaran-data";
 
-  const res = await fetch(url, {
-    method,
-    body: formData,
-  });
+      const method =
+        mode === "edit"
+          ? "PUT"
+          : "POST";
 
-  const json = await res.json();
+      const res =
+        await fetch(url, {
+          method,
+          body: formData,
+        });
 
-  if (!json.success) {
-    alert(json.message ?? "Gagal menyimpan.");
-    return;
+      const json =
+        await res.json();
+
+      if (!json.success) {
+        alert(
+          json.message ??
+            "Gagal menyimpan."
+        );
+        return;
+      }
+
+      setErrors({});
+      setFileKtp(null);
+      setFileKk(null);
+
+      if (mode === "edit") {
+
+        alert(
+          "Perbaikan berhasil dikirim."
+        );
+
+        window.location.href =
+          `/tracking/${initialData.kode_tracking}`;
+
+      } else {
+
+        window.location.href =
+          `/success/${json.kode_tracking}`;
+
+      }
+
+    } catch (err) {
+
+      console.error(err);
+
+      alert(
+        "Terjadi kesalahan server."
+      );
+
+    }
+
   }
 
-  setErrors({});
-  setFileKtp(null);
-
-  if (mode === "edit") {
-    alert("Perbaikan berhasil dikirim.");
-    window.location.href = `/tracking/${initialData.kode_tracking}`;
-  } else {
-    window.location.href = `/success/${json.kode_tracking}`;
-  }
-} catch (err) {
-  console.error(err);
-  alert("Terjadi kesalahan server.");
-}}
-
+  // ==========================
   // RENDER
+  // ==========================
+
   return (
     <div className="pengajuan-page">
+
       <section className="pengajuan-hero">
+
         <div className="pengajuan-hero-content">
+
           <h1>
             {mode === "create"
-              ? "Surat Keterangan Domisili"
-              : "Perbaiki Pengajuan Surat Domisili"}
+              ? "Surat Keterangan Kebenaran Data"
+              : "Perbaiki Pengajuan Surat Keterangan Kebenaran Data"}
           </h1>
+
           <p>
             {mode === "create"
               ? "Lengkapi data di bawah ini dengan benar sebelum mengajukan surat."
               : "Perbaiki data sesuai catatan Admin kemudian kirim kembali."}
           </p>
+
         </div>
+
       </section>
 
       <section className="pengajuan-content">
+
         <div className="pengajuan-card">
 
-          {/* ALASAN PENOLAKAN */}
-
           {mode === "edit" && (
+
             <div className="reject-alert">
+
               <h3>
                 Pengajuan Ditolak
               </h3>
+
               <p>
                 <strong>
                   Alasan Penolakan :
                 </strong>
               </p>
+
               <p>
                 {initialData.alasan_penolakan}
               </p>
+
             </div>
+
           )}
-          
+
           <form onSubmit={handleSubmit}>
 
             <InputField
@@ -359,6 +439,12 @@ try {
 
             </div>
 
+            {errors.tempat_lahir && (
+              <p className="form-error">
+                {errors.tempat_lahir}
+              </p>
+            )}
+
             {errors.tanggal_lahir && (
               <p className="form-error">
                 {errors.tanggal_lahir}
@@ -380,27 +466,6 @@ try {
             )}
 
             <SelectField
-              label="Agama"
-              name="agama"
-              value={form.agama}
-              onChange={handleChange}
-              options={[
-                "Islam",
-                "Kristen",
-                "Katolik",
-                "Hindu",
-                "Buddha",
-                "Konghucu",
-              ]}
-            />
-
-            {errors.agama && (
-              <p className="form-error">
-                {errors.agama}
-              </p>
-            )}
-
-            <SelectField
               label="Jenis Kelamin"
               name="jenis_kelamin"
               value={form.jenis_kelamin}
@@ -417,17 +482,22 @@ try {
               </p>
             )}
 
-            <InputField
-              label="Pekerjaan"
-              name="pekerjaan"
-              value={form.pekerjaan}
+            <SelectField
+              label="Status Perkawinan"
+              name="status_perkawinan"
+              value={form.status_perkawinan}
               onChange={handleChange}
-              placeholder="Masukkan pekerjaan"
+              options={[
+                "Belum Kawin",
+                "Kawin",
+                "Cerai Hidup",
+                "Cerai Mati",
+              ]}
             />
 
-            {errors.pekerjaan && (
+            {errors.status_perkawinan && (
               <p className="form-error">
-                {errors.pekerjaan}
+                {errors.status_perkawinan}
               </p>
             )}
 
@@ -446,27 +516,55 @@ try {
               </p>
             )}
 
-            <InputField
-              label="Dusun"
-              name="dusun"
-              value={form.dusun}
+                        <InputField
+              label="Nomor HP"
+              name="no_hp"
+              value={form.no_hp}
               onChange={handleChange}
-              placeholder="Contoh: Dusun I"
+              placeholder="Masukkan nomor HP"
             />
 
-            {errors.dusun && (
+            {errors.no_hp && (
               <p className="form-error">
-                {errors.dusun}
+                {errors.no_hp}
               </p>
             )}
 
-              <FileUploadField
-                label="Upload KTP"
-                accept="image/jpeg,image/png"
-                onChange={(file: File | null) =>
-                  setFileKtp(file)
-                }
-              />
+            <InputField
+              label="Nomor Porsi"
+              name="nomor_porsi"
+              value={form.nomor_porsi}
+              onChange={handleChange}
+              placeholder="Masukkan nomor porsi"
+            />
+
+            {errors.nomor_porsi && (
+              <p className="form-error">
+                {errors.nomor_porsi}
+              </p>
+            )}
+
+            <InputField
+              label="Bin / Binti"
+              name="bin_binti"
+              value={form.bin_binti}
+              onChange={handleChange}
+              placeholder="Masukkan nama Bin / Binti"
+            />
+
+            {errors.bin_binti && (
+              <p className="form-error">
+                {errors.bin_binti}
+              </p>
+            )}
+
+            <FileUploadField
+              label="Upload KTP"
+              accept="image/jpeg,image/png"
+              onChange={(file: File | null) =>
+                setFileKtp(file)
+              }
+            />
 
             {mode === "edit" &&
               initialData?.dokumen?.file_ktp && (
@@ -478,7 +576,7 @@ try {
                   fontSize: 14,
                 }}
               >
-                File saat ini :
+                File KTP saat ini :
                 <a
                   href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
                   target="_blank"
@@ -490,6 +588,7 @@ try {
                   Lihat KTP
                 </a>
               </div>
+
             )}
 
             {errors.file_ktp && (
@@ -498,33 +597,42 @@ try {
               </p>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
+            <FileUploadField
+              label="Upload KK"
+              accept="image/jpeg,image/png"
+              onChange={(file: File | null) =>
+                setFileKk(file)
+              }
+            />
 
-              <InputField
-                label="RT"
-                name="rt"
-                value={form.rt}
-                onChange={handleChange}
-                placeholder="001"
-              />
-              <InputField
-                label="RW"
-                name="rw"
-                value={form.rw}
-                onChange={handleChange}
-                placeholder="002"
-              />
-            </div>
+            {mode === "edit" &&
+              initialData?.dokumen?.file_kk && (
 
-            {errors.rt && (
-              <p className="form-error">
-                {errors.rt}
-              </p>
+              <div
+                style={{
+                  marginTop: 8,
+                  marginBottom: 16,
+                  fontSize: 14,
+                }}
+              >
+                File KK saat ini :
+                <a
+                  href={`/uploads/kk/${initialData.dokumen.file_kk}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    marginLeft: 8,
+                  }}
+                >
+                  Lihat KK
+                </a>
+              </div>
+
             )}
 
-            {errors.rw && (
+            {errors.file_kk && (
               <p className="form-error">
-                {errors.rw}
+                {errors.file_kk}
               </p>
             )}
 
@@ -536,9 +644,14 @@ try {
                   ? "Perbaiki Pengajuan"
                   : "Ajukan Surat")}
             </SubmitButton>
+
           </form>
+
         </div>
+
       </section>
+
     </div>
   );
+
 }
