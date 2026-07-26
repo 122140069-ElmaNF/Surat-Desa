@@ -158,3 +158,18 @@
 
   color: #0f172a;
 }
+
+/* =====================================================
+   PIMPINAN DASHBOARD
+===================================================== */
+
+.dashboard-card-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.dashboard-small-card {
+  width: 280px;
+  flex: 0 0 auto;
+}

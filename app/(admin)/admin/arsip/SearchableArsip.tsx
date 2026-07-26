@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import AdminArsipTable, { ArsipSuratRow } from "./AdminArsipTable";
+import AdminArsipTable, {
+  ArsipSuratRow,
+} from "./AdminArsipTable";
 
 export default function SearchableArsip({
   initialRows,
@@ -9,20 +11,41 @@ export default function SearchableArsip({
   initialRows: ArsipSuratRow[];
 }) {
   const [q, setQ] = useState("");
-  const [rows, setRows] = useState<ArsipSuratRow[]>(initialRows);
-  const [loading, setLoading] = useState(false);
-  const isSearching = q.trim() !== "" || loading;
+  const [rows, setRows] =
+    useState<ArsipSuratRow[]>(initialRows);
+  const [loading, setLoading] =
+    useState(false);
 
-  async function handleSearch(e?: React.FormEvent) {
+  const isSearching =
+    q.trim() !== "" || loading;
+
+  async function handleSearch(
+    e?: React.FormEvent
+  ) {
     e?.preventDefault();
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (q.trim()) params.set("q", q.trim());
 
-      const res = await fetch(`/api/admin/arsip?${params.toString()}`);
-      if (!res.ok) throw new Error("Gagal mengambil data");
+    setLoading(true);
+
+    try {
+      const params =
+        new URLSearchParams();
+
+      if (q.trim()) {
+        params.set("q", q.trim());
+      }
+
+      const res = await fetch(
+        `/api/admin/arsip?${params.toString()}`
+      );
+
+      if (!res.ok) {
+        throw new Error(
+          "Gagal mengambil data"
+        );
+      }
+
       const data = await res.json();
+
       setRows(data);
     } catch (err) {
       console.error(err);
@@ -39,74 +62,115 @@ export default function SearchableArsip({
         style={{
           display: "flex",
           gap: "12px",
-          marginBottom: "16px",
-          alignItems: "center",
+          alignItems: "flex-end",
           flexWrap: "wrap",
+          marginBottom: "18px",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", flex: "1 1 320px" }}>
+        {/* SEARCH */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            width: "450px",
+            maxWidth: "100%",
+          }}
+        >
           <label
             style={{
               fontSize: "13px",
-              color: isSearching ? "#000" : "#374151",
-              marginBottom: 6,
+              color: isSearching
+                ? "#000"
+                : "#374151",
+              marginBottom: "6px",
+              fontWeight: 500,
             }}
           >
-            Cari Nama Pemohon atau Jenis Surat
+            Cari Nama Pemohon atau Jenis
+            Surat
           </label>
+
           <input
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={(e) =>
+              setQ(e.target.value)
+            }
             placeholder="Masukkan nama pemohon atau jenis surat"
             style={{
               width: "100%",
-              padding: "8px 10px",
-              borderRadius: 6,
-              border: "1px solid #d1d5db",
-              color: isSearching ? "#000" : undefined,
+              padding: "10px 12px",
+              borderRadius: "8px",
+              border:
+                "1px solid #d1d5db",
+              outline: "none",
+              fontSize: "14px",
+              color: isSearching
+                ? "#000"
+                : undefined,
             }}
           />
         </div>
 
-        <div className="action-row" style={{ alignItems: "flex-end" }}>
+        {/* BUTTON */}
+        <div
+          className="action-row"
+          style={{
+            display: "flex",
+            gap: "8px",
+          }}
+        >
           <button
             type="submit"
+            disabled={loading}
             style={{
-              padding: "8px 12px",
-              borderRadius: 6,
-              backgroundColor: "#111827",
+              padding: "10px 14px",
+              borderRadius: "8px",
+              backgroundColor: "#2563eb",
               color: "white",
               border: "none",
               cursor: "pointer",
               fontWeight: 700,
+              transition: "0.2s",
             }}
-            disabled={loading}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#1d4ed8")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "#2563eb")
+            }
           >
-            {loading ? "Mencari..." : "Cari"}
+            {loading
+              ? "Mencari..."
+              : "Cari"}
           </button>
+
           <button
             type="button"
+            disabled={loading}
             onClick={() => {
               setQ("");
               setRows(initialRows);
             }}
             style={{
-              padding: "8px 12px",
-              borderRadius: 6,
-              backgroundColor: "white",
+              padding: "10px 14px",
+              borderRadius: "8px",
+              backgroundColor:
+                "white",
               color: "#111827",
-              border: "1px solid #d1d5db",
+              border:
+                "1px solid #d1d5db",
               cursor: "pointer",
               fontWeight: 700,
             }}
-            disabled={loading}
           >
             Reset
           </button>
         </div>
       </form>
 
-      <AdminArsipTable surat={rows} />
+      <AdminArsipTable
+        surat={rows}
+      />
     </div>
   );
 }

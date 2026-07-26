@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import InputField from "@/app/components/form/InputField";
 import FileUploadField from "@/app/components/form/FileUploadField";
 import SubmitButton from "@/app/components/form/SubmitButton";
+import SelectField from "../form/SelectField";
 
 type Props = {
   mode: "create" | "edit";
@@ -135,7 +136,8 @@ export default function TidakBerlanggananAirForm({
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement |
-      HTMLTextAreaElement
+      HTMLTextAreaElement |
+      HTMLSelectElement
     >
   ) {
 
@@ -554,12 +556,17 @@ export default function TidakBerlanggananAirForm({
               </p>
             )}
 
-            <InputField
+            <SelectField
               label="Status Perkawinan"
               name="status_perkawinan_pertama"
               value={form.status_perkawinan_pertama}
               onChange={handleChange}
-              placeholder="Contoh : Kawin"
+              options={[
+                "Belum Kawin",
+                "Kawin",
+                "Cerai Hidup",
+                "Cerai Mati",
+              ]}
             />
 
             {errors.status_perkawinan_pertama && (

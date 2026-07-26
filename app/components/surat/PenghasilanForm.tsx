@@ -531,12 +531,15 @@ export default function PenghasilanForm({
               </p>
             )}
 
-            <InputField
+            <SelectField
               label="Kewarganegaraan"
               name="kewarganegaraan_kepala_keluarga"
               value={form.kewarganegaraan_kepala_keluarga}
               onChange={handleChange}
-              placeholder="Contoh : Indonesia"
+              options={[
+                "WNI",
+                "WNA",
+              ]}
             />
 
             {errors.kewarganegaraan_kepala_keluarga && (
@@ -545,12 +548,19 @@ export default function PenghasilanForm({
               </p>
             )}
 
-            <InputField
+            <SelectField
               label="Agama"
               name="agama_kepala_keluarga"
               value={form.agama_kepala_keluarga}
               onChange={handleChange}
-              placeholder="Masukkan agama"
+              options={[
+                "Islam",
+                "Kristen",
+                "Katolik",
+                "Hindu",
+                "Buddha",
+                "Konghucu",
+              ]}
             />
 
             {errors.agama_kepala_keluarga && (
@@ -673,12 +683,15 @@ export default function PenghasilanForm({
               </p>
             )}
 
-            <InputField
+            <SelectField
               label="Kewarganegaraan"
               name="kewarganegaraan_anak"
               value={form.kewarganegaraan_anak}
               onChange={handleChange}
-              placeholder="Contoh : Indonesia"
+              options={[
+                "WNI",
+                "WNA",
+              ]}
             />
 
             {errors.kewarganegaraan_anak && (
@@ -687,12 +700,19 @@ export default function PenghasilanForm({
               </p>
             )}
 
-            <InputField
+            <SelectField
               label="Agama"
               name="agama_anak"
               value={form.agama_anak}
               onChange={handleChange}
-              placeholder="Masukkan agama"
+              options={[
+                "Islam",
+                "Kristen",
+                "Katolik",
+                "Hindu",
+                "Buddha",
+                "Konghucu",
+              ]}
             />
 
             {errors.agama_anak && (

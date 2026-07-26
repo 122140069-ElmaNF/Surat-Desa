@@ -168,21 +168,26 @@ export default function AdminSuratTable({
                       borderRadius:
                         "999px",
                       backgroundColor:
-                        item.status ===
-                        "selesai"
-                          ? "#dcfce7"
-                          : item.status ===
-                            "menunggu_persetujuan"
-                          ? "#dbeafe"
-                          : "#fef3c7",
+                        item.status === "selesai"
+                          ? "#DCFCE7"
+                          : item.status === "menunggu_persetujuan"
+                          ? "#DBEAFE"
+                          : item.status === "ditolak"
+                          ? "#FEE2E2"
+                          : item.status === "draft"
+                          ? "#F3F4F6"
+                          : "#FEF3C7",
+
                       color:
-                        item.status ===
-                        "selesai"
+                        item.status === "selesai"
                           ? "#166534"
-                          : item.status ===
-                            "menunggu_persetujuan"
-                          ? "#1e40af"
-                          : "#92400e",
+                          : item.status === "menunggu_persetujuan"
+                          ? "#1E40AF"
+                          : item.status === "ditolak"
+                          ? "#B91C1C"
+                          : item.status === "draft"
+                          ? "#4B5563"
+                          : "#92400E",
                       fontSize: "13px",
                       fontWeight: 700,
                     }}

@@ -487,12 +487,15 @@ export default function KehilanganForm({
               </p>
             )}
 
-            <InputField
+            <SelectField
               label="Kewarganegaraan"
               name="kewarganegaraan"
               value={form.kewarganegaraan}
               onChange={handleChange}
-              placeholder="Contoh : Indonesia"
+              options={[
+                "WNI",
+                "WNA",
+              ]}
             />
 
             {errors.kewarganegaraan && (

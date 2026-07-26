@@ -474,12 +474,19 @@ export default function KematianForm({
               </p>
             )}
 
-            <InputField
+            <SelectField
               label="Agama"
               name="agama"
               value={form.agama}
               onChange={handleChange}
-              placeholder="Masukkan agama"
+              options={[
+                "Islam",
+                "Kristen",
+                "Katolik",
+                "Hindu",
+                "Buddha",
+                "Konghucu",
+              ]}
             />
 
             {errors.agama && (
