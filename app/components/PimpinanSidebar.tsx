@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   usePathname,
@@ -12,6 +13,7 @@ import {
   UserCog,
   LogOut,
   TriangleAlert,
+  Landmark,
 } from "lucide-react";
 
 const menus = [
@@ -93,8 +95,17 @@ export default function PimpinanSidebar() {
     <>
       <aside className="sidebar">
         <div className="sidebar-header">
+
+          <img
+            src="/logoSurat.png"
+            alt="Logo Surat Desa"
+            className="sidebar-logo"
+          />
+
           <h2>Surat Desa</h2>
-          <span>Pimpinan Panel</span>
+
+          <p>Panel Pimpinan</p>
+
         </div>
 
         <nav className="sidebar-menu">

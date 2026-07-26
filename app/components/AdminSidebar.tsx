@@ -103,8 +103,17 @@ export default function AdminSidebar() {
     <>
       <aside className="sidebar">
         <div className="sidebar-header">
+
+          <img
+            src="/logoSurat.png"
+            alt="Logo Surat Desa"
+            className="sidebar-logo"
+          />
+
           <h2>Surat Desa</h2>
-          <span>Admin Panel</span>
+
+          <p>Panel Admin</p>
+
         </div>
 
         {/* Menu */}
