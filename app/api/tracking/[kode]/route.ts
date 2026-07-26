@@ -72,12 +72,32 @@ export async function GET(
 
     const table = TABLE_MAP[data.kode_surat];
 
+    const NAMA_FIELD_MAP: Record<string, string> = {
+      domisili: "nama",
+      izin_keramaian: "nama",
+      tafsiran_harga_tanah: "nama",
+      listrik: "nama",
+      tidak_mampu: "nama",
+      usaha: "nama",
+      jalan: "nama",
+      kehilangan: "nama",
+      kebenaran_data: "nama",
+      kematian: "nama",
+
+      beda_nama_identitas: "nama_lama",
+      tidak_berlangganan_air: "nama_pertama",
+      penghasilan: "nama_kepala_keluarga",
+    };
+
     let namaPemohon = "-";
 
     if (table) {
+      const namaField =
+        NAMA_FIELD_MAP[table] ?? "nama";
+
       const [detailRows] = await db.query(
         `
-        SELECT nama
+        SELECT ${namaField} AS nama
         FROM ${table}
         WHERE pengajuan_id = ?
         LIMIT 1

@@ -1,53 +1,64 @@
 import db from "@/lib/db";
+import { getNamaPemohon } from "@/lib/surat/getNamaPemohon";
 
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const q = searchParams.get("q");
-    let sql = `SELECT
-      ps.id,
-      ps.kode_tracking,
-      ps.status,
-      ps.created_at,
-      js.nama_surat,
-      (
-        SELECT dp.value
-        FROM detail_pengajuan dp
-        JOIN field_surat fs ON fs.id = dp.field_id
-        WHERE dp.pengajuan_id = ps.id
-          AND fs.nama_field = 'nama'
-        LIMIT 1
-      ) AS nama
-    FROM pengajuan_surat ps
-    LEFT JOIN jenis_surat js ON js.id = ps.jenis_surat_id
-    WHERE ps.status = 'selesai'`;
+    const q = (searchParams.get("q") || "").toLowerCase();
 
-    const params = [];
+    const [rows] = await db.query(`
+      SELECT
+        ps.id,
+        ps.kode_tracking,
+        ps.status,
+        ps.created_at,
+        js.nama_surat,
+        js.kode_surat
+
+      FROM pengajuan_surat ps
+
+      JOIN jenis_surat js
+        ON js.id = ps.jenis_surat_id
+
+      WHERE ps.status = 'selesai'
+
+      ORDER BY ps.created_at DESC
+    `);
+
+    let data = await Promise.all(
+      rows.map(async (item) => ({
+        ...item,
+        nama: await getNamaPemohon(
+          item.kode_surat,
+          item.id
+        ),
+      }))
+    );
+
     if (q) {
-      sql += ` AND (
-        (
-          SELECT dp.value
-          FROM detail_pengajuan dp
-          JOIN field_surat fs ON fs.id = dp.field_id
-          WHERE dp.pengajuan_id = ps.id
-            AND fs.nama_field = 'nama'
-          LIMIT 1
-        ) LIKE ?
-        OR js.nama_surat LIKE ?
-      )`;
-      params.push(`%${q}%`, `%${q}%`);
+      data = data.filter(
+        (item) =>
+          item.nama?.toLowerCase().includes(q) ||
+          item.nama_surat?.toLowerCase().includes(q)
+      );
     }
 
-    sql += ` ORDER BY ps.created_at DESC`;
-
-    const [rows] = await db.query(sql, params);
-
-    return new Response(JSON.stringify(rows), {
+    return new Response(JSON.stringify(data), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: "Server error" }), { status: 500 });
+
+    return new Response(
+      JSON.stringify({
+        error: "Server error",
+      }),
+      {
+        status: 500,
+      }
+    );
   }
 }

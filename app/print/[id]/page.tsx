@@ -17,6 +17,7 @@ export default function PrintSuratPage() {
 
   const id = params.id;
 
+  const [kodeSurat, setKodeSurat] = useState("");
   const [content, setContent] = useState("");
   const [useKop, setUseKop] = useState(true);
   const [status, setStatus] = useState("");
@@ -43,9 +44,8 @@ export default function PrintSuratPage() {
         setUseKop(res.use_kop);
         setStatus(res.status ?? "");
         setProfil(res.profil ?? null);
-        setTanggalSurat(
-          res.tanggalSurat ?? ""
-        );
+        setTanggalSurat(res.tanggalSurat ?? "");
+        setKodeSurat(res.kodeSurat ?? "");
 
         setLoading(false);
       });
@@ -86,6 +86,7 @@ export default function PrintSuratPage() {
   return (
       <SuratPreview
         mode="print"
+         kodeSurat={kodeSurat}
         content={content}
         useKop={useKop}
         status={status}

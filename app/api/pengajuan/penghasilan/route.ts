@@ -184,7 +184,7 @@ export async function POST(request: Request) {
       `
       SELECT id, kode_surat
       FROM jenis_surat
-      WHERE kode_surat = 'SKP'
+      WHERE kode_surat = 'SKPHS'
       `
     );
 

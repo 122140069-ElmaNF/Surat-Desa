@@ -105,6 +105,8 @@ const profilFinal =
     status: pengajuan.status,
     use_kop: Boolean(pengajuan.use_kop),
 
+    kodeSurat: pengajuan.kode_surat,
+
     tanggalSurat: pengajuan.tanggal_surat
       ? new Date(
           pengajuan.tanggal_surat

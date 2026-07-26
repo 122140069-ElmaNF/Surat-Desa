@@ -1,5 +1,6 @@
 import db from "@/lib/db";
 import AdminSuratTable, { SuratRow } from "./AdminSuratTable";
+import { getNamaPemohon } from "@/lib/surat/getNamaPemohon";
 
 export default async function AdminSuratPage() {
   const [rows] = await db.query(
@@ -10,30 +11,42 @@ export default async function AdminSuratPage() {
       ps.status,
       ps.created_at,
       js.nama_surat,
-      d.nama
+      js.kode_surat
+
     FROM pengajuan_surat ps
 
-    LEFT JOIN jenis_surat js
+    JOIN jenis_surat js
       ON js.id = ps.jenis_surat_id
-
-    LEFT JOIN domisili d
-      ON d.pengajuan_id = ps.id
 
     ORDER BY ps.created_at DESC
     `
   );
 
+  const surat = await Promise.all(
+    (rows as any[]).map(async (item) => ({
+      ...item,
+      nama: await getNamaPemohon(
+        item.kode_surat,
+        item.id
+      ),
+    }))
+  );
+
   return (
     <div>
       <div style={{ marginBottom: "22px" }}>
-        <h1 className="page-title">Surat Masuk</h1>
+        <h1 className="page-title">
+          Surat Masuk
+        </h1>
 
         <p className="page-subtitle">
           Daftar semua pengajuan surat dari pemohon.
         </p>
       </div>
 
-      <AdminSuratTable surat={rows as SuratRow[]} />
+      <AdminSuratTable
+        surat={surat as SuratRow[]}
+      />
     </div>
   );
 }

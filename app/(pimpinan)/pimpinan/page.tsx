@@ -1,4 +1,6 @@
 import db from "@/lib/db";
+import { getNamaPemohon } from "@/lib/surat/getNamaPemohon";
+
 import PimpinanDashboardStats from "./PimpinanDashboardStats";
 import PimpinanSuratTable, {
   SuratPersetujuanRow,
@@ -10,22 +12,30 @@ export default async function PimpinanDashboardPage() {
     SELECT
       ps.id,
       ps.kode_tracking,
-      d.nama,
       ps.status,
       ps.created_at,
-      js.nama_surat
+      js.nama_surat,
+      js.kode_surat
+
     FROM pengajuan_surat ps
 
-    LEFT JOIN jenis_surat js
+    JOIN jenis_surat js
       ON js.id = ps.jenis_surat_id
-
-    LEFT JOIN domisili d
-      ON d.pengajuan_id = ps.id
 
     WHERE ps.status = 'menunggu_persetujuan'
 
     ORDER BY ps.created_at ASC
   `);
+
+  const surat = await Promise.all(
+    (rows as any[]).map(async (item) => ({
+      ...item,
+      nama: await getNamaPemohon(
+        item.kode_surat,
+        item.id
+      ),
+    }))
+  );
 
   const [statRows] = await db.query(`
     SELECT COUNT(*) AS total
@@ -55,7 +65,7 @@ export default async function PimpinanDashboardPage() {
       />
 
       <PimpinanSuratTable
-        surat={rows as SuratPersetujuanRow[]}
+        surat={surat as SuratPersetujuanRow[]}
       />
     </div>
   );

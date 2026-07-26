@@ -15,6 +15,7 @@ type Profil = {
 };
 
 export default function AdminPreviewPage() {
+  const [kodeSurat, setKodeSurat] = useState("");
   const [data, setData] = useState("");
   const [useKop, setUseKop] = useState(true);
   const [status, setStatus] = useState("");
@@ -40,6 +41,7 @@ export default function AdminPreviewPage() {
         setStatus(res.status || "");
         setProfil(res.profil ?? null);
         setTanggalSurat(res.tanggalSurat || "");
+        setKodeSurat(res.kodeSurat ?? "");
       });
   }, [id]);
 
@@ -87,6 +89,7 @@ export default function AdminPreviewPage() {
 
         <SuratPreview
         mode="preview"
+          kodeSurat={kodeSurat}
           content={data}
           useKop={useKop}
           status={status}

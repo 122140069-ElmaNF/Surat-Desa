@@ -1,9 +1,11 @@
 import db from "@/lib/db";
+import { getNamaPemohon } from "@/lib/surat/getNamaPemohon";
 import { ArsipSuratRow } from "./AdminArsipTable";
 import SearchableArsip from "./SearchableArsip";
 
-type ArsipSuratDbRow = Omit<ArsipSuratRow, "created_at"> & {
+type ArsipSuratDbRow = Omit<ArsipSuratRow, "created_at" | "nama"> & {
   created_at: string | Date | null;
+  kode_surat: string;
 };
 
 export default async function AdminArsipPage() {
@@ -17,11 +19,16 @@ export default async function AdminArsipPage() {
         ps.status,
         ps.created_at,
         ps.nomor_surat,
-        js.nama_surat
+        js.nama_surat,
+        js.kode_surat
+
       FROM pengajuan_surat ps
-      LEFT JOIN jenis_surat js
+
+      JOIN jenis_surat js
         ON js.id = ps.jenis_surat_id
+
       WHERE ps.status = 'selesai'
+
       ORDER BY ps.created_at DESC
     `);
 
@@ -34,12 +41,18 @@ export default async function AdminArsipPage() {
     rows = [];
   }
 
-  const sanitized: ArsipSuratRow[] = rows.map((r) => ({
-    ...r,
-    created_at: r.created_at
-      ? new Date(r.created_at).toISOString()
-      : "",
-  }));
+  const sanitized: ArsipSuratRow[] = await Promise.all(
+    rows.map(async (r) => ({
+      ...r,
+      nama: await getNamaPemohon(
+        r.kode_surat,
+        r.id
+      ),
+      created_at: r.created_at
+        ? new Date(r.created_at).toISOString()
+        : "",
+    }))
+  );
 
   return (
     <div>
@@ -54,9 +67,7 @@ export default async function AdminArsipPage() {
         </p>
       </div>
 
-      <SearchableArsip
-        initialRows={sanitized}
-      />
+      <SearchableArsip initialRows={sanitized} />
     </div>
   );
 }

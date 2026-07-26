@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import {
-  usePathname,
-  useRouter,
-} from "next/navigation";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import {
   LayoutDashboard,
@@ -13,6 +11,7 @@ import {
   Archive,
   Users,
   LogOut,
+  TriangleAlert,
 } from "lucide-react";
 
 const menus = [
@@ -41,16 +40,35 @@ const menus = [
     href: "/admin/users",
     icon: Users,
   },
-  {
-    title: "Logout",
-    href: "#",
-    icon: LogOut,
-  },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+
+  const [showLogoutModal, setShowLogoutModal] =
+    useState(false);
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setShowLogoutModal(false);
+      }
+    }
+
+    if (showLogoutModal) {
+      window.addEventListener(
+        "keydown",
+        handleKey
+      );
+    }
+
+    return () => {
+      window.removeEventListener(
+        "keydown",
+        handleKey
+      );
+    };
+  }, [showLogoutModal]);
 
   const isActive = (href: string) => {
     if (href === "/admin") {
@@ -64,63 +82,115 @@ export default function AdminSidebar() {
   };
 
   async function handleLogout() {
-    await fetch("/api/logout", {
-      method: "POST",
-    });
+    try {
+      const res = await fetch("/api/logout", {
+        method: "POST",
+      });
 
-    router.push("/login");
-    router.refresh();
+      if (!res.ok) {
+        alert("Logout gagal.");
+        return;
+      }
+
+      window.location.href = "/login";
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan.");
+    }
   }
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
-        <h2>Surat Desa</h2>
-        <span>Admin Panel</span>
-      </div>
+    <>
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h2>Surat Desa</h2>
+          <span>Admin Panel</span>
+        </div>
 
-      <nav className="sidebar-menu">
-        {menus.map((menu) => {
-          const Icon = menu.icon;
+        {/* Menu */}
+        <nav className="sidebar-menu">
+          {menus.map((menu) => {
+            const Icon = menu.icon;
 
-          // ===== MENU LOGOUT =====
-          if (menu.title === "Logout") {
             return (
-              <button
-                key={menu.title}
-                onClick={handleLogout}
-                className="menu-item"
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  width: "100%",
-                  cursor: "pointer",
-                  textAlign: "left",
-                }}
+              <Link
+                key={menu.href}
+                href={menu.href}
+                className={`menu-item ${
+                  isActive(menu.href)
+                    ? "active"
+                    : ""
+                }`}
               >
                 <Icon size={20} />
                 <span>{menu.title}</span>
-              </button>
+              </Link>
             );
-          }
+          })}
+        </nav>
 
-          // ===== MENU BIASA =====
-          return (
-            <Link
-              key={menu.href}
-              href={menu.href}
-              className={`menu-item ${
-                isActive(menu.href)
-                  ? "active"
-                  : ""
-              }`}
-            >
-              <Icon size={20} />
-              <span>{menu.title}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+        {/* Footer */}
+        <div className="sidebar-footer">
+          <button
+            onClick={() =>
+              setShowLogoutModal(true)
+            }
+            className="logout-menu"
+          >
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Modal Logout */}
+      {showLogoutModal && (
+        <div
+          className="logout-overlay"
+          onClick={() =>
+            setShowLogoutModal(false)
+          }
+        >
+          <div
+            className="logout-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <div className="logout-icon">
+              <TriangleAlert
+                size={44}
+                color="#f59e0b"
+              />
+            </div>
+
+            <h2>Konfirmasi Logout</h2>
+
+            <p>
+              Apakah Anda yakin ingin keluar
+              dari sistem?
+            </p>
+
+            <div className="logout-actions">
+              <button
+                className="btn-cancel"
+                onClick={() =>
+                  setShowLogoutModal(false)
+                }
+              >
+                Batal
+              </button>
+
+              <button
+                className="btn-logout"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

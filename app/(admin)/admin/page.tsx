@@ -1,6 +1,7 @@
 import db from "@/lib/db";
 import AdminDashboardStats from "./AdminDashboardStats";
 import AdminSuratTerbaruTable from "./AdminSuratTerbaruTable";
+import { getNamaPemohon } from "@/lib/surat/getNamaPemohon";
 
 export default async function AdminDashboardPage() {
   const [rows] = await db.query(`
@@ -14,33 +15,40 @@ export default async function AdminDashboardPage() {
 
   const data = (rows as any[])[0];
 
-const [suratTerbaru] = await db.query(`
-SELECT
-    ps.id,
-    ps.kode_tracking,
-    ps.status,
-    ps.created_at,
-    js.nama_surat,
-    d.nama
+  const [suratRows] = await db.query(`
+    SELECT
+      ps.id,
+      ps.kode_tracking,
+      ps.status,
+      ps.created_at,
+      js.nama_surat,
+      js.kode_surat
 
-FROM pengajuan_surat ps
+    FROM pengajuan_surat ps
 
-LEFT JOIN jenis_surat js
-    ON js.id = ps.jenis_surat_id
+    JOIN jenis_surat js
+      ON js.id = ps.jenis_surat_id
 
-LEFT JOIN domisili d
-    ON d.pengajuan_id = ps.id
+    ORDER BY ps.created_at DESC
+    LIMIT 3
+  `);
 
-ORDER BY ps.created_at DESC
-LIMIT 3
-`);
+  const suratTerbaru = await Promise.all(
+    (suratRows as any[]).map(async (item) => ({
+      ...item,
+      nama: await getNamaPemohon(
+        item.kode_surat,
+        item.id
+      ),
+    }))
+  );
 
   return (
     <div>
       <AdminDashboardStats data={data} />
 
       <AdminSuratTerbaruTable
-        data={suratTerbaru as any[]}
+        data={suratTerbaru}
       />
     </div>
   );

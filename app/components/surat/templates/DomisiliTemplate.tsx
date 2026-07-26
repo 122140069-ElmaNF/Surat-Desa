@@ -1,6 +1,7 @@
 import "../surat.css";
 import SuratCanvas from "../SuratCanvas";
 import TandaTangan from "../TandaTangan";
+import LayoutTandaTangan from "../LayoutTandaTangan";
 import { Editor, EditorContent } from "@tiptap/react";
 
 type Profil = {
@@ -63,13 +64,15 @@ export default function DomisiliTemplate({
 </div>
 
       {/* ===================== TANDA TANGAN ===================== */}
-<TandaTangan
-  jabatan={profil?.jabatan ?? "Kepala Desa"}
-  nama={profil?.nama_kepala_desa ?? ""}
-  image={profil?.tanda_tangan}
-  showImage={status === "selesai"}
-  tanggal={tanggalSurat}
-/>
+<LayoutTandaTangan columns={1}>
+  <TandaTangan
+    jabatan={profil?.jabatan ?? "Kepala Desa"}
+    nama={profil?.nama_kepala_desa ?? ""}
+    image={profil?.tanda_tangan}
+    showImage={status === "selesai"}
+    tanggal={tanggalSurat}
+  />
+</LayoutTandaTangan>
     </SuratCanvas>
   );
 }

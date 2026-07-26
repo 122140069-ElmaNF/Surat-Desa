@@ -1,5 +1,5 @@
 import SuratPaper from "./SuratPaper";
-import DomisiliTemplate from "./templates/DomisiliTemplate";
+import SuratTemplate from "./templates/SuratTemplate";
 
 type Profil = {
   nama_kepala_desa: string;
@@ -10,6 +10,7 @@ type Profil = {
 type Props = {
   mode?: "preview" | "print";
 
+  kodeSurat: string;
   content: string;
   useKop: boolean;
   status: string;
@@ -19,6 +20,7 @@ type Props = {
 
 export default function SuratPreview({
   mode = "preview",
+  kodeSurat,
   content,
   useKop,
   status,
@@ -27,7 +29,8 @@ export default function SuratPreview({
 }: Props) {
   return (
     <SuratPaper mode={mode}>
-      <DomisiliTemplate
+      <SuratTemplate
+      kodeSurat={kodeSurat}
         content={content}
         useKop={useKop}
         status={status}

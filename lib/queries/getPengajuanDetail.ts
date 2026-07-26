@@ -32,8 +32,9 @@ const FILE_COLUMNS = [
 export async function getPengajuanDetail(
   id: number | string
 ) {
-
-  // Pengajuan
+  // ===========================
+  // DATA PENGAJUAN
+  // ===========================
 
   const [rows] = await db.query(
     `
@@ -46,7 +47,7 @@ export async function getPengajuanDetail(
     FROM pengajuan_surat ps
     JOIN jenis_surat js
       ON js.id = ps.jenis_surat_id
-    WHERE ps.id=?
+    WHERE ps.id = ?
     LIMIT 1
     `,
     [id]
@@ -58,71 +59,71 @@ export async function getPengajuanDetail(
     return null;
   }
 
-  // Tentukan tabel detail
+  // ===========================
+  // TABEL DETAIL
+  // ===========================
 
   const table =
     TABLE_MAP[pengajuan.kode_surat];
 
-let detail: {
-  key: string;
-  label: string;
-  value: any;
-}[] = [];
+  let detail: {
+    key: string;
+    label: string;
+    value: any;
+  }[] = [];
 
   let dokumen: {
+    key: string;
     label: string;
     file: string;
     url: string;
   }[] = [];
 
   if (table) {
-    const [detailRows] =
-      await db.query(
-        `
-        SELECT *
-        FROM ${table}
-        WHERE pengajuan_id=?
-        LIMIT 1
-        `,
-        [pengajuan.id]
-      );
+    const [detailRows] = await db.query(
+      `
+      SELECT *
+      FROM ${table}
+      WHERE pengajuan_id = ?
+      LIMIT 1
+      `,
+      [pengajuan.id]
+    );
 
-const row = (detailRows as any[])[0] ?? null;
-const detailData = row as Record<string, any>;
+    const row =
+      (detailRows as any[])[0] ?? null;
 
-detail = [];
+    if (row) {
+      detail = Object.keys(row)
+        .filter(
+          (key) =>
+            ![
+              "id",
+              "pengajuan_id",
+              "created_at",
+              "updated_at",
+              ...FILE_COLUMNS,
+            ].includes(key)
+        )
+        .map((key) => ({
+          key,
+          label: formatLabel(key),
+          value: normalizeValue(row[key]),
+        }));
 
-if (row) {
-  detail = Object.keys(row)
-    .filter(
-      (key) =>
-        ![
-          "id",
-          "pengajuan_id",
-          "created_at",
-          "updated_at",
-          ...FILE_COLUMNS,
-        ].includes(key)
-    )
-    .map((key) => ({
-      key,
-      label: formatLabel(key),
-      value: row[key],
-    }));
-
-  dokumen = FILE_COLUMNS
-    .filter(
-      (column) =>
-        row[column] &&
-        String(row[column]).trim() !== ""
-    )
-    .map((column) => ({
-      key: column,
-      label: formatLabel(column),
-      file: row[column],
-      url: `/uploads/${getFolder(column)}/${row[column]}`,
-    }));
-}
+      dokumen = FILE_COLUMNS
+        .filter(
+          (column) =>
+            row[column] &&
+            String(row[column]).trim() !== ""
+        )
+        .map((column) => ({
+          key: column,
+          label: formatLabel(column),
+          file: row[column],
+          url: `/uploads/${getFolder(column)}/${row[column]}`,
+        }));
+    }
   }
 
   return {
@@ -133,9 +134,27 @@ if (row) {
   };
 }
 
-function formatLabel(
-  column: string
-) {
+function normalizeValue(value: any) {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+
+  if (value instanceof Date) {
+    return value.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  if (typeof value === "bigint") {
+    return value.toString();
+  }
+
+  return value;
+}
+
+function formatLabel(column: string) {
   return column
     .replace("file_", "")
     .replace(/_/g, " ")
@@ -144,9 +163,7 @@ function formatLabel(
     );
 }
 
-function getFolder(
-  column: string
-) {
+function getFolder(column: string) {
   switch (column) {
     case "file_ktp":
       return "ktp";

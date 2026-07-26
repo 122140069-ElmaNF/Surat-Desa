@@ -10,7 +10,7 @@ import { editorExtensions } from "./extensions";
 import Toolbar from "./Toolbar";
 import SuratCanvas from "@/app/components/surat/SuratCanvas";
 import SuratPaper from "@/app/components/surat/SuratPaper";
-import DomisiliTemplate from "@/app/components/surat/templates/DomisiliTemplate";
+import SuratTemplate from "@/app/components/surat/templates/SuratTemplate";
 
 import "./editor.css";
 
@@ -28,6 +28,8 @@ type Props = {
   status: string;
   tanggalSurat?: string;
   profil: Profil | null;
+
+  kodeSurat: string;
 };
 
 export default function SuratEditor({
@@ -37,6 +39,7 @@ export default function SuratEditor({
   status,
   tanggalSurat,
   profil,
+  kodeSurat,
 }: Props) {
   const editor = useEditor({
     immediatelyRender: false,
@@ -100,7 +103,8 @@ export default function SuratEditor({
     onSave={handleSave}
 />
 <SuratPaper>
-  <DomisiliTemplate
+  <SuratTemplate
+  kodeSurat={kodeSurat}
     content={content}
     useKop={useKop}
     status={status}

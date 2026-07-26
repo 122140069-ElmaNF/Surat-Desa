@@ -8,6 +8,14 @@ import ListrikForm from "@/app/components/surat/ListrikForm";
 import JalanForm from "@/app/components/surat/JalanForm";
 import UsahaForm from "@/app/components/surat/UsahaForm";
 import KebenaranDataForm from "@/app/components/surat/KebenaranDataForm";
+import KematianForm from "@/app/components/surat/KematianForm";
+import TafsiranHargaTanahForm from "@/app/components/surat/TafsiranHargaTanahForm";
+import BedaNamaIdentitasForm from "@/app/components/surat/BedaNamaIdentitasForm";
+import PenghasilanForm from "@/app/components/surat/PenghasilanForm";
+import KehilanganForm from "@/app/components/surat/KehilanganForm";
+import IzinKeramaianForm from "@/app/components/surat/IzinKeramaianForm";
+import TidakMampuForm from "@/app/components/surat/TidakMampuForm";
+import TidakBerlanggananAirForm from "@/app/components/surat/TidakBerlangganAirForm";
 
 
 type JenisSurat = {
@@ -52,8 +60,15 @@ export default function AdminBuatSuratPage() {
         SKJ: "jalan",
         SKL: "listrik",
         SKU: "usaha",
-        SKKD: "kebenaran_data",
+        SKKD: "kebenaran-data",
         SKPHS: "penghasilan",
+        SKM: "kematian",
+        STHT: "tafsiran-harga-tanah",
+        SKBNI: "beda-nama-identitas",
+        SKH: "kehilangan",
+        SKIK: "izin-keramaian",
+        SKTM: "tidak-mampu",
+        SKTBAPT: "tidak-berlanggan-air",
       };
 
       const endpoint =
@@ -141,7 +156,70 @@ export default function AdminBuatSuratPage() {
 
         case "SKPHS":
         return (
-          <KebenaranDataForm
+          <PenghasilanForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+        case "SKM":
+        return (
+          <KematianForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+        case "STHT":
+        return (
+          <TafsiranHargaTanahForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+        case "SKBNI":
+        return (
+          <BedaNamaIdentitasForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+        case "SKH":
+        return (
+          <KehilanganForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+        case "SKIK":
+        return (
+          <IzinKeramaianForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+        case "SKTM":
+        return (
+          <TidakMampuForm
+            mode="create"
+            role="admin"
+            onSubmit={handleAdminSubmit}
+          />
+        );
+
+        case "SKTBAPT":
+        return (
+          <TidakBerlanggananAirForm
             mode="create"
             role="admin"
             onSubmit={handleAdminSubmit}
