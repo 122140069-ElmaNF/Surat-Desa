@@ -67,7 +67,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <UsahaForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
@@ -75,7 +75,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <KebenaranDataForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
@@ -83,7 +83,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <PenghasilanForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
@@ -91,7 +91,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <KematianForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
@@ -99,7 +99,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <TafsiranHargaTanahForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
@@ -107,7 +107,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <BedaNamaIdentitasForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
@@ -115,7 +115,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <KehilanganForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
     
@@ -123,7 +123,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <IzinKeramaianForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
@@ -131,7 +131,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <TidakMampuForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
@@ -139,7 +139,7 @@ export default async function PerbaikiPengajuanPage({
     return (
       <TidakBerlanggananAirForm
         mode="edit"
-        initialData={data}
+        initialData={initialData}
       />
     );
 
