@@ -5,7 +5,7 @@ export default function HeroSection() {
     <section className="hero">
       <div className="hero-content">
         <img
-          src="\desa-logo.png"
+          src="\logoSurat.png"
           alt="Logo Desa"
           className="hero-logo"
         />
