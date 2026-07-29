@@ -1,8 +1,11 @@
 import Link from "next/link";
 import db from "@/lib/db";
 import DeleteUserButton from "@/app/components/DeleteUserButton";
+import { requireSuperAdminPage } from "@/lib/auth";
 
 export default async function AdminUsersPage() {
+  const currentUser =
+  await requireSuperAdminPage();
   const [rows] = await db.query(`
     SELECT
       id,
@@ -82,10 +85,11 @@ export default async function AdminUsersPage() {
                           </button>
                       </Link>
 
-                      <DeleteUserButton
-                          id={user.id}
-                      />
-
+                      {currentUser.id !== user.id && (
+                          <DeleteUserButton
+                              id={user.id}
+                          />
+                      )}
                   </div>
                   </td>
                 </tr>

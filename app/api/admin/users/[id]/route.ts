@@ -1,22 +1,48 @@
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import bcrypt from "bcrypt";
+import { requireSuperAdminApi } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 export async function PATCH(
+  
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireSuperAdminApi();
+
+  if (auth) return auth;
+
   try {
     const { id } = await params;
-
     const body = await req.json();
-
     const {
       nama,
       username,
       password,
       role,
     } = body;
+
+    const cookieStore = await cookies();
+
+    const session = cookieStore.get("session");
+
+    const currentUser = JSON.parse(session!.value);
+
+    if (
+        Number(id) === currentUser.id &&
+        role !== "admin"
+    ) {
+        return NextResponse.json(
+            {
+                success:false,
+                message:"Role Super Admin tidak boleh diubah."
+            },
+            {
+                status:400
+            }
+        );
+    }
 
     const [checkUser] = await db.query(
     `
@@ -131,6 +157,27 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireSuperAdminApi();
+
+  if (auth) return auth;
+
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session");
+  const currentUser = JSON.parse(session!.value);
+  const { id } = await params;
+
+  if (Number(id) === currentUser.id) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Super Admin tidak dapat menghapus akun sendiri.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
   try {
     const { id } = await params;
 

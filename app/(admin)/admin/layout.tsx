@@ -9,57 +9,67 @@ import "@/app/styles/form.css";
 import "@/app/styles/responsive.css";
 import "@/app/styles/button.css";
 
-export default  async function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
 
-const cookieStore = await cookies();
+  const session = cookieStore.get("session");
 
-const session =
-cookieStore.get("session");
+  let nama = "Admin";
+  let role = "Administrator";
+  let isSuperAdmin = false;
 
-let nama = "Admin";
-let role = "Administrator";
+  if (session) {
+    const user = JSON.parse(session.value);
 
-if (session) {
-  const user = JSON.parse(session.value);
-  nama = user.nama;
-  role =
-    user.role === "admin"
-      ? "Administrator"
-      : "Pimpinan";
-}
+    nama = user.nama;
+
+    role =
+      user.role === "admin"
+        ? "Administrator"
+        : "Pimpinan";
+
+    isSuperAdmin =
+      user.is_super_admin ?? false;
+  }
 
   return (
     <div className="admin-layout">
-      <AdminSidebar />
+      <AdminSidebar
+        isSuperAdmin={isSuperAdmin}
+      />
 
       <div className="admin-content">
         <header className="topbar">
           <div>
-              <h1 className="topbar-title">
-                  Dashboard Admin
-              </h1>
-              <p className="topbar-subtitle">
-                  Sistem Informasi Surat Desa
-              </p>
+            <h1 className="topbar-title">
+              Dashboard Admin
+            </h1>
+
+            <p className="topbar-subtitle">
+              Sistem Informasi Surat Desa
+            </p>
           </div>
+
           <div className="topbar-user">
-              <div>
-                  <h3>
-                      {nama}
-                  </h3>
-                  <span>
-                      {role}
-                  </span>
-              </div>
-              <div className="user-avatar">
-                  {nama.charAt(0).toUpperCase()}
-              </div>
+            <div>
+              <h3>{nama}</h3>
+
+              <span>
+                {isSuperAdmin
+                  ? "Super Administrator"
+                  : role}
+              </span>
+            </div>
+
+            <div className="user-avatar">
+              {nama.charAt(0).toUpperCase()}
+            </div>
           </div>
-      </header>
+        </header>
 
         <main>{children}</main>
       </div>

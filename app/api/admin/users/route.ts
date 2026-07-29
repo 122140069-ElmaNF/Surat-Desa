@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 import bcrypt from "bcrypt";
+import { requireSuperAdminApi } from "@/lib/auth";
 
 export async function POST(req: Request) {
+  const auth = await requireSuperAdminApi();
+
+  if (auth) return auth;
   try {
     const body = await req.json();
 
@@ -13,9 +17,7 @@ export async function POST(req: Request) {
       role,
     } = body;
 
-    /* ===========================
-       VALIDASI FIELD KOSONG
-    =========================== */
+    /* VALIDASI FIELD KOSONG*/
 
     if (
       !nama ||
@@ -34,9 +36,7 @@ export async function POST(req: Request) {
       );
     }
 
-    /* ===========================
-       VALIDASI NAMA
-    =========================== */
+    /*VALIDASI NAMA*/
 
     if (nama.trim().length < 3) {
       return NextResponse.json(

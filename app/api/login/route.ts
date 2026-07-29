@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
         nama,
         username,
         password,
-        role
+        role,
+        is_super_admin
       FROM users
       WHERE username = ?
       LIMIT 1
@@ -73,17 +74,22 @@ export async function POST(req: NextRequest) {
     
     const cookieStore = await cookies();
 
-cookieStore.set("session", JSON.stringify({
+cookieStore.set(
+  "session",
+  JSON.stringify({
     id: user.id,
     nama: user.nama,
     role: user.role,
-}),{
+    is_super_admin: Boolean(user.is_super_admin),
+  }),
+  {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 60 * 24,
-});
+  }
+);
 
 return NextResponse.json({
     success: true,

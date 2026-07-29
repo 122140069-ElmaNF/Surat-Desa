@@ -14,6 +14,10 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
+type Props = {
+  isSuperAdmin: boolean;
+};
+
 const menus = [
   {
     title: "Dashboard",
@@ -42,7 +46,9 @@ const menus = [
   },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({
+  isSuperAdmin,
+}: Props) {
   const pathname = usePathname();
 
   const [showLogoutModal, setShowLogoutModal] =
@@ -81,6 +87,17 @@ export default function AdminSidebar() {
     );
   };
 
+  const filteredMenus = menus.filter((menu) => {
+    if (
+      menu.href === "/admin/users" &&
+      !isSuperAdmin
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
   async function handleLogout() {
     try {
       const res = await fetch("/api/logout", {
@@ -103,7 +120,6 @@ export default function AdminSidebar() {
     <>
       <aside className="sidebar">
         <div className="sidebar-header">
-
           <img
             src="/logoSurat.png"
             alt="Logo Surat Desa"
@@ -113,12 +129,11 @@ export default function AdminSidebar() {
           <h2>Surat Desa</h2>
 
           <p>Panel Admin</p>
-
         </div>
 
         {/* Menu */}
         <nav className="sidebar-menu">
-          {menus.map((menu) => {
+          {filteredMenus.map((menu) => {
             const Icon = menu.icon;
 
             return (
