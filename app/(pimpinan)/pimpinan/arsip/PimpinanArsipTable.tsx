@@ -5,6 +5,7 @@ export type ArsipSuratRow = {
   kode_tracking: string;
   nama: string | null;
   nama_surat: string | null;
+  nama_penandatangan: string | null;
   status: string;
   created_at: string;
 };
@@ -28,6 +29,7 @@ export default function PimpinanArsipTable({
             <Th>Kode Tracking</Th>
             <Th>Nama Pemohon</Th>
             <Th>Jenis Surat</Th>
+            <Th>Kepala Desa</Th>
             <Th>Status</Th>
             <Th>Tanggal</Th>
             <Th>Aksi</Th>
@@ -37,7 +39,7 @@ export default function PimpinanArsipTable({
           {surat.length === 0 ? (
             <tr>
               <td
-                colSpan={6}
+                colSpan={7}
                 style={{
                   padding: "24px",
                   textAlign: "center",
@@ -53,6 +55,7 @@ export default function PimpinanArsipTable({
                 <Td label="Kode Tracking">{item.kode_tracking}</Td>
                 <Td label="Nama Pemohon">{item.nama || "-"}</Td>
                 <Td label="Jenis Surat">{item.nama_surat || "-"}</Td>
+                <Td label="Kepala Desa">{item.nama_penandatangan || "-"}</Td>
                 <Td label="Status">
                   <span
                     style={{

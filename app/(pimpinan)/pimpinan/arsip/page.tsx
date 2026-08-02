@@ -19,6 +19,7 @@ export default async function PimpinanArsipPage() {
         ps.status,
         ps.created_at,
         ps.nomor_surat,
+        ps.nama_penandatangan,
         js.nama_surat,
         js.kode_surat
 

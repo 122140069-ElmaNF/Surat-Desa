@@ -97,7 +97,7 @@ if (nomorUrutManual) {
     isiSurat: pengajuan.isi_surat,
     templateSurat: pengajuan.template_surat,
   });
-
+console.log(currentUser);
     // Update Pengajuan
     await conn.query(
       `
@@ -107,7 +107,9 @@ if (nomorUrutManual) {
         nomor_surat=?,
         nomor_urut=?,
         tanggal_surat=?,
-        status='menunggu_persetujuan'
+        status='menunggu_persetujuan',
+        admin_id=?,
+        nama_admin=?
       WHERE id=?
       `,
       [
@@ -115,6 +117,8 @@ if (nomorUrutManual) {
         nomorSurat,
         nomorUrut,
         tanggalSurat,
+        currentUser?.id ?? null,
+        currentUser?.nama ?? null,
         pengajuanId,
       ]
     );

@@ -10,6 +10,7 @@ export default async function AdminSuratPage() {
       ps.kode_tracking,
       ps.status,
       ps.created_at,
+      ps.nama_admin,
       js.nama_surat,
       js.kode_surat
 

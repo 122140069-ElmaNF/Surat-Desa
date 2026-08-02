@@ -9,6 +9,7 @@ export type SuratRow = {
   kode_tracking: string;
   nama: string | null;
   nama_surat: string | null;
+  nama_admin: string | null;
   status: string;
   created_at: string;
 };
@@ -197,8 +198,18 @@ export default function AdminSuratTable({
                 </Td>
 
                 <Td label="Tanggal">
-                  {formatTanggal(
-                    item.created_at
+                  <div>{formatTanggal(item.created_at)}</div>
+
+                  {item.nama_admin && (
+                    <div
+                      style={{
+                        fontSize: "14px",
+                        color: "#6b7280",
+                        marginTop: "4px",
+                      }}
+                    >
+                      oleh {item.nama_admin}
+                    </div>
                   )}
                 </Td>
 

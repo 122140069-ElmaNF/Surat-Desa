@@ -24,7 +24,7 @@ export default async function PimpinanDashboardPage() {
 
     WHERE ps.status = 'menunggu_persetujuan'
 
-    ORDER BY ps.created_at ASC
+    ORDER BY ps.created_at DESC
   `);
 
   const surat = await Promise.all(
