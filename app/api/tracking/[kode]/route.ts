@@ -1,5 +1,6 @@
 import db from "@/lib/db";
 import { NextRequest } from "next/server";
+import { getActivityLogs } from "@/lib/queries/getActivityLogs";
 
 type RouteContext = {
   params: Promise<{
@@ -57,6 +58,7 @@ export async function GET(
     const result = rows as any[];
 
     if (result.length === 0) {
+      
       return Response.json(
         {
           success: false,
@@ -112,11 +114,17 @@ export async function GET(
       }
     }
 
+      const activities = await getActivityLogs(
+        data.id,
+        true
+      );
+
     return Response.json({
       success: true,
       data: {
         ...data,
         nama: namaPemohon,
+        activities,
       },
     });
   } catch (error) {

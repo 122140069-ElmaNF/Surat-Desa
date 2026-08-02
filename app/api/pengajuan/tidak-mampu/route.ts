@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
+import { logActivity } from "@/lib/activity";
 
 import { generateSurat } from "@/lib/surat/generateSurat";
 import getJenisSurat from "@/lib/surat/getJenisSurat";
@@ -261,6 +262,13 @@ export async function POST(request: Request) {
         pengajuan_id,
       ]
     );
+
+    await logActivity({
+  pengajuanId: pengajuan_id,
+  status: "pending",
+  aktivitas: "Pengajuan surat berhasil dikirim.",
+  conn,
+});
 
     await conn.commit();
 

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
+import { logActivity } from "@/lib/activity";
 
-import { writeFile, unlink } from "fs/promises";
+import {
+  writeFile,
+  unlink,
+} from "fs/promises";
+
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -16,70 +21,114 @@ export async function PUT(
   request: Request,
   context: RouteContext
 ) {
+
+  const conn =
+    await db.getConnection();
+
   try {
-    const { id } = await context.params;
 
-    const formData = await request.formData();
+    await conn.beginTransaction();
 
-    const nama = String(formData.get("nama"));
-    const ttl = String(formData.get("ttl"));
-    const nik = String(formData.get("nik"));
+    const { id } =
+      await context.params;
 
-    const status_perkawinan = String(
-      formData.get("status_perkawinan")
-    );
+    const formData =
+      await request.formData();
 
-    const pekerjaan = String(
-      formData.get("pekerjaan")
-    );
+    const nama =
+      String(formData.get("nama"));
 
-    const alamat = String(
-      formData.get("alamat")
-    );
+    const ttl =
+      String(formData.get("ttl"));
 
-    const dusun = String(
-      formData.get("dusun")
-    );
+    const nik =
+      String(formData.get("nik"));
 
-    const rt = String(
-      formData.get("rt")
-    );
+    const status_perkawinan =
+      String(
+        formData.get(
+          "status_perkawinan"
+        )
+      );
 
-    const rw = String(
-      formData.get("rw")
-    );
+    const pekerjaan =
+      String(
+        formData.get(
+          "pekerjaan"
+        )
+      );
 
-    const idpel = String(
-      formData.get("idpel")
-    );
+    const alamat =
+      String(
+        formData.get(
+          "alamat"
+        )
+      );
 
-    const jenis_meteran = String(
-      formData.get("jenis_meteran")
-    );
+    const dusun =
+      String(
+        formData.get("dusun")
+      );
 
-    const keperluan = String(
-      formData.get("keperluan")
-    );
+    const rt =
+      String(
+        formData.get("rt")
+      );
+
+    const rw =
+      String(
+        formData.get("rw")
+      );
+
+    const idpel =
+      String(
+        formData.get("idpel")
+      );
+
+    const jenis_meteran =
+      String(
+        formData.get(
+          "jenis_meteran"
+        )
+      );
+
+    const keperluan =
+      String(
+        formData.get(
+          "keperluan"
+        )
+      );
 
     const fileKtp =
-      formData.get("file_ktp") as File | null;
+      formData.get(
+        "file_ktp"
+      ) as File | null;
 
-    const [rows]: any = await db.query(
-      `
-      SELECT file_ktp
-      FROM listrik
-      WHERE pengajuan_id=?
-      LIMIT 1
-      `,
-      [id]
-    );
+    const [rows]: any =
+      await conn.query(
+        `
+        SELECT file_ktp
+        FROM listrik
+        WHERE pengajuan_id=?
+        LIMIT 1
+        `,
+        [id]
+      );
 
     const oldFile =
       rows[0]?.file_ktp ?? null;
 
-    let newFileName = oldFile;
+    let newFileName =
+      oldFile;
 
-    if (fileKtp && fileKtp.size > 0) {
+      // ==========================
+    // Upload File Baru
+    // ==========================
+
+    if (
+      fileKtp &&
+      fileKtp.size > 0
+    ) {
 
       const bytes =
         await fileKtp.arrayBuffer();
@@ -88,7 +137,9 @@ export async function PUT(
         Buffer.from(bytes);
 
       const ext =
-        fileKtp.name.split(".").pop();
+        fileKtp.name
+          .split(".")
+          .pop();
 
       newFileName =
         `${randomUUID()}.${ext}`;
@@ -122,9 +173,13 @@ export async function PUT(
             oldFile
           );
 
-        if (fs.existsSync(oldPath)) {
+        if (
+          fs.existsSync(oldPath)
+        ) {
 
-          await unlink(oldPath);
+          await unlink(
+            oldPath
+          );
 
         }
 
@@ -136,7 +191,7 @@ export async function PUT(
     // Update Tabel Listrik
     // ==========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE listrik
       SET
@@ -173,11 +228,11 @@ export async function PUT(
       ]
     );
 
-    // ==========================
+      // ==========================
     // Reset Status Pengajuan
     // ==========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE pengajuan_surat
       SET
@@ -188,13 +243,32 @@ export async function PUT(
       [id]
     );
 
+    // ==========================
+    // Simpan Activity Log
+    // ==========================
+
+    await logActivity({
+      pengajuanId: Number(id),
+      status: "pending",
+      aktivitas: "Pemohon mengirim perbaikan pengajuan.",
+      conn,
+    });
+
+    // ==========================
+    // Commit Transaction
+    // ==========================
+
+    await conn.commit();
+
     return NextResponse.json({
       success: true,
       message:
         "Pengajuan berhasil diperbarui.",
     });
 
-  } catch (err: any) {
+    } catch (err: any) {
+
+    await conn.rollback();
 
     console.error(err);
 
@@ -209,6 +283,10 @@ export async function PUT(
         status: 500,
       }
     );
+
+  } finally {
+
+    conn.release();
 
   }
 

@@ -1,10 +1,18 @@
 import db from "@/lib/db";
+import { logActivity } from "@/lib/activity";
+import { cookies } from "next/headers";
 
 export async function PATCH(req, context) {
   const { id } = await context.params;
   const body = await req.json();
 
   const action = body.action;
+
+  const cookieStore = await cookies();
+  const session = cookieStore.get("session");
+  const currentUser = session
+    ? JSON.parse(session.value)
+    : null;
 
   // ==========================
   // TOLAK
@@ -18,6 +26,13 @@ export async function PATCH(req, context) {
       `,
       [id]
     );
+
+    await logActivity({
+      pengajuanId: Number(id),
+      userId: currentUser?.id,
+      status: "ditolak",
+      aktivitas: "Pengajuan surat ditolak oleh Kepala Desa.",
+    });
 
     return Response.json({
       success: true,
@@ -55,6 +70,13 @@ export async function PATCH(req, context) {
       id,
     ]
   );
+
+    await logActivity({
+    pengajuanId: Number(id),
+    userId: currentUser?.id,
+    status: "selesai",
+    aktivitas: "Surat telah disetujui oleh Kepala Desa.",
+  });
 
   return Response.json({
     success: true,

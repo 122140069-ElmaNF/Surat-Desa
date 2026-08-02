@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
 
-import { writeFile, unlink } from "fs/promises";
+import {
+  writeFile,
+  unlink,
+} from "fs/promises";
+
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import { logActivity } from "@/lib/activity";
 
 type RouteContext = {
   params: Promise<{
@@ -17,7 +22,12 @@ export async function PUT(
   context: RouteContext
 ) {
 
+  const conn =
+    await db.getConnection();
+
   try {
+
+    await conn.beginTransaction();
 
     const { id } =
       await context.params;
@@ -120,7 +130,7 @@ export async function PUT(
     // ==========================
 
     const [rows]: any =
-      await db.query(
+      await conn.query(
         `
         SELECT file_ktp
         FROM tidak_berlangganan_air
@@ -135,6 +145,10 @@ export async function PUT(
 
     let newFileName =
       oldFile;
+
+        // ==========================
+    // Upload file baru
+    // ==========================
 
     if (
       fileKtp &&
@@ -197,11 +211,12 @@ export async function PUT(
       }
 
     }
-        // ===========================
+
+    // ===========================
     // Update tabel tidak_berlangganan_air
     // ===========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE tidak_berlangganan_air
       SET
@@ -240,11 +255,11 @@ export async function PUT(
       ]
     );
 
-    // ===========================
+      // ===========================
     // Reset status pengajuan
     // ===========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE pengajuan_surat
       SET
@@ -255,13 +270,32 @@ export async function PUT(
       [id]
     );
 
+    // ===========================
+    // Simpan Activity Log
+    // ===========================
+
+    await logActivity({
+      pengajuanId: Number(id),
+      status: "pending",
+      aktivitas: "Pemohon mengirim perbaikan pengajuan.",
+      conn,
+    });
+
+    // ===========================
+    // Commit Transaction
+    // ===========================
+
+    await conn.commit();
+
     return NextResponse.json({
       success: true,
       message:
         "Pengajuan berhasil diperbarui.",
     });
+  
+    } catch (err: any) {
 
-  } catch (err: any) {
+    await conn.rollback();
 
     console.error(err);
 
@@ -276,6 +310,10 @@ export async function PUT(
         status: 500,
       }
     );
+
+  } finally {
+
+    conn.release();
 
   }
 

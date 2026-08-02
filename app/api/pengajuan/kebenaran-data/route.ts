@@ -3,6 +3,7 @@ import { writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: Request) {
   const conn = await db.getConnection();
@@ -216,6 +217,13 @@ export async function POST(request: Request) {
         kkName,
       ]
     );
+
+    await logActivity({
+  pengajuanId: pengajuan_id,
+  status: "pending",
+  aktivitas: "Pengajuan surat berhasil dikirim.",
+  conn,
+});
 
     await conn.commit();
 

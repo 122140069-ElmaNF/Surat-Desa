@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams, } from "next/navigation";
 import { useEffect, useState } from "react";
 import ApprovalModal from "@/app/components/approval/ApprovalModal";
+import ActivityTimeline from "@/app/components/activity/ActivityTimeline";
 
 import {
   ArrowLeft,
@@ -19,12 +20,14 @@ type Props = {
   pengajuan: any;
   detail: any[];
   dokumen: any[];
+  activities: any[];
 };
 
 export default function DetailSuratClient({
   pengajuan,
   detail,
   dokumen,
+  activities,
 }: Props){
 
   const router = useRouter();
@@ -79,9 +82,7 @@ async function handleApproval() {
     alert("Terjadi kesalahan server.");
 
   } finally {
-
     setLoadingApproval(false);
-
   }
 
 }
@@ -358,6 +359,21 @@ console.log("previewTanggal =", previewTanggal);
       );
     })}
   </div>
+</section>
+
+{/* ================= RIWAYAT AKTIVITAS ================= */}
+
+<section className="detail-card">
+
+  <h2 className="detail-title">
+    Riwayat Aktivitas
+  </h2>
+
+  <ActivityTimeline
+    activities={activities}
+    showUserInfo
+  />
+
 </section>
 
         {/* ================= ACTION ================= */}

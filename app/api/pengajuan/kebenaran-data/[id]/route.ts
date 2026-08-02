@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
+import { logActivity } from "@/lib/activity";
 
 type Params = {
   params: Promise<{
@@ -14,24 +15,46 @@ export async function PUT(
   request: NextRequest,
   { params }: Params
 ) {
-  const conn = await db.getConnection();
+
+  const conn =
+    await db.getConnection();
 
   try {
+
     await conn.beginTransaction();
 
-    const { id } = await params;
+    const { id } =
+      await params;
 
-    const formData = await request.formData();
+    const formData =
+      await request.formData();
 
-    const nama = formData.get("nama") as string;
-    const ttl = formData.get("ttl") as string;
-    const nik = formData.get("nik") as string;
-    const jenis_kelamin = formData.get("jenis_kelamin") as string;
-    const status_perkawinan = formData.get("status_perkawinan") as string;
-    const alamat = formData.get("alamat") as string;
-    const no_hp = formData.get("no_hp") as string;
-    const nomor_porsi = formData.get("nomor_porsi") as string;
-    const bin_binti = formData.get("bin_binti") as string;
+    const nama =
+      formData.get("nama") as string;
+
+    const ttl =
+      formData.get("ttl") as string;
+
+    const nik =
+      formData.get("nik") as string;
+
+    const jenis_kelamin =
+      formData.get("jenis_kelamin") as string;
+
+    const status_perkawinan =
+      formData.get("status_perkawinan") as string;
+
+    const alamat =
+      formData.get("alamat") as string;
+
+    const no_hp =
+      formData.get("no_hp") as string;
+
+    const nomor_porsi =
+      formData.get("nomor_porsi") as string;
+
+    const bin_binti =
+      formData.get("bin_binti") as string;
 
     const fileKtp =
       formData.get("file_ktp") as File | null;
@@ -43,16 +66,18 @@ export async function PUT(
     // Ambil data lama
     // ===========================
 
-    const [rows]: any = await conn.query(
-      `
-      SELECT *
-      FROM kebenaran_data
-      WHERE pengajuan_id = ?
-      `,
-      [id]
-    );
+    const [rows]: any =
+      await conn.query(
+        `
+        SELECT *
+        FROM kebenaran_data
+        WHERE pengajuan_id = ?
+        `,
+        [id]
+      );
 
     if (rows.length === 0) {
+
       return NextResponse.json(
         {
           success: false,
@@ -62,10 +87,14 @@ export async function PUT(
           status: 404,
         }
       );
+
     }
 
-    let fileKtpName = rows[0].file_ktp;
-    let fileKkName = rows[0].file_kk;
+    let fileKtpName =
+      rows[0].file_ktp;
+
+    let fileKkName =
+      rows[0].file_kk;
 
     const allowedTypes = [
       "image/jpeg",
@@ -75,7 +104,7 @@ export async function PUT(
     const maxSize =
       5 * 1024 * 1024;
 
-    // ===========================
+      // ===========================
     // Upload KTP baru
     // ===========================
 
@@ -84,6 +113,7 @@ export async function PUT(
       if (
         !allowedTypes.includes(fileKtp.type)
       ) {
+
         return NextResponse.json(
           {
             success: false,
@@ -94,9 +124,13 @@ export async function PUT(
             status: 400,
           }
         );
+
       }
 
-      if (fileKtp.size > maxSize) {
+      if (
+        fileKtp.size > maxSize
+      ) {
+
         return NextResponse.json(
           {
             success: false,
@@ -107,6 +141,7 @@ export async function PUT(
             status: 400,
           }
         );
+
       }
 
       const ext =
@@ -141,6 +176,7 @@ export async function PUT(
       if (
         !allowedTypes.includes(fileKk.type)
       ) {
+
         return NextResponse.json(
           {
             success: false,
@@ -151,9 +187,13 @@ export async function PUT(
             status: 400,
           }
         );
+
       }
 
-      if (fileKk.size > maxSize) {
+      if (
+        fileKk.size > maxSize
+      ) {
+
         return NextResponse.json(
           {
             success: false,
@@ -164,6 +204,7 @@ export async function PUT(
             status: 400,
           }
         );
+
       }
 
       const ext =
@@ -190,7 +231,7 @@ export async function PUT(
     }
 
     // ===========================
-    // Update data surat
+    // Update Data Surat
     // ===========================
 
     await conn.query(
@@ -226,8 +267,8 @@ export async function PUT(
       ]
     );
 
-    // ===========================
-    // Reset status
+      // ===========================
+    // Reset Status Pengajuan
     // ===========================
 
     await conn.query(
@@ -241,15 +282,29 @@ export async function PUT(
       [id]
     );
 
+    // ===========================
+    // Tambah Riwayat Aktivitas
+    // ===========================
+
+    await logActivity({
+      pengajuanId: Number(id),
+      status: "pending",
+      aktivitas: "Pemohon mengirim perbaikan pengajuan.",
+      conn,
+    });
+
+    // ===========================
+    // Commit Transaction
+    // ===========================
+
     await conn.commit();
 
     return NextResponse.json({
       success: true,
-      message:
-        "Pengajuan berhasil diperbarui.",
+      message: "Pengajuan berhasil diperbarui.",
     });
 
-  } catch (error) {
+    } catch (error) {
 
     await conn.rollback();
 
@@ -258,8 +313,7 @@ export async function PUT(
     return NextResponse.json(
       {
         success: false,
-        message:
-          "Terjadi kesalahan server.",
+        message: "Terjadi kesalahan server.",
       },
       {
         status: 500,
@@ -271,4 +325,5 @@ export async function PUT(
     conn.release();
 
   }
+
 }

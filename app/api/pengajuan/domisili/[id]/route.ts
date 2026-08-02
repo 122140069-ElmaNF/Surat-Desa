@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
+import { logActivity } from "@/lib/activity";
 
-import { writeFile, unlink } from "fs/promises";
+import {
+  writeFile,
+  unlink,
+} from "fs/promises";
+
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -16,7 +21,13 @@ export async function PUT(
   request: Request,
   context: RouteContext
 ) {
+
+  const conn =
+    await db.getConnection();
+
   try {
+
+    await conn.beginTransaction();
 
     const { id } =
       await context.params;
@@ -65,15 +76,26 @@ export async function PUT(
       );
 
     const rt =
-      String(formData.get("rt"));
+      String(
+        formData.get("rt")
+      );
 
     const rw =
-      String(formData.get("rw"));
+      String(
+        formData.get("rw")
+      );
 
     const fileKtp =
-        formData.get("file_ktp") as File | null;
+      formData.get(
+        "file_ktp"
+      ) as File | null;
 
-    const [rows]: any = await db.query(
+    // ==========================
+    // Ambil File Lama
+    // ==========================
+
+    const [rows]: any =
+      await conn.query(
         `
         SELECT file_ktp
         FROM domisili
@@ -81,86 +103,100 @@ export async function PUT(
         LIMIT 1
         `,
         [id]
+      );
+
+    const oldFile =
+      rows[0]?.file_ktp ?? null;
+
+    let newFileName =
+      oldFile;
+
+      // ==========================
+    // Upload File Baru
+    // ==========================
+
+    if (
+      fileKtp &&
+      fileKtp.size > 0
+    ) {
+
+      const bytes =
+        await fileKtp.arrayBuffer();
+
+      const buffer =
+        Buffer.from(bytes);
+
+      const ext =
+        fileKtp.name
+          .split(".")
+          .pop();
+
+      newFileName =
+        `${randomUUID()}.${ext}`;
+
+      const uploadPath =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp",
+          newFileName
         );
 
-        const oldFile =
-        rows[0]?.file_ktp ?? null;
+      await writeFile(
+        uploadPath,
+        buffer
+      );
 
-        let newFileName = oldFile;
+      // ==========================
+      // Hapus File Lama
+      // ==========================
 
-    if (fileKtp && fileKtp.size > 0) {
+      if (oldFile) {
 
-        const bytes =
-            await fileKtp.arrayBuffer();
-
-        const buffer =
-            Buffer.from(bytes);
-
-        const ext =
-            fileKtp.name.split(".").pop();
-
-        newFileName =
-            `${randomUUID()}.${ext}`;
-
-        const uploadPath =
-            path.join(
+        const oldPath =
+          path.join(
             process.cwd(),
             "public",
             "uploads",
             "ktp",
-            newFileName
-            );
+            oldFile
+          );
 
-        await writeFile(
-            uploadPath,
-            buffer
-        );
+        if (
+          fs.existsSync(oldPath)
+        ) {
 
-        // ==========================
-        // hapus file lama
-        // ==========================
-
-        if (oldFile) {
-
-            const oldPath =
-            path.join(
-                process.cwd(),
-                "public",
-                "uploads",
-                "ktp",
-                oldFile
-            );
-
-            if (fs.existsSync(oldPath)) {
-
-            await unlink(oldPath);
-
-            }
+          await unlink(
+            oldPath
+          );
 
         }
 
-        }
+      }
 
-    // ===========================
-    // Update tabel domisili
-    // ===========================
+    }
 
-    await db.query(
+    // ==========================
+    // Update Tabel Domisili
+    // ==========================
+
+    await conn.query(
       `
-        UPDATE domisili
-        SET
-            nama=?,
-            ttl=?,
-            nik=?,
-            agama=?,
-            jenis_kelamin=?,
-            pekerjaan=?,
-            alamat=?,
-            dusun=?,
-            rt=?,
-            rw=?,
-            file_ktp=?
-        WHERE pengajuan_id=?
+      UPDATE domisili
+      SET
+        nama=?,
+        ttl=?,
+        nik=?,
+        agama=?,
+        jenis_kelamin=?,
+        pekerjaan=?,
+        alamat=?,
+        dusun=?,
+        rt=?,
+        rw=?,
+        file_ktp=?
+      WHERE pengajuan_id=?
       `,
       [
         nama,
@@ -178,11 +214,11 @@ export async function PUT(
       ]
     );
 
-    // ===========================
-    // Reset status pengajuan
-    // ===========================
+      // ==========================
+    // Reset Status Pengajuan
+    // ==========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE pengajuan_surat
       SET
@@ -193,13 +229,32 @@ export async function PUT(
       [id]
     );
 
+    // ==========================
+    // Simpan Activity Log
+    // ==========================
+
+    await logActivity({
+      pengajuanId: Number(id),
+      status: "pending",
+      aktivitas: "Pemohon mengirim perbaikan pengajuan.",
+      conn,
+    });
+
+    // ==========================
+    // Commit Transaction
+    // ==========================
+
+    await conn.commit();
+
     return NextResponse.json({
       success: true,
       message:
         "Pengajuan berhasil diperbarui.",
     });
 
-  } catch (err: any) {
+    } catch (err: any) {
+
+    await conn.rollback();
 
     console.error(err);
 
@@ -215,5 +270,10 @@ export async function PUT(
       }
     );
 
+  } finally {
+
+    conn.release();
+
   }
+
 }

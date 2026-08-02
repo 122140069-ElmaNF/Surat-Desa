@@ -1,6 +1,8 @@
 import db from "@/lib/db";
 import generateNomorSurat from "./generateNomorSurat";
 import buildSuratHtml from "./buildSuratHtml";
+import { logActivity } from "@/lib/activity";
+import { cookies } from "next/headers";
 
 export default async function approvalSurat(
   pengajuanId: number,
@@ -8,6 +10,14 @@ export default async function approvalSurat(
 ) {
 
   const conn = await db.getConnection();
+
+  const cookieStore = await cookies();
+
+  const session = cookieStore.get("session");
+
+  const currentUser = session
+    ? JSON.parse(session.value)
+    : null;
   
   try {
     await conn.beginTransaction();
@@ -108,11 +118,22 @@ if (nomorUrutManual) {
         pengajuanId,
       ]
     );
+    
     await conn.commit();
+
+    await logActivity({
+      pengajuanId,
+      userId: currentUser?.id,
+      status: "menunggu_persetujuan",
+      aktivitas: "Surat sedang diproses oleh Admin.",
+    });
+
+
     return {
       success: true,
       nomorSurat,
     };
+
   } catch (err) {
     await conn.rollback();
     throw err;

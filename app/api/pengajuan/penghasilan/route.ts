@@ -3,6 +3,7 @@ import { writeFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: Request) {
 
@@ -313,6 +314,13 @@ export async function POST(request: Request) {
         fileName,
       ]
     );
+
+    await logActivity({
+  pengajuanId: pengajuan_id,
+  status: "pending",
+  aktivitas: "Pengajuan surat berhasil dikirim.",
+  conn,
+});
 
     await conn.commit();
 

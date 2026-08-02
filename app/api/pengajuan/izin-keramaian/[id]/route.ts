@@ -1,4 +1,6 @@
 import db from "@/lib/db";
+import { logActivity } from "@/lib/activity";
+
 import { NextResponse } from "next/server";
 import { writeFile, unlink } from "fs/promises";
 import { randomUUID } from "crypto";
@@ -14,41 +16,75 @@ export async function PUT(
   request: Request,
   context: RouteContext
 ) {
+
+  const conn =
+    await db.getConnection();
+
   try {
-    const { id } = await context.params;
 
-    const formData = await request.formData();
+    await conn.beginTransaction();
 
-    const nama = formData.get("nama") as string;
-    const ttl = formData.get("ttl") as string;
-    const nik = formData.get("nik") as string;
-    const agama = formData.get("agama") as string;
-    const jenis_kelamin = formData.get("jenis_kelamin") as string;
-    const pekerjaan = formData.get("pekerjaan") as string;
-    const alamat = formData.get("alamat") as string;
-    const jenis_kegiatan = formData.get("jenis_kegiatan") as string;
-    const tanggal_kegiatan = formData.get("tanggal_kegiatan") as string;
-    const jam_kegiatan = formData.get("jam_kegiatan") as string;
-    const acara = formData.get("acara") as string;
-    const kewarganegaraan = formData.get("kewarganegaraan") as string;
+    const { id } =
+      await context.params;
+
+    const formData =
+      await request.formData();
+
+    const nama =
+      formData.get("nama") as string;
+
+    const ttl =
+      formData.get("ttl") as string;
+
+    const nik =
+      formData.get("nik") as string;
+
+    const agama =
+      formData.get("agama") as string;
+
+    const jenis_kelamin =
+      formData.get("jenis_kelamin") as string;
+
+    const pekerjaan =
+      formData.get("pekerjaan") as string;
+
+    const alamat =
+      formData.get("alamat") as string;
+
+    const jenis_kegiatan =
+      formData.get("jenis_kegiatan") as string;
+
+    const tanggal_kegiatan =
+      formData.get("tanggal_kegiatan") as string;
+
+    const jam_kegiatan =
+      formData.get("jam_kegiatan") as string;
+
+    const acara =
+      formData.get("acara") as string;
+
+    const kewarganegaraan =
+      formData.get("kewarganegaraan") as string;
 
     const fileKtp =
       formData.get("file_ktp") as File | null;
 
     // ===========================
-    // AMBIL FILE LAMA
+    // Ambil File Lama
     // ===========================
 
-    const [rows]: any = await db.query(
-      `
-      SELECT file_ktp
-      FROM izin_keramaian
-      WHERE pengajuan_id = ?
-      `,
-      [id]
-    );
+    const [rows]: any =
+      await conn.query(
+        `
+        SELECT file_ktp
+        FROM izin_keramaian
+        WHERE pengajuan_id = ?
+        `,
+        [id]
+      );
 
     if (rows.length === 0) {
+
       return NextResponse.json(
         {
           success: false,
@@ -58,15 +94,18 @@ export async function PUT(
           status: 404,
         }
       );
+
     }
 
-    let newFileName = rows[0].file_ktp;
-
-    // ===========================
-    // JIKA ADA FILE BARU
+    let newFileName =
+      rows[0].file_ktp;
+  
+        // ===========================
+    // Jika Ada File Baru
     // ===========================
 
     if (fileKtp) {
+
       const bytes =
         await fileKtp.arrayBuffer();
 
@@ -81,21 +120,28 @@ export async function PUT(
       newFileName =
         `${randomUUID()}.${ext}`;
 
-      const uploadPath = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "ktp",
-        newFileName
-      );
+      const uploadPath =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp",
+          newFileName
+        );
 
       await writeFile(
         uploadPath,
         buffer
       );
 
+      // ===========================
+      // Hapus File Lama
+      // ===========================
+
       if (rows[0].file_ktp) {
+
         try {
+
           await unlink(
             path.join(
               process.cwd(),
@@ -105,14 +151,18 @@ export async function PUT(
               rows[0].file_ktp
             )
           );
+
         } catch {}
+
       }
+
     }
-        // ===========================
-    // UPDATE IZIN KERAMAIAN
+
+    // ===========================
+    // Update Izin Keramaian
     // ===========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE izin_keramaian
       SET
@@ -149,11 +199,11 @@ export async function PUT(
       ]
     );
 
-    // ===========================
-    // RESET STATUS PENGAJUAN
+      // ===========================
+    // Reset Status Pengajuan
     // ===========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE pengajuan_surat
       SET
@@ -164,12 +214,31 @@ export async function PUT(
       [id]
     );
 
+    // ===========================
+    // Simpan Activity Log
+    // ===========================
+
+    await logActivity({
+      pengajuanId: Number(id),
+      status: "pending",
+      aktivitas: "Pemohon mengirim perbaikan pengajuan.",
+      conn,
+    });
+
+    // ===========================
+    // Commit Transaction
+    // ===========================
+
+    await conn.commit();
+
     return NextResponse.json({
       success: true,
       message: "Pengajuan berhasil diperbarui.",
     });
 
-  } catch (err: any) {
+    } catch (err: any) {
+
+    await conn.rollback();
 
     console.error(err);
 
@@ -184,6 +253,10 @@ export async function PUT(
         status: 500,
       }
     );
+
+  } finally {
+
+    conn.release();
 
   }
 

@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(req) {
   const body = await req.json();
@@ -48,7 +49,17 @@ export async function POST(req) {
     ]
   );
 
-  const pengajuan_id = result.insertId;
+const pengajuan_id = result.insertId;
+
+console.log("SEBELUM LOG ACTIVITY");
+
+await logActivity({
+  pengajuanId: pengajuan_id,
+  status: "pending",
+  aktivitas: "Pengajuan surat berhasil dibuat",
+});
+
+console.log("SESUDAH LOG ACTIVITY");
 
   // 4. Simpan detail field
   for (const field of fields) {

@@ -146,6 +146,8 @@ const content = shouldGenerate
           tanda_tangan:
             profil?.tanda_tangan ?? "",
         }}
+
+        kodeSurat={pengajuan.kode_surat}
       />
     </div>
   );

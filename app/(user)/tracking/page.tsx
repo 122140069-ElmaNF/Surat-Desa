@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ActivityTimeline from "@/app/components/activity/ActivityTimeline";
 import { Search, FileText,} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
@@ -188,6 +189,12 @@ export default function TrackingPage() {
                   </button>
 
                 </div>
+              )}
+              {data.activities?.length > 0 && (
+                <ActivityTimeline
+                  activities={data.activities}
+                  showUserInfo={false}
+                />
               )}
             </div>
           )}

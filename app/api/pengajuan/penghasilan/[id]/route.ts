@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
+import { logActivity } from "@/lib/activity";
 
 type Params = {
   params: Promise<{
@@ -23,13 +24,9 @@ export async function PUT(
 
     const { id } = await params;
 
-    const formData =
-      await request.formData();
+    const formData = await request.formData();
 
-    // ==========================
     // Kepala Keluarga
-    // ==========================
-
     const nama_kepala_keluarga =
       formData.get("nama_kepala_keluarga") as string;
 
@@ -54,10 +51,7 @@ export async function PUT(
     const alamat_kepala_keluarga =
       formData.get("alamat_kepala_keluarga") as string;
 
-    // ==========================
     // Anak
-    // ==========================
-
     const nama_anak =
       formData.get("nama_anak") as string;
 
@@ -88,10 +82,7 @@ export async function PUT(
     const fileKtp =
       formData.get("file_ktp") as File | null;
 
-    // ==========================
     // Ambil Data Lama
-    // ==========================
-
     const [rows]: any =
       await conn.query(
         `
@@ -126,10 +117,8 @@ export async function PUT(
 
     const maxSize =
       5 * 1024 * 1024;
-          // ==========================
-    // Upload File Baru
-    // ==========================
 
+    // Upload File Baru
     if (fileKtp) {
 
       if (
@@ -193,10 +182,7 @@ export async function PUT(
 
     }
 
-    // ==========================
     // Update Penghasilan
-    // ==========================
-
     await conn.query(
       `
       UPDATE penghasilan
@@ -253,10 +239,7 @@ export async function PUT(
       ]
     );
 
-    // ==========================
     // Reset Status
-    // ==========================
-
     await conn.query(
       `
       UPDATE pengajuan_surat
@@ -268,8 +251,14 @@ export async function PUT(
       [id]
     );
 
-    await conn.commit();
+    await logActivity({
+  pengajuanId: Number(id),
+  status: "pending",
+  aktivitas: "Pemohon mengirim perbaikan pengajuan.",
+});
 
+    await conn.commit();
+    
     return NextResponse.json({
 
       success: true,

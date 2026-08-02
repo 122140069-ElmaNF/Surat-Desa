@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import db from "@/lib/db";
+import { logActivity } from "@/lib/activity";
 
 import {
   writeFile,
@@ -21,7 +22,12 @@ export async function PUT(
   context: RouteContext
 ) {
 
+  const conn =
+    await db.getConnection();
+
   try {
+
+    await conn.beginTransaction();
 
     const { id } =
       await context.params;
@@ -118,7 +124,7 @@ export async function PUT(
         | null;
 
     const [rows]: any =
-      await db.query(
+      await conn.query(
         `
         SELECT file_ktp
         FROM beda_nama_identitas
@@ -133,6 +139,10 @@ export async function PUT(
 
     let newFileName =
       oldFile;
+
+      // ===========================
+    // Upload File Baru
+    // ===========================
 
     if (
       fileKtp &&
@@ -168,7 +178,7 @@ export async function PUT(
       );
 
       // ===========================
-      // HAPUS FILE LAMA
+      // Hapus File Lama
       // ===========================
 
       if (oldFile) {
@@ -183,9 +193,7 @@ export async function PUT(
           );
 
         if (
-          fs.existsSync(
-            oldPath
-          )
+          fs.existsSync(oldPath)
         ) {
 
           await unlink(
@@ -197,11 +205,12 @@ export async function PUT(
       }
 
     }
-        // ===========================
-    // UPDATE BEDA NAMA IDENTITAS
+
+    // ===========================
+    // Update Beda Nama Identitas
     // ===========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE beda_nama_identitas
       SET
@@ -247,11 +256,11 @@ export async function PUT(
       ]
     );
 
-    // ===========================
-    // RESET STATUS PENGAJUAN
+        // ===========================
+    // Reset Status Pengajuan
     // ===========================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE pengajuan_surat
       SET
@@ -262,13 +271,32 @@ export async function PUT(
       [id]
     );
 
+    // ===========================
+    // Simpan Activity Log
+    // ===========================
+
+    await logActivity({
+      pengajuanId: Number(id),
+      status: "pending",
+      aktivitas: "Pemohon mengirim perbaikan pengajuan.",
+      conn,
+    });
+
+    // ===========================
+    // Commit Transaction
+    // ===========================
+
+    await conn.commit();
+
     return NextResponse.json({
       success: true,
       message:
         "Pengajuan berhasil diperbarui.",
     });
 
-  } catch (err: any) {
+    } catch (err: any) {
+
+    await conn.rollback();
 
     console.error(err);
 
@@ -283,5 +311,11 @@ export async function PUT(
         status: 500,
       }
     );
+
+  } finally {
+
+    conn.release();
+
   }
+
 }
