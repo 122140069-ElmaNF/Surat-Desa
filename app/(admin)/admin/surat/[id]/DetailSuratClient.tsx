@@ -372,6 +372,7 @@ console.log("previewTanggal =", previewTanggal);
   <ActivityTimeline
     activities={activities}
     showUserInfo
+    showTitle={false}
   />
 
 </section>

@@ -246,34 +246,69 @@
 /* =====================================================
    STATUS
 ===================================================== */
-
 .status-info,
 .status-success,
-.status-reject {
-  padding: 16px;
-
-  border-radius: 12px;
-
-  font-weight: 600;
-
-  line-height: 1.7;
+.status-reject{
+    padding:20px;
+    border-radius:14px;
+    line-height:1.7;
 }
 
-.status-info {
-  background: #fef3c7;
-  color: #92400e;
+/* ================= STATUS INFO ================= */
+
+.status-info{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+
+    background:#eef5ff;
+    border:1px solid #c9dcff;
 }
 
-.status-success {
-  background: #dcfce7;
-  color: #166534;
+/* Setiap baris */
+.status-row{
+    display:grid;
+    grid-template-columns:160px 18px 1fr;
+    align-items:start;
+    gap:8px;
 }
 
-.status-reject {
-  background: #fee2e2;
-  color: #b91c1c;
+/* Label */
+.status-label{
+    font-weight:600;
+    color:#1e3a8a;
 }
 
+/* Titik dua */
+.status-separator{
+    text-align:center;
+    color:#64748b;
+    font-weight:600;
+}
+
+/* Isi */
+.status-value{
+    color:#1f2937;
+    font-weight:500;
+    word-break:break-word;
+    line-height:1.6;
+}
+
+/* ================= STATUS BERHASIL ================= */
+
+.status-success{
+    background:#dcfce7;
+    border:1px solid #86efac;
+    color:#166534;
+}
+
+/* ================= STATUS DITOLAK ================= */
+
+.status-reject{
+    background:#fee2e2;
+    border:1px solid #fecaca;
+    color:#991b1b;
+}
 /* =====================================================
    BREADCRUMB
 ===================================================== */

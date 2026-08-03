@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 type Props = {
   user: {
@@ -22,8 +23,8 @@ export default function EditAdminForm({
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(user.role);
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleUpdate() {
     if (!nama || !username) {
@@ -101,34 +102,32 @@ export default function EditAdminForm({
           </div>
 
           <div className="admin-form-group">
-            <label>Username</label>
+            <label>Password Baru</label>
 
-            <input
-              type="text"
-              value={username}
-              onChange={(e) =>
-                setUsername(
-                  e.target.value
-                )
-              }
-            />
-          </div>
+            <div className="password-input">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                placeholder="Kosongkan jika tidak diubah"
+                onChange={(e) =>
+                  setPassword(e.target.value)
+                }
+              />
 
-          <div className="admin-form-group">
-            <label>
-              Password Baru
-            </label>
-
-            <input
-              type="password"
-              value={password}
-              placeholder="Kosongkan jika tidak diubah"
-              onChange={(e) =>
-                setPassword(
-                  e.target.value
-                )
-              }
-            />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() =>
+                  setShowPassword(!showPassword)
+                }
+              >
+                {showPassword ? (
+                  <EyeOff size={18} />
+                ) : (
+                  <Eye size={18} />
+                )}
+              </button>
+            </div>
           </div>
 
           <div className="admin-form-group">

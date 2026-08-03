@@ -78,6 +78,45 @@ export default function TrackingPage() {
   setLoading(false);
 }
 
+const formatTanggalSingkat = (tanggal: string) => {
+  const hariSingkat = [
+    "Min",
+    "Sen",
+    "Sel",
+    "Rab",
+    "Kam",
+    "Jum",
+    "Sab",
+  ];
+
+  const date = new Date(tanggal);
+
+  const hari =
+    hariSingkat[date.getDay()];
+
+  const tanggalFormat =
+    new Intl.DateTimeFormat(
+      "id-ID",
+      {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }
+    ).format(date);
+
+  const jam =
+    new Intl.DateTimeFormat(
+      "id-ID",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }
+    ).format(date);
+
+  return `${hari}, ${tanggalFormat} • ${jam} WIB`;
+};
+
   return (
     <div className="tracking-page">
       {/* HERO */}
@@ -138,34 +177,65 @@ export default function TrackingPage() {
               </div>
 
               <div className="status-info">
-                <p>
-                  <strong>Jenis Surat :</strong>{" "}
-                  {data.nama_surat}
-                </p>
 
-                <p>
-                  <strong>Kode Tracking :</strong>{" "}
-                  {data.kode_tracking}
-                </p>
+                <div className="status-row">
+                  <span className="status-label">
+                    Jenis Surat
+                  </span>
 
-                <p>
-                  <strong>Nama Pemohon :</strong>{" "}
-                  {data.nama}
-                </p>
+                  <span className="status-separator">
+                    :
+                  </span>
 
-                <p>
-                  <strong>Tanggal Pengajuan :</strong>{" "}
-                  {new Date(
-                    data.created_at
-                  ).toLocaleDateString(
-                    "id-ID",
-                    {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    }
-                  )}
-                </p>
+                  <span className="status-value">
+                    {data.nama_surat}
+                  </span>
+                </div>
+
+                <div className="status-row">
+                  <span className="status-label">
+                    Kode Tracking
+                  </span>
+
+                  <span className="status-separator">
+                    :
+                  </span>
+
+                  <span className="status-value">
+                    {data.kode_tracking}
+                  </span>
+                </div>
+
+                <div className="status-row">
+                  <span className="status-label">
+                    Nama Pemohon
+                  </span>
+
+                  <span className="status-separator">
+                    :
+                  </span>
+
+                  <span className="status-value">
+                    {data.nama}
+                  </span>
+                </div>
+
+                <div className="status-row">
+                  <span className="status-label">
+                    Waktu Pengajuan
+                  </span>
+
+                  <span className="status-separator">
+                    :
+                  </span>
+
+                  <span className="status-value">
+                    {formatTanggalSingkat(
+                      data.created_at
+                    )}
+                  </span>
+                </div>
+
               </div>
               {data.status === "ditolak" && (
                 <div className="tracking-reject-box">
@@ -191,10 +261,12 @@ export default function TrackingPage() {
                 </div>
               )}
               {data.activities?.length > 0 && (
-                <ActivityTimeline
-                  activities={data.activities}
-                  showUserInfo={false}
-                />
+                <div style={{ marginTop: "28px" }}>
+                  <ActivityTimeline
+                    activities={data.activities}
+                    showUserInfo={false}
+                  />
+                </div>
               )}
             </div>
           )}

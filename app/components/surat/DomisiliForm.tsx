@@ -308,19 +308,66 @@ try {
           {/* ALASAN PENOLAKAN */}
 
           {mode === "edit" && (
-            <div className="reject-alert">
-              <h3>
-                Pengajuan Ditolak
-              </h3>
-              <p>
-                <strong>
-                  Alasan Penolakan :
-                </strong>
-              </p>
-              <p>
-                {initialData.alasan_penolakan}
-              </p>
-            </div>
+            <div
+  className="reject-alert"
+  style={{
+    background: "#fff7ed",
+    border: "1px solid #fdba74",
+    borderLeft: "6px solid #f97316",
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 24,
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 12,
+    }}
+  >
+    <div
+      style={{
+        fontSize: 26,
+      }}
+    >
+      ⚠️
+    </div>
+
+    <div>
+      <h3
+        style={{
+          margin: 0,
+          color: "#9a3412",
+          fontWeight: 700,
+          fontSize: 18,
+        }}
+      >
+        Pengajuan Ditolak
+      </h3>
+
+      <p
+        style={{
+          margin: "10px 0 4px",
+          fontWeight: 600,
+          color: "#7c2d12",
+        }}
+      >
+        Alasan Penolakan :
+      </p>
+
+      <p
+        style={{
+          margin: 0,
+          color: "#444",
+          lineHeight: 1.7,
+        }}
+      >
+        {initialData.alasan_penolakan}
+      </p>
+    </div>
+  </div>
+</div>
           )}
           
           <form onSubmit={handleSubmit}>

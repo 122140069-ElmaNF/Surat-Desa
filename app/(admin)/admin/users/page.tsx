@@ -12,6 +12,7 @@ export default async function AdminUsersPage() {
       nama,
       username,
       role,
+      is_super_admin,
       created_at
     FROM users
     ORDER BY created_at DESC
@@ -67,9 +68,15 @@ export default async function AdminUsersPage() {
                   <td>{user.username}</td>
 
                   <td>
-                    <span className={`status-badge status-${user.role}`}>
-                      {user.role}
-                    </span>
+                    {user.is_super_admin ? (
+                      <span className="status-badge status-super-admin">
+                        Super Admin
+                      </span>
+                    ) : (
+                      <span className={`status-badge status-${user.role}`}>
+                        {user.role}
+                      </span>
+                    )}
                   </td>
 
                   <td>

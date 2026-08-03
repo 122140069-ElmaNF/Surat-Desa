@@ -93,6 +93,24 @@
   white-space: nowrap;
 }
 
+.status-super-admin {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fdba74;
+}
+
+.status-admin {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+
+.status-pimpinan {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+
 .status-pending {
   background: #fef3c7;
   color: #92400e;
