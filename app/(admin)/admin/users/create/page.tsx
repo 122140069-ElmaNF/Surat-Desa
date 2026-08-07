@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CreateAdminPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ async function handleSubmit() {
         !username ||
         !password
     ) {
-        alert("Semua field harus diisi.");
+        toast.warning("Semua field harus diisi.");
         return;
     }
 
@@ -53,7 +54,7 @@ async function handleSubmit() {
 
         if(result.success){
 
-            alert("Admin berhasil ditambahkan.");
+            toast.success("Admin berhasil ditambahkan.");
 
             router.push("/admin/users");
 
@@ -61,7 +62,7 @@ async function handleSubmit() {
 
         }else{
 
-            alert(result.message);
+            toast.error(result.message);
 
         }
 
@@ -69,7 +70,7 @@ async function handleSubmit() {
 
         console.error(error);
 
-        alert("Terjadi kesalahan.");
+        toast.error("Terjadi kesalahan.");
 
     }finally{
 
@@ -123,7 +124,7 @@ async function handleSubmit() {
                 placeholder="Masukkan username"
                 />
           </div>
-          
+
           <div className="admin-form-group">
             <label>Password</label>
 

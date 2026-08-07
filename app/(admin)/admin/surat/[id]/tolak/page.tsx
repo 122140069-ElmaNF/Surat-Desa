@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function TolakSuratPage() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function TolakSuratPage() {
 
   async function handleSubmit() {
     if (!alasan.trim()) {
-      alert("Alasan penolakan wajib diisi.");
+      toast.warning("Alasan penolakan wajib diisi.");
       return;
     }
 
@@ -39,17 +40,17 @@ export default function TolakSuratPage() {
       const result = await res.json();
 
       if (!result.success) {
-        alert(result.message);
+        toast.error(result.message);
         return;
       }
 
-      alert("Surat berhasil ditolak.");
+      toast.success("Surat berhasil ditolak.");
 
       router.push("/admin/surat");
     } catch (err) {
       console.error(err);
 
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setLoading(false);
     }

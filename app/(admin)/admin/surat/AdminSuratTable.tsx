@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export type SuratRow = {
   id: number;
@@ -49,7 +50,7 @@ export default function AdminSuratTable({
       );
 
       if (!res.ok) {
-        alert("Gagal approve surat");
+        toast.error("Gagal mengirim surat.");
         return;
       }
 
@@ -59,7 +60,7 @@ export default function AdminSuratTable({
         "ERROR APPROVE:",
         error
       );
-      alert("Terjadi kesalahan");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoadingId(null);
     }
@@ -85,7 +86,7 @@ export default function AdminSuratTable({
       );
 
       if (!res.ok) {
-        alert("Gagal menghapus surat");
+        toast.error("Gagal menghapus surat");
         return;
       }
 
@@ -95,7 +96,7 @@ export default function AdminSuratTable({
         "ERROR DELETE:",
         error
       );
-      alert("Terjadi kesalahan");
+      toast.error("Terjadi kesalahan");
     } finally {
       setDeleteId(null);
     }

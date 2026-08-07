@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 
 type Props = {
   user: {
@@ -28,7 +29,7 @@ export default function EditAdminForm({
 
   async function handleUpdate() {
     if (!nama || !username) {
-      alert("Nama dan Username wajib diisi.");
+      toast.warning("Nama dan Username wajib diisi.");
       return;
     }
 
@@ -56,16 +57,16 @@ export default function EditAdminForm({
         await res.json();
 
       if (result.success) {
-        alert("Data berhasil diperbarui.");
+        toast.success("Data berhasil diperbarui.");
 
         router.push("/admin/users");
         router.refresh();
       } else {
-        alert(result.message);
+        toast.error(result.message);
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setLoading(false);
     }

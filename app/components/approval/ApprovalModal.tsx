@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 type Props = {
   open: boolean;
@@ -63,11 +64,11 @@ const suffix =
   const result = await res.json();
 
   if (!result.success) {
-    alert(result.message);
+    toast.error(result.message);
     return;
   }
 
-  alert("Surat berhasil dikirim ke Kepala Desa.");
+  toast.success("Surat berhasil dikirim ke Kepala Desa.");
 
   onSuccess();
 }

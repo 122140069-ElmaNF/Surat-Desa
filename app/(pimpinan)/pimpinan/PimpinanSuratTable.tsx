@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export type SuratPersetujuanRow = {
   id: number;
@@ -49,7 +50,7 @@ export default function PimpinanSuratTable({
       });
 
       if (!res.ok) {
-        alert("Gagal memproses surat");
+        toast.error("Gagal memproses surat.");
         return;
       }
 
@@ -60,7 +61,7 @@ export default function PimpinanSuratTable({
       }
     } catch (error) {
       console.error("ERROR PERSETUJUAN:", error);
-      alert("Terjadi kesalahan");
+      toast.error("Terjadi kesalahan");
     } finally {
       setLoading(null);
     }

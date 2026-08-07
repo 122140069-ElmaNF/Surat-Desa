@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getPengajuanDetail } from "@/lib/queries/getPengajuanDetail";
-import SuratEditor from "./SuratEditor";
 import { generateSurat } from "@/lib/surat/generateSurat";
 import db from "@/lib/db";
+import EditSuratLayout from "./EditSuratLayout";
 
 type PageProps = {
   params: Promise<{
@@ -25,28 +25,26 @@ export default async function AdminEditSuratPage({
     );
   }
 
-  const { pengajuan, detail } = data;
+  const {
+    pengajuan,
+    detail,
+    table,
+  } = data;
 
   const [profilRows] = await db.query(`
     SELECT *
     FROM profil_pimpinan
     LIMIT 1
-`);
+  `);
 
-const profil = (profilRows as any[])[0];
+  const profil = (profilRows as any[])[0];
 
   const fields: Record<string, string> = {};
 
-  // ==========================
-  // Field dari detail surat
-  // ==========================
   detail.forEach((item) => {
     fields[item.key] = String(item.value ?? "");
   });
 
-  // ==========================
-  // Field sistem
-  // ==========================
   fields.nomor_surat =
     pengajuan.nomor_surat ?? "";
 
@@ -67,31 +65,28 @@ const profil = (profilRows as any[])[0];
   fields.jabatan =
     pengajuan.jabatan ?? "";
 
-// ==========================
-// Generate isi surat
-// ==========================
-
-const shouldGenerate =
-  ["draft", "pending"].includes(
-    pengajuan.status
-  );
-
-const content = shouldGenerate
-  ? generateSurat(
-      pengajuan.template_surat || "",
-      fields,
-      {
-        preserveSystemFields: true,
-      }
-    )
-  : (
-      pengajuan.isi_surat ||
-      pengajuan.template_surat ||
-      ""
+  const shouldGenerate =
+    ["draft", "pending"].includes(
+      pengajuan.status
     );
+
+  const content = shouldGenerate
+    ? generateSurat(
+        pengajuan.template_surat || "",
+        fields,
+        {
+          preserveSystemFields: true,
+        }
+      )
+    : (
+        pengajuan.isi_surat ||
+        pengajuan.template_surat ||
+        ""
+      );
 
   return (
     <div>
+
       <div
         className="page-header"
         style={{
@@ -128,14 +123,12 @@ const content = shouldGenerate
         </Link>
       </div>
 
-      <SuratEditor
-        suratId={pengajuan.id}
+      <EditSuratLayout
+        pengajuan={pengajuan}
+        detail={detail}
+        table={table}
+        template={pengajuan.template_surat ?? ""}
         content={content}
-        useKop={Boolean(pengajuan.use_kop)}
-
-        status={pengajuan.status}
-        tanggalSurat={pengajuan.tanggal_surat}
-
         profil={{
           nama_kepala_desa:
             profil?.nama_kepala_desa ?? "",
@@ -146,9 +139,8 @@ const content = shouldGenerate
           tanda_tangan:
             profil?.tanda_tangan ?? "",
         }}
-
-        kodeSurat={pengajuan.kode_surat}
       />
+
     </div>
   );
 }

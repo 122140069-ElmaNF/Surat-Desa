@@ -15,6 +15,7 @@ import {
   CircleX,
   Printer,
 } from "lucide-react";
+import { toast } from "sonner";
 
 type Props = {
   pengajuan: any;
@@ -67,9 +68,7 @@ async function handleApproval() {
 
     }
 
-    alert(
-      "Surat berhasil dikirim ke Kepala Desa."
-    );
+    toast.success("Surat berhasil dikirim ke Kepala Desa.");
 
     router.push("/admin/surat");
 
@@ -79,7 +78,7 @@ async function handleApproval() {
 
     console.error(err);
 
-    alert("Terjadi kesalahan server.");
+    toast.error("Terjadi kesalahan server.");
 
   } finally {
     setLoadingApproval(false);
@@ -99,7 +98,7 @@ async function handleOpenApproval() {
     console.log("RESULT API =", result);
 
     if (!result.success) {
-      alert(result.message);
+      toast.error(result.message);
       return;
     }
 
