@@ -18,7 +18,9 @@ export default async function EditAdminPage({
       id,
       nama,
       username,
-      role
+      role,
+      periode,
+      is_super_admin
     FROM users
     WHERE id = ?
     LIMIT 1
@@ -30,13 +32,23 @@ export default async function EditAdminPage({
 
   if (!user) {
     return (
-      <div className="card">
-        <h2>User tidak ditemukan.</h2>
+      <div style={{ color: "#991b1b" }}>
+        User tidak ditemukan.
       </div>
     );
   }
 
   return (
-    <EditAdminForm user={user} />
+    <EditAdminForm
+      user={{
+        id: user.id,
+        nama: user.nama,
+        username: user.username,
+        role: user.role,
+        periode: user.periode ?? null,
+        is_super_admin:
+          Boolean(user.is_super_admin),
+      }}
+    />
   );
 }

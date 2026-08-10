@@ -18,6 +18,31 @@ type Props = {
   tanggalSurat?: string;
 };
 
+// ========================================
+// FORMAT TANGGAL SURAT
+// ========================================
+
+function formatTanggalSurat(
+  value?: string
+) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Jakarta",
+  });
+}
+
 export default function SuratPreview({
   mode = "preview",
   kodeSurat,
@@ -27,15 +52,21 @@ export default function SuratPreview({
   profil,
   tanggalSurat,
 }: Props) {
+
+  const tanggalSuratFormatted =
+    formatTanggalSurat(tanggalSurat);
+
   return (
     <SuratPaper mode={mode}>
       <SuratTemplate
-      kodeSurat={kodeSurat}
+        kodeSurat={kodeSurat}
         content={content}
         useKop={useKop}
         status={status}
         profil={profil}
-        tanggalSurat={tanggalSurat}
+        tanggalSurat={
+          tanggalSuratFormatted
+        }
       />
     </SuratPaper>
   );

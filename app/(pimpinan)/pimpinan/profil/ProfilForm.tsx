@@ -3,18 +3,19 @@
 import { useState } from "react";
 
 type Props = {
-  jabatan?: string;
-  nama_kepala_desa?: string;
+  nama: string;
+  jabatan: string;
+  periode?: string | null;
   tanda_tangan?: string | null;
 };
 
 export default function ProfilForm({
+  nama,
   jabatan,
-  nama_kepala_desa,
+  periode,
   tanda_tangan,
 }: Props) {
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(
     e: React.FormEvent<HTMLFormElement>
@@ -24,9 +25,7 @@ export default function ProfilForm({
     setLoading(true);
 
     try {
-      const formData = new FormData(
-        e.currentTarget
-      );
+      const formData = new FormData(e.currentTarget);
 
       const res = await fetch(
         "/api/pimpinan/profil",
@@ -36,13 +35,12 @@ export default function ProfilForm({
         }
       );
 
-      const data =
-        await res.json();
+      const data = await res.json();
 
       if (!res.ok) {
         throw new Error(
           data.message ||
-            "Gagal menyimpan profil."
+            "Gagal menyimpan tanda tangan."
         );
       }
 
@@ -60,31 +58,36 @@ export default function ProfilForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-    >
+    <form onSubmit={handleSubmit}>
+
       {/* Jabatan */}
       <div
         style={{
           marginBottom: "20px",
         }}
       >
-        <label
-          style={labelStyle}
-        >
+        <label style={labelStyle}>
           Jabatan
         </label>
 
-        <input
-          type="text"
-          name="jabatan"
-          defaultValue={
-            jabatan || ""
-          }
-          placeholder="Masukkan jabatan"
-          style={inputStyle}
-          required
-        />
+        <div style={displayStyle}>
+          {jabatan || "-"}
+        </div>
+      </div>
+
+      {/* Periode Jabatan */}
+      <div
+        style={{
+          marginBottom: "20px",
+        }}
+      >
+        <label style={labelStyle}>
+          Periode Jabatan
+        </label>
+
+        <div style={displayStyle}>
+          {periode || "-"}
+        </div>
       </div>
 
       {/* Nama Kepala Desa */}
@@ -93,72 +96,49 @@ export default function ProfilForm({
           marginBottom: "20px",
         }}
       >
-        <label
-          style={labelStyle}
-        >
+        <label style={labelStyle}>
           Nama Kepala Desa
         </label>
 
-        <input
-          type="text"
-          name="nama_kepala_desa"
-          defaultValue={
-            nama_kepala_desa ||
-            ""
-          }
-          placeholder="Masukkan nama kepala desa"
-          style={inputStyle}
-          required
-        />
+        <div style={displayStyle}>
+          {nama || "-"}
+        </div>
       </div>
 
-      {/* Preview TTD */}
+      {/* Tanda Tangan Saat Ini */}
       <div
         style={{
           marginBottom: "20px",
         }}
       >
-        <label
-          style={labelStyle}
-        >
+        <label style={labelStyle}>
           Tanda Tangan Saat Ini
         </label>
 
         {tanda_tangan ? (
           <img
             src={tanda_tangan}
-            alt="Tanda tangan"
+            alt="Tanda tangan Kepala Desa"
             style={{
-              maxWidth:
-                "250px",
-              maxHeight:
-                "120px",
-              objectFit:
-                "contain",
-              border:
-                "1px solid #e5e7eb",
-              borderRadius:
-                "10px",
+              maxWidth: "250px",
+              maxHeight: "120px",
+              objectFit: "contain",
+              border: "1px solid #e5e7eb",
+              borderRadius: "10px",
               padding: "10px",
-              background:
-                "white",
+              background: "white",
             }}
           />
         ) : (
           <div
             style={{
-              padding:
-                "14px",
-              border:
-                "1px dashed #d1d5db",
-              borderRadius:
-                "10px",
-              color:
-                "#6b7280",
+              padding: "14px",
+              border: "1px dashed #d1d5db",
+              borderRadius: "10px",
+              color: "#6b7280",
             }}
           >
-            Belum ada tanda
-            tangan.
+            Belum ada tanda tangan.
           </div>
         )}
       </div>
@@ -169,11 +149,8 @@ export default function ProfilForm({
           marginBottom: "30px",
         }}
       >
-        <label
-          style={labelStyle}
-        >
-          Upload Tanda Tangan
-          Baru
+        <label style={labelStyle}>
+          Upload Tanda Tangan Baru
         </label>
 
         <input
@@ -183,19 +160,17 @@ export default function ProfilForm({
         />
       </div>
 
+      {/* Button */}
       <button
         type="submit"
         disabled={loading}
         style={{
-          padding:
-            "12px 22px",
+          padding: "12px 22px",
           border: "none",
-          borderRadius:
-            "10px",
-          background:
-            loading
-              ? "#93c5fd"
-              : "#2563eb",
+          borderRadius: "10px",
+          background: loading
+            ? "#93c5fd"
+            : "#2563eb",
           color: "white",
           fontWeight: 600,
           cursor: loading
@@ -205,7 +180,7 @@ export default function ProfilForm({
       >
         {loading
           ? "Menyimpan..."
-          : "Simpan Profil"}
+          : "Simpan Tanda Tangan"}
       </button>
     </form>
   );
@@ -218,11 +193,11 @@ const labelStyle = {
   color: "#374151",
 };
 
-const inputStyle = {
+const displayStyle = {
   width: "100%",
   padding: "12px",
-  border:
-    "1px solid #d1d5db",
+  border: "1px solid #e5e7eb",
   borderRadius: "10px",
-  outline: "none",
+  backgroundColor: "#f9fafb",
+  color: "#374151",
 };

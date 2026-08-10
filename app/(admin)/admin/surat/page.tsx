@@ -1,16 +1,20 @@
 import db from "@/lib/db";
-import AdminSuratTable, { SuratRow } from "./AdminSuratTable";
+import AdminSuratTable, {
+  SuratRow,
+} from "./AdminSuratTable";
 import { getNamaPemohon } from "@/lib/surat/getNamaPemohon";
 
 export default async function AdminSuratPage() {
-  const [rows] = await db.query(
-    `
+  const [rows] = await db.query(`
     SELECT
       ps.id,
       ps.kode_tracking,
       ps.status,
       ps.created_at,
-      ps.nama_admin,
+
+      -- Ambil nama admin TERBARU dari users
+      u.nama AS nama_admin,
+
       js.nama_surat,
       js.kode_surat
 
@@ -19,13 +23,16 @@ export default async function AdminSuratPage() {
     JOIN jenis_surat js
       ON js.id = ps.jenis_surat_id
 
+    LEFT JOIN users u
+      ON u.id = ps.admin_id
+
     ORDER BY ps.created_at DESC
-    `
-  );
+  `);
 
   const surat = await Promise.all(
     (rows as any[]).map(async (item) => ({
       ...item,
+
       nama: await getNamaPemohon(
         item.kode_surat,
         item.id

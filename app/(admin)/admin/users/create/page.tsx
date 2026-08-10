@@ -11,96 +11,118 @@ export default function CreateAdminPage() {
   const [nama, setNama] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("admin");
+
+  const [role, setRole] = useState("staff_admin");
+
+  const [periode, setPeriode] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-async function handleSubmit() {
-
-    if (
-        !nama ||
-        !username ||
-        !password
-    ) {
-        toast.warning("Semua field harus diisi.");
-        return;
+  async function handleSubmit() {
+    if (!nama || !username || !password) {
+      toast.warning("Semua field wajib diisi.");
+      return;
     }
 
-    try{
+    // Periode hanya wajib untuk Kepala Desa
+    if (role === "kepala_desa" && !periode) {
+      toast.warning("Periode jabatan Kepala Desa wajib diisi.");
+      return;
+    }
 
-        setLoading(true);
+    // Validasi format periode
+    if (
+      role === "kepala_desa" &&
+      !/^\d{4}-\d{4}$/.test(periode)
+    ) {
+      toast.warning(
+        "Format periode harus seperti 2026-2027."
+      );
+      return;
+    }
 
-        const res = await fetch(
-            "/api/admin/users",
-            {
-                method:"POST",
+    try {
+      setLoading(true);
 
-                headers:{
-                    "Content-Type":
-                    "application/json",
-                },
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
 
-                body:JSON.stringify({
-                    nama,
-                    username,
-                    password,
-                    role,
-                }),
-            }
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          nama,
+          username,
+          password,
+          role,
+          periode:
+            role === "kepala_desa"
+              ? periode
+              : null,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        toast.success(
+          "Akun berhasil ditambahkan."
         );
 
-        const result =
-        await res.json();
+        router.push("/admin/users");
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error(error);
 
-        if(result.success){
-
-            toast.success("Admin berhasil ditambahkan.");
-
-            router.push("/admin/users");
-
-            router.refresh();
-
-        }else{
-
-            toast.error(result.message);
-
-        }
-
-    }catch(error){
-
-        console.error(error);
-
-        toast.error("Terjadi kesalahan.");
-
-    }finally{
-
-        setLoading(false);
-
+      toast.error(
+        "Terjadi kesalahan pada server."
+      );
+    } finally {
+      setLoading(false);
     }
-
-}
+  }
 
   return (
     <div>
-      {/* Header */}
-      <div className="page-header">
+      {/* =========================
+          HEADER
+      ========================= */}
+
+      <div
+        className="page-header"
+        style={{
+          marginBottom: "24px",
+        }}
+      >
         <div>
           <h1 className="page-title">
-            Tambah Admin
+            Tambah Akun
           </h1>
 
           <p className="page-subtitle">
-            Tambahkan akun Admin atau Pimpinan
+            Tambahkan akun Staff Admin atau Kepala Desa
           </p>
         </div>
       </div>
 
-      <section className="card">
+      {/* =========================
+          FORM
+      ========================= */}
 
+      <section className="card">
         <div className="admin-form">
 
+          {/* NAMA */}
+
           <div className="admin-form-group">
-            <label>Nama Lengkap</label>
+            <label>
+              Nama Lengkap
+            </label>
 
             <input
               type="text"
@@ -112,25 +134,37 @@ async function handleSubmit() {
             />
           </div>
 
+          {/* USERNAME */}
+
           <div className="admin-form-group">
-            <label>Username</label>
+            <label>
+              Username
+            </label>
 
             <input
-                type="text"
-                value={username}
-                onChange={(e) =>
-                    setUsername(e.target.value)
-                }
-                placeholder="Masukkan username"
-                />
+              type="text"
+              value={username}
+              onChange={(e) =>
+                setUsername(e.target.value)
+              }
+              placeholder="Masukkan username"
+            />
           </div>
 
+          {/* PASSWORD */}
+
           <div className="admin-form-group">
-            <label>Password</label>
+            <label>
+              Password
+            </label>
 
             <div className="password-input">
               <input
-                type={showPassword ? "text" : "password"}
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
                 value={password}
                 onChange={(e) =>
                   setPassword(e.target.value)
@@ -142,7 +176,9 @@ async function handleSubmit() {
                 type="button"
                 className="password-toggle"
                 onClick={() =>
-                  setShowPassword(!showPassword)
+                  setShowPassword(
+                    !showPassword
+                  )
                 }
               >
                 {showPassword ? (
@@ -154,31 +190,92 @@ async function handleSubmit() {
             </div>
           </div>
 
+          {/* ROLE */}
+
           <div className="admin-form-group">
-            <label>Role</label>
+            <label>
+              Role
+            </label>
 
             <select
               value={role}
-              onChange={(e) =>
-                setRole(e.target.value)
-              }
+              onChange={(e) => {
+                const newRole =
+                  e.target.value;
+
+                setRole(newRole);
+
+                // Kalau bukan Kepala Desa,
+                // kosongkan periode
+                if (
+                  newRole !==
+                  "kepala_desa"
+                ) {
+                  setPeriode("");
+                }
+              }}
             >
-              <option value="admin">
-                Admin
+              <option value="staff_admin">
+                Staff Admin
               </option>
 
-              <option value="pimpinan">
-                Pimpinan
+              <option value="kepala_desa">
+                Kepala Desa
               </option>
             </select>
           </div>
 
+          {/* PERIODE */}
+
+          {role === "kepala_desa" && (
+            <div
+              className="admin-form-group"
+              style={{
+                marginTop: "-4px",
+              }}
+            >
+              <label>
+                Periode Jabatan
+              </label>
+
+              <input
+                type="text"
+                value={periode}
+                onChange={(e) =>
+                  setPeriode(
+                    e.target.value
+                  )
+                }
+                placeholder="Contoh: 2026-2027"
+                maxLength={9}
+              />
+
+              <small
+                style={{
+                  display: "block",
+                  marginTop: "6px",
+                  color: "#64748b",
+                  fontSize: "12px",
+                }}
+              >
+                Masukkan periode masa jabatan,
+                contoh 2026-2027.
+              </small>
+            </div>
+          )}
         </div>
+
+        {/* =========================
+            ACTION
+        ========================= */}
 
         <div className="form-action">
           <button
             className="btn btn-outline"
-            onClick={() => router.back()}
+            onClick={() =>
+              router.back()
+            }
+            disabled={loading}
           >
             Batal
           </button>
@@ -188,7 +285,9 @@ async function handleSubmit() {
             onClick={handleSubmit}
             disabled={loading}
           >
-            {loading ? "Menyimpan..." : "Simpan"}
+            {loading
+              ? "Menyimpan..."
+              : "Simpan"}
           </button>
         </div>
       </section>

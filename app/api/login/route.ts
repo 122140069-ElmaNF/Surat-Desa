@@ -91,6 +91,9 @@ cookieStore.set(
   }
 );
 
+console.log("USER DARI DB =", user);
+console.log("ROLE =", user.role);
+
 return NextResponse.json({
     success: true,
     role: user.role,

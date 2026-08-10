@@ -13,6 +13,7 @@ export default function SearchableArsip({
   const [q, setQ] = useState("");
   const [rows, setRows] =
     useState<ArsipSuratRow[]>(initialRows);
+
   const [loading, setLoading] =
     useState(false);
 
@@ -31,19 +32,24 @@ export default function SearchableArsip({
         new URLSearchParams();
 
       if (q.trim()) {
-        params.set("q", q.trim());
+        params.set(
+          "q",
+          q.trim()
+        );
       }
 
       const res = await fetch(
         `/api/pimpinan/arsip?${params.toString()}`
       );
 
-      if (!res.ok)
+      if (!res.ok) {
         throw new Error(
           "Gagal mengambil data"
         );
+      }
 
-      const data = await res.json();
+      const data =
+        await res.json();
 
       setRows(data);
     } catch (err) {
@@ -66,7 +72,10 @@ export default function SearchableArsip({
           marginBottom: "18px",
         }}
       >
-        {/* SEARCH */}
+        {/* =========================
+            SEARCH
+        ========================= */}
+
         <div
           style={{
             display: "flex",
@@ -85,8 +94,8 @@ export default function SearchableArsip({
               fontWeight: 500,
             }}
           >
-            Cari Nama Pemohon atau Jenis
-            Surat
+            Cari Nama Pemohon, Jenis Surat,
+            atau Kepala Desa
           </label>
 
           <input
@@ -94,7 +103,7 @@ export default function SearchableArsip({
             onChange={(e) =>
               setQ(e.target.value)
             }
-            placeholder="Masukkan nama pemohon atau jenis surat"
+            placeholder="Masukkan nama pemohon, jenis surat, atau kepala desa"
             style={{
               width: "100%",
               padding: "10px 12px",
@@ -110,7 +119,10 @@ export default function SearchableArsip({
           />
         </div>
 
-        {/* BUTTON */}
+        {/* =========================
+            BUTTON
+        ========================= */}
+
         <div
           className="action-row"
           style={{
@@ -124,19 +136,16 @@ export default function SearchableArsip({
             style={{
               padding: "10px 14px",
               borderRadius: "8px",
-              backgroundColor: "#2563eb",
+              backgroundColor:
+                "#2563eb",
               color: "white",
               border: "none",
-              cursor: "pointer",
+              cursor: loading
+                ? "not-allowed"
+                : "pointer",
               fontWeight: 700,
               transition: "0.2s",
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "#1d4ed8")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#2563eb")
-            }
           >
             {loading
               ? "Mencari..."
@@ -158,7 +167,9 @@ export default function SearchableArsip({
               color: "#111827",
               border:
                 "1px solid #d1d5db",
-              cursor: "pointer",
+              cursor: loading
+                ? "not-allowed"
+                : "pointer",
               fontWeight: 700,
             }}
           >

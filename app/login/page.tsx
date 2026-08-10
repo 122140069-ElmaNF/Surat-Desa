@@ -62,17 +62,21 @@ export default function LoginPage() {
       }
 
       // Redirect berdasarkan role
-      if (result.role === "admin") {
-        router.push("/admin");
-      } else if (
-        result.role === "pimpinan"
-      ) {
-        router.push("/pimpinan");
-      } else {
-        alert(
-          "Role tidak dikenali."
-        );
-      }
+    if (
+      result.role === "super_admin" ||
+      result.role === "staff_admin"
+    ) {
+      router.push("/admin");
+    } else if (result.role === "kepala_desa") {
+      router.push("/pimpinan");
+    } else if (result.role === "ex_kepala_desa") {
+      alert(
+        "Masa jabatan Anda telah berakhir. Akun ini tidak dapat digunakan untuk mengakses dashboard."
+      );
+    } else {
+      alert("Role tidak dikenali.");
+    }
+
     } catch (err) {
       console.error(err);
 

@@ -16,12 +16,13 @@ export default function AdminArsipTable({ surat }: { surat: ArsipSuratRow[] }) {
       <table
         className="responsive-table"
         style={{
-          minWidth: "820px",
+          minWidth: "900px",
           borderCollapse: "collapse",
         }}
       >
         <thead>
             <tr style={{ backgroundColor: "#f9fafb" }}>
+            <Th>No.</Th>
             <Th>Kode Tracking</Th>
             <Th>Nama Pemohon</Th>
             <Th>Jenis Surat</Th>
@@ -46,8 +47,9 @@ export default function AdminArsipTable({ surat }: { surat: ArsipSuratRow[] }) {
               </td>
             </tr>
           ) : (
-            surat.map((item) => (
+            surat.map((item, index) => (
               <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                  <Td label="No.">{index + 1}</Td>
                   <Td label="Kode Tracking">{item.kode_tracking}</Td>
                   <Td label="Nama Pemohon">{item.nama || "-"}</Td>
                   <Td label="Jenis Surat">{item.nama_surat || "-"}</Td>

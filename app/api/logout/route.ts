@@ -10,3 +10,18 @@ export async function POST() {
     success: true,
   });
 }
+
+export async function GET(request: Request) {
+  const cookieStore = await cookies();
+
+  cookieStore.delete("session");
+
+  const url = new URL(request.url);
+
+  const redirectTo =
+    url.searchParams.get("redirect") || "/login";
+
+  return NextResponse.redirect(
+    new URL(redirectTo, request.url)
+  );
+}

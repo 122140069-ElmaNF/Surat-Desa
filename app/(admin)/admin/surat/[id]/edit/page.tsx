@@ -31,13 +31,57 @@ export default async function AdminEditSuratPage({
     table,
   } = data;
 
-  const [profilRows] = await db.query(`
-    SELECT *
-    FROM profil_pimpinan
-    LIMIT 1
-  `);
+let profil = {
+  nama_kepala_desa: "",
+  jabatan: "Kepala Desa Sumberejo",
+  tanda_tangan: "",
+};
 
-  const profil = (profilRows as any[])[0];
+if (pengajuan.status === "selesai") {
+  // Surat lama/selesai menggunakan data Kepala Desa
+  // yang tersimpan pada saat surat disetujui.
+  profil = {
+    nama_kepala_desa:
+      pengajuan.nama_penandatangan ?? "",
+
+    jabatan:
+      pengajuan.jabatan_penandatangan ??
+      "Kepala Desa Sumberejo",
+
+    tanda_tangan:
+      pengajuan.file_ttd ?? "",
+  };
+} else {
+  // Surat yang belum selesai menggunakan
+  // Kepala Desa yang sedang aktif.
+  const [userRows] = await db.query(
+    `
+    SELECT
+      id,
+      nama,
+      tanda_tangan
+    FROM users
+    WHERE role = 'kepala_desa'
+    LIMIT 1
+    `
+  );
+
+  const kepalaDesa =
+    (userRows as any[])[0];
+
+  if (kepalaDesa) {
+    profil = {
+      nama_kepala_desa:
+        kepalaDesa.nama ?? "",
+
+      jabatan:
+        "Kepala Desa Sumberejo",
+
+      tanda_tangan:
+        kepalaDesa.tanda_tangan ?? "",
+    };
+  }
+}
 
   const fields: Record<string, string> = {};
 
@@ -63,7 +107,7 @@ export default async function AdminEditSuratPage({
     pengajuan.nama_penandatangan ?? "";
 
   fields.jabatan =
-    pengajuan.jabatan ?? "";
+    pengajuan.jabatan_penandatangan ?? "";
 
   const shouldGenerate =
     ["draft", "pending"].includes(

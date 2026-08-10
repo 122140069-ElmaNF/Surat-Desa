@@ -7,15 +7,22 @@ import PimpinanSuratTable, {
 } from "./PimpinanSuratTable";
 
 export default async function PimpinanDashboardPage() {
-
   const [rows] = await db.query(`
     SELECT
       ps.id,
       ps.kode_tracking,
       ps.status,
-      ps.created_at,
       js.nama_surat,
-      js.kode_surat
+      js.kode_surat,
+
+      (
+        SELECT sal.created_at
+        FROM surat_activity_logs sal
+        WHERE sal.pengajuan_id = ps.id
+          AND sal.status = 'menunggu_persetujuan'
+        ORDER BY sal.created_at DESC
+        LIMIT 1
+      ) AS approval_requested_at
 
     FROM pengajuan_surat ps
 
@@ -24,16 +31,20 @@ export default async function PimpinanDashboardPage() {
 
     WHERE ps.status = 'menunggu_persetujuan'
 
-    ORDER BY ps.created_at DESC
+    ORDER BY approval_requested_at DESC
   `);
 
   const surat = await Promise.all(
     (rows as any[]).map(async (item) => ({
       ...item,
+
       nama: await getNamaPemohon(
         item.kode_surat,
         item.id
       ),
+
+      // Waktu Admin mengajukan approval
+      created_at: item.approval_requested_at,
     }))
   );
 

@@ -7,8 +7,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 
-import SuratPaper from "@/app/components/surat/SuratPaper";
-import DomisiliTemplate from "@/app/components/surat/templates/DomisiliTemplate";
+import SuratPreview from "@/app/components/surat/SuratPreview";
 
 type Profil = {
   nama_kepala_desa: string;
@@ -24,19 +23,24 @@ export default function PimpinanPreviewPage() {
     useState<Profil | null>(null);
   const [tanggalSurat, setTanggalSurat] =
     useState("");
+  const [kodeSurat, setKodeSurat] =
+    useState("");
 
   const [loading, setLoading] =
     useState<"acc" | "tolak" | null>(null);
 
   const params = useParams();
   const router = useRouter();
-  const searchParams =
-    useSearchParams();
+  const searchParams = useSearchParams();
 
   const isPrint =
     searchParams?.get("print") !== null;
 
   const id = params.id;
+
+  // =========================================
+  // AMBIL DATA SURAT
+  // =========================================
 
   useEffect(() => {
     if (!id) return;
@@ -44,15 +48,28 @@ export default function PimpinanPreviewPage() {
     fetch(`/api/generate/${id}`)
       .then((res) => res.json())
       .then((res) => {
-        setData(res.hasil);
-        setUseKop(res.use_kop);
-        setStatus(res.status || "");
+        setData(res.hasil ?? "");
+        setUseKop(Boolean(res.use_kop));
+        setStatus(res.status ?? "");
         setProfil(res.profil ?? null);
         setTanggalSurat(
           res.tanggalSurat ?? ""
         );
+        setKodeSurat(
+          res.kodeSurat ?? ""
+        );
+      })
+      .catch((error) => {
+        console.error(
+          "Gagal mengambil preview surat:",
+          error
+        );
       });
   }, [id]);
+
+  // =========================================
+  // ACC / TOLAK
+  // =========================================
 
   async function updatePersetujuan(
     action: "acc" | "tolak"
@@ -85,30 +102,95 @@ export default function PimpinanPreviewPage() {
         }
       );
 
+      const result =
+        await res.json();
+
       if (!res.ok) {
         alert(
-          "Gagal memproses surat."
+          result.message ||
+            "Gagal memproses surat."
         );
         return;
       }
 
       if (action === "acc") {
+        /*
+         * Setelah ACC:
+         * status menjadi selesai.
+         *
+         * Refresh agar API generate
+         * mengambil snapshot TTD
+         * yang baru disimpan.
+         */
         setStatus("selesai");
+
         router.refresh();
+
+        // Ambil ulang data preview
+        const previewRes =
+          await fetch(
+            `/api/generate/${id}`,
+            {
+              cache: "no-store",
+            }
+          );
+
+        const previewData =
+          await previewRes.json();
+
+        setData(
+          previewData.hasil ?? ""
+        );
+
+        setUseKop(
+          Boolean(
+            previewData.use_kop
+          )
+        );
+
+        setStatus(
+          previewData.status ?? ""
+        );
+
+        setProfil(
+          previewData.profil ??
+            null
+        );
+
+        setTanggalSurat(
+          previewData.tanggalSurat ??
+            ""
+        );
+
+        setKodeSurat(
+          previewData.kodeSurat ??
+            ""
+        );
       } else {
         router.push("/pimpinan");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+
+      alert(
+        "Terjadi kesalahan."
+      );
     } finally {
       setLoading(null);
     }
   }
 
+  // =========================================
+  // PRINT
+  // =========================================
+
   function handlePrint() {
     window.print();
   }
+
+  // =========================================
+  // RENDER
+  // =========================================
 
   return (
     <div
@@ -130,6 +212,8 @@ export default function PimpinanPreviewPage() {
             alignItems: "center",
           }}
         >
+          {/* KEMBALI */}
+
           <button
             onClick={() =>
               router.push(
@@ -143,12 +227,16 @@ export default function PimpinanPreviewPage() {
             Kembali
           </button>
 
+          {/* ACTION */}
+
           <div
             style={{
               display: "flex",
               gap: "10px",
             }}
           >
+            {/* PRINT */}
+
             {status ===
               "selesai" && (
               <button
@@ -165,6 +253,8 @@ export default function PimpinanPreviewPage() {
               </button>
             )}
 
+            {/* ACC */}
+
             <button
               onClick={() =>
                 updatePersetujuan(
@@ -172,8 +262,7 @@ export default function PimpinanPreviewPage() {
                 )
               }
               disabled={
-                loading !==
-                  null ||
+                loading !== null ||
                 status ===
                   "selesai"
               }
@@ -184,6 +273,12 @@ export default function PimpinanPreviewPage() {
                   "selesai"
                     ? "#9ca3af"
                     : "#16a34a",
+                cursor:
+                  loading !== null ||
+                  status ===
+                    "selesai"
+                    ? "not-allowed"
+                    : "pointer",
               }}
             >
               {status ===
@@ -195,6 +290,8 @@ export default function PimpinanPreviewPage() {
                 : "ACC"}
             </button>
 
+            {/* TOLAK */}
+
             <button
               onClick={() =>
                 updatePersetujuan(
@@ -202,8 +299,7 @@ export default function PimpinanPreviewPage() {
                 )
               }
               disabled={
-                loading !==
-                  null ||
+                loading !== null ||
                 status ===
                   "selesai"
               }
@@ -214,6 +310,12 @@ export default function PimpinanPreviewPage() {
                   "selesai"
                     ? "#9ca3af"
                     : "#dc2626",
+                cursor:
+                  loading !== null ||
+                  status ===
+                    "selesai"
+                    ? "not-allowed"
+                    : "pointer",
               }}
             >
               {loading ===
@@ -225,20 +327,26 @@ export default function PimpinanPreviewPage() {
         </div>
       )}
 
-      <SuratPaper>
-        <DomisiliTemplate
-          content={data}
-          useKop={useKop}
-          status={status}
-          profil={profil}
-          tanggalSurat={
-            tanggalSurat
-          }
-        />
-      </SuratPaper>
+      {/* =========================================
+          PREVIEW SURAT
+      ========================================= */}
+
+      <SuratPreview
+        mode="preview"
+        kodeSurat={kodeSurat}
+        content={data}
+        useKop={useKop}
+        status={status}
+        profil={profil}
+        tanggalSurat={tanggalSurat}
+      />
     </div>
   );
 }
+
+// =========================================
+// STYLE
+// =========================================
 
 const outlineButtonStyle: React.CSSProperties =
   {

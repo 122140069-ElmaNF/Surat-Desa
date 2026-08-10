@@ -25,7 +25,7 @@ export function middleware(req: NextRequest) {
 
       // Admin membuka halaman pimpinan
       if (
-        user.role === "admin" &&
+        user.role === "staff_admin" &&
         pathname.startsWith("/pimpinan")
       ) {
         return NextResponse.redirect(
@@ -33,9 +33,9 @@ export function middleware(req: NextRequest) {
         );
       }
 
-      // Pimpinan membuka halaman admin
+      // Kepala Desa membuka halaman admin
       if (
-        user.role === "pimpinan" &&
+        user.role === "kepala_desa" &&
         pathname.startsWith("/admin")
       ) {
         return NextResponse.redirect(
@@ -45,18 +45,22 @@ export function middleware(req: NextRequest) {
 
       // Sudah login lalu membuka /login
       if (pathname === "/login") {
-        if (user.role === "admin") {
-          return NextResponse.redirect(
-            new URL("/admin", req.url)
-          );
+        if (
+          user.role === "super_admin" ||
+          user.role === "staff_admin"
+        ) {
+          return NextResponse.redirect(new URL("/admin", req.url));
         }
 
-        if (user.role === "pimpinan") {
-          return NextResponse.redirect(
-            new URL("/pimpinan", req.url)
-          );
+        if (user.role === "kepala_desa") {
+          return NextResponse.redirect(new URL("/pimpinan", req.url));
+        }
+
+        if (user.role === "ex_kepala_desa") {
+          return NextResponse.redirect(new URL("/login", req.url));
         }
       }
+      
     } catch (error) {
       // Cookie rusak → hapus & kembali ke login
       const response = NextResponse.redirect(

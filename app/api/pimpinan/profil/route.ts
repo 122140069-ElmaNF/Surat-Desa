@@ -1,135 +1,207 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import db from "@/lib/db";
 import fs from "fs/promises";
 import path from "path";
 
 export async function POST(request: Request) {
   try {
+    // =========================
+    // 1. Ambil session
+    // =========================
+    const cookieStore = await cookies();
+    const session = cookieStore.get("session");
+
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Anda belum login.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    let userSession: any;
+
+    try {
+      userSession = JSON.parse(session.value);
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Session tidak valid.",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    // =========================
+    // 2. Pastikan user adalah
+    //    Kepala Desa
+    // =========================
+    if (
+      !userSession.id ||
+      userSession.role !== "kepala_desa"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Akses hanya untuk Kepala Desa.",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    // =========================
+    // 3. Ambil file
+    // =========================
     const formData = await request.formData();
-
-    const namaKepalaDesa = String(
-      formData.get("nama_kepala_desa") ?? ""
-    ).trim();
-
-    const jabatan = String(
-      formData.get("jabatan") ?? ""
-    ).trim();
 
     const file = formData.get(
       "tanda_tangan"
     ) as File | null;
 
-    let tandaTanganPath: string | null = null;
-
-    // Upload file jika ada
-    if (file && file.size > 0) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      const ext =
-        path.extname(file.name) || ".png";
-
-      const fileName = `ttd-${Date.now()}${ext}`;
-
-      const uploadDir = path.join(
-        process.cwd(),
-        "public",
-        "ttd"
+    if (!file || file.size === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Silakan pilih file tanda tangan terlebih dahulu.",
+        },
+        {
+          status: 400,
+        }
       );
-
-      // Membuat folder public/ttd jika belum ada
-      await fs.mkdir(uploadDir, {
-        recursive: true,
-      });
-
-      const savePath = path.join(
-        uploadDir,
-        fileName
-      );
-
-      await fs.writeFile(
-        savePath,
-        buffer
-      );
-
-      tandaTanganPath = `/ttd/${fileName}`;
     }
 
-    // Cek apakah profil sudah ada
+    // =========================
+    // 4. Validasi file
+    // =========================
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "File tanda tangan harus berupa gambar.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // =========================
+    // 5. Pastikan user masih
+    //    Kepala Desa di database
+    // =========================
     const [rows] = await db.query(
       `
-      SELECT *
-      FROM profil_pimpinan
+      SELECT
+        id,
+        nama,
+        role,
+        tanda_tangan
+      FROM users
+      WHERE id = ?
       LIMIT 1
-      `
+      `,
+      [userSession.id]
     );
 
-    const profil = (rows as any[])[0];
+    const user = (rows as any[])[0];
 
-    // Jika tabel masih kosong
-    if (!profil) {
-      await db.query(
-        `
-        INSERT INTO profil_pimpinan
-        (
-          nama_kepala_desa,
-          jabatan,
-          tanda_tangan
-        )
-        VALUES (?, ?, ?)
-        `,
-        [
-          namaKepalaDesa,
-          jabatan,
-          tandaTanganPath,
-        ]
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Data pengguna tidak ditemukan.",
+        },
+        {
+          status: 404,
+        }
       );
-    } else {
-      // Jika upload tanda tangan baru
-      if (tandaTanganPath) {
-        await db.query(
-          `
-          UPDATE profil_pimpinan
-          SET
-            nama_kepala_desa = ?,
-            jabatan = ?,
-            tanda_tangan = ?
-          WHERE id = ?
-          `,
-          [
-            namaKepalaDesa,
-            jabatan,
-            tandaTanganPath,
-            profil.id,
-          ]
-        );
-      } else {
-        // Update tanpa mengganti tanda tangan
-        await db.query(
-          `
-          UPDATE profil_pimpinan
-          SET
-            nama_kepala_desa = ?,
-            jabatan = ?
-          WHERE id = ?
-          `,
-          [
-            namaKepalaDesa,
-            jabatan,
-            profil.id,
-          ]
-        );
-      }
     }
+
+    if (user.role !== "kepala_desa") {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Akun ini bukan Kepala Desa aktif.",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    // =========================
+    // 6. Simpan file tanda tangan
+    // =========================
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    const ext =
+      path.extname(file.name) || ".png";
+
+    const fileName =
+      `ttd-${user.id}-${Date.now()}${ext}`;
+
+    const uploadDir = path.join(
+      process.cwd(),
+      "public",
+      "ttd"
+    );
+
+    await fs.mkdir(uploadDir, {
+      recursive: true,
+    });
+
+    const savePath = path.join(
+      uploadDir,
+      fileName
+    );
+
+    await fs.writeFile(
+      savePath,
+      buffer
+    );
+
+    const tandaTanganPath =
+      `/ttd/${fileName}`;
+
+    // =========================
+    // 7. Update users
+    // =========================
+    await db.query(
+      `
+      UPDATE users
+      SET tanda_tangan = ?
+      WHERE id = ?
+        AND role = 'kepala_desa'
+      `,
+      [
+        tandaTanganPath,
+        user.id,
+      ]
+    );
 
     return NextResponse.json({
       success: true,
       message:
-        "Profil pimpinan berhasil disimpan.",
+        "Tanda tangan Kepala Desa berhasil disimpan.",
     });
   } catch (error) {
     console.error(
-      "Gagal menyimpan profil pimpinan:",
+      "Gagal menyimpan tanda tangan Kepala Desa:",
       error
     );
 
@@ -137,7 +209,7 @@ export async function POST(request: Request) {
       {
         success: false,
         message:
-          "Gagal menyimpan profil pimpinan.",
+          "Gagal menyimpan tanda tangan Kepala Desa.",
       },
       {
         status: 500,

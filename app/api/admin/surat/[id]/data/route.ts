@@ -16,6 +16,10 @@ export async function PATCH(
       fields,
     } = body;
 
+    // ===========================
+    // VALIDASI TABLE
+    // ===========================
+
     if (!table) {
       return NextResponse.json(
         {
@@ -28,7 +32,14 @@ export async function PATCH(
       );
     }
 
-    if (!fields || typeof fields !== "object") {
+    // ===========================
+    // VALIDASI FIELDS
+    // ===========================
+
+    if (
+      !fields ||
+      typeof fields !== "object"
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -81,62 +92,97 @@ export async function PATCH(
     // AMBIL DATA TERBARU
     // ===========================
 
-    const [pengajuanRows]: any = await db.query(
-      `
-      SELECT
-        ps.*,
-        js.template_surat
-      FROM pengajuan_surat ps
-      JOIN jenis_surat js
-        ON js.id = ps.jenis_surat_id
-      WHERE ps.id = ?
-      LIMIT 1
-      `,
-      [id]
-    );
+    const [pengajuanRows]: any =
+      await db.query(
+        `
+        SELECT
+          ps.*,
+          js.template_surat
+        FROM pengajuan_surat ps
+        JOIN jenis_surat js
+          ON js.id = ps.jenis_surat_id
+        WHERE ps.id = ?
+        LIMIT 1
+        `,
+        [id]
+      );
 
-    const pengajuan = pengajuanRows[0];
+    const pengajuan =
+      pengajuanRows[0];
 
-    const [detailRows]: any = await db.query(
-      `
-      SELECT *
-      FROM ${table}
-      WHERE pengajuan_id = ?
-      LIMIT 1
-      `,
-      [id]
-    );
-
-    const detail = detailRows[0];
-
-    const [profilRows]: any = await db.query(`
-      SELECT *
-      FROM profil_pimpinan
-      LIMIT 1
-    `);
-
-    const profil = profilRows[0];
+    if (!pengajuan) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Data surat tidak ditemukan.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
 
     // ===========================
-    // BANGUN FIELD
+    // AMBIL DETAIL TERBARU
     // ===========================
 
-    const templateFields: Record<string, string> = {};
+    const [detailRows]: any =
+      await db.query(
+        `
+        SELECT *
+        FROM ${table}
+        WHERE pengajuan_id = ?
+        LIMIT 1
+        `,
+        [id]
+      );
 
-    Object.entries(detail).forEach(([key, value]) => {
-      if (
-        [
-          "id",
-          "pengajuan_id",
-          "created_at",
-          "updated_at",
-        ].includes(key)
-      ) {
-        return;
+    const detail =
+      detailRows[0];
+
+    if (!detail) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Detail data surat tidak ditemukan.",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    // ===========================
+    // BANGUN FIELD TEMPLATE
+    // ===========================
+
+    const templateFields: Record<
+      string,
+      string
+    > = {};
+
+    Object.entries(detail).forEach(
+      ([key, value]) => {
+        if (
+          [
+            "id",
+            "pengajuan_id",
+            "created_at",
+            "updated_at",
+          ].includes(key)
+        ) {
+          return;
+        }
+
+        templateFields[key] =
+          String(value ?? "");
       }
+    );
 
-      templateFields[key] = String(value ?? "");
-    });
+    // ===========================
+    // FIELD SISTEM
+    // ===========================
 
     templateFields.nomor_surat =
       pengajuan.nomor_surat ?? "";
@@ -155,11 +201,55 @@ export async function PATCH(
           )
         : "";
 
-    templateFields.nama_penandatangan =
-      profil?.nama_kepala_desa ?? "";
+    // ===========================
+    // DATA KEPALA DESA
+    // ===========================
 
-    templateFields.jabatan =
-      profil?.jabatan ?? "";
+    if (
+      pengajuan.status ===
+      "selesai"
+    ) {
+      // --------------------------------
+      // SURAT SUDAH SELESAI
+      // Gunakan snapshot Kepala Desa
+      // ketika surat di-ACC
+      // --------------------------------
+
+      templateFields.nama_penandatangan =
+        pengajuan.nama_penandatangan ??
+        "";
+
+      templateFields.jabatan =
+        pengajuan.jabatan_penandatangan ??
+        "";
+    } else {
+      // --------------------------------
+      // SURAT BELUM SELESAI
+      // Ambil Kepala Desa aktif
+      // dari tabel users
+      // --------------------------------
+
+      const [
+        kepalaDesaRows,
+      ]: any = await db.query(
+        `
+        SELECT
+          nama
+        FROM users
+        WHERE role = 'kepala_desa'
+        LIMIT 1
+        `
+      );
+
+      const kepalaDesa =
+        kepalaDesaRows[0];
+
+      templateFields.nama_penandatangan =
+        kepalaDesa?.nama ?? "";
+
+      templateFields.jabatan =
+        "Kepala Desa Sumberejo";
+    }
 
     // ===========================
     // GENERATE ULANG SURAT
@@ -172,6 +262,10 @@ export async function PATCH(
         preserveSystemFields: true,
       }
     );
+
+    // ===========================
+    // SIMPAN ISI SURAT TERBARU
+    // ===========================
 
     await db.query(
       `
@@ -187,22 +281,24 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      message: "Data berhasil diperbarui.",
+      message:
+        "Data berhasil diperbarui.",
     });
-
   } catch (err) {
-
-    console.error(err);
+    console.error(
+      "ERROR UPDATE DATA SURAT:",
+      err
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan server.",
+        message:
+          "Terjadi kesalahan server.",
       },
       {
         status: 500,
       }
     );
-
   }
 }

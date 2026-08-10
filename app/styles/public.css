@@ -628,6 +628,41 @@
   color: #991b1b;
 }
 
+/* ================================
+   ROLE BADGE - MANAJEMEN ADMIN
+================================ */
+
+.status-super-admin {
+  color: #ea580c;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+}
+
+.status-staff_admin {
+  color: #2563eb;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+}
+
+.status-kepala_desa {
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+}
+
+.status-ex_kepala_desa {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+}
+
+.role-period {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+
 /* ======================
    SUCCESS PAGE
 ====================== */

@@ -3,7 +3,10 @@ import { getNamaPemohon } from "@/lib/surat/getNamaPemohon";
 import { ArsipSuratRow } from "./PimpinanArsipTable";
 import SearchableArsip from "./SearchableArsip";
 
-type ArsipSuratDbRow = Omit<ArsipSuratRow, "created_at" | "nama"> & {
+type ArsipSuratDbRow = Omit<
+  ArsipSuratRow,
+  "created_at" | "nama"
+> & {
   created_at: string | Date | null;
   kode_surat: string;
 };
@@ -20,6 +23,7 @@ export default async function PimpinanArsipPage() {
         ps.created_at,
         ps.nomor_surat,
         ps.nama_penandatangan,
+
         js.nama_surat,
         js.kode_surat
 
@@ -34,26 +38,36 @@ export default async function PimpinanArsipPage() {
     `);
 
     rows =
-      Array.isArray(result) && Array.isArray(result[0])
+      Array.isArray(result) &&
+      Array.isArray(result[0])
         ? (result[0] as ArsipSuratDbRow[])
         : [];
   } catch (err) {
-    console.error("ERROR fetching arsip rows:", err);
+    console.error(
+      "ERROR fetching arsip rows:",
+      err
+    );
+
     rows = [];
   }
 
-  const sanitized: ArsipSuratRow[] = await Promise.all(
-    rows.map(async (r) => ({
-      ...r,
-      nama: await getNamaPemohon(
-        r.kode_surat,
-        r.id
-      ),
-      created_at: r.created_at
-        ? new Date(r.created_at).toISOString()
-        : "",
-    }))
-  );
+  const sanitized: ArsipSuratRow[] =
+    await Promise.all(
+      rows.map(async (r) => ({
+        ...r,
+
+        nama: await getNamaPemohon(
+          r.kode_surat,
+          r.id
+        ),
+
+        created_at: r.created_at
+          ? new Date(
+              r.created_at
+            ).toISOString()
+          : "",
+      }))
+    );
 
   return (
     <div>
@@ -63,8 +77,8 @@ export default async function PimpinanArsipPage() {
         </h1>
 
         <p className="page-subtitle">
-          Daftar surat yang telah disetujui dan
-          ditandatangani Kepala Desa.
+          Daftar surat yang telah disetujui
+          dan ditandatangani Kepala Desa.
         </p>
       </div>
 

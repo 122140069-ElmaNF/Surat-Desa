@@ -9,7 +9,6 @@ export type ArsipSuratRow = {
   status: string;
   created_at: string;
 };
-
 export default function PimpinanArsipTable({
   surat,
 }: {
@@ -26,6 +25,7 @@ export default function PimpinanArsipTable({
       >
         <thead>
           <tr style={{ backgroundColor: "#f9fafb" }}>
+            <Th>No.</Th>
             <Th>Kode Tracking</Th>
             <Th>Nama Pemohon</Th>
             <Th>Jenis Surat</Th>
@@ -50,12 +50,13 @@ export default function PimpinanArsipTable({
               </td>
             </tr>
           ) : (
-            surat.map((item) => (
+            surat.map((item, index) => (
               <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+                <Td label="No.">{index + 1}</Td>
                 <Td label="Kode Tracking">{item.kode_tracking}</Td>
                 <Td label="Nama Pemohon">{item.nama || "-"}</Td>
                 <Td label="Jenis Surat">{item.nama_surat || "-"}</Td>
-                <Td label="Kepala Desa">{item.nama_penandatangan || "-"}</Td>
+                <Td label="Kepala Desa">{item.nama_penandatangan ||"-"}</Td>
                 <Td label="Status">
                   <span
                     style={{

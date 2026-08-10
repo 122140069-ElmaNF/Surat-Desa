@@ -12,6 +12,7 @@ export default async function AdminUsersPage() {
       nama,
       username,
       role,
+      periode,
       is_super_admin,
       created_at
     FROM users
@@ -67,17 +68,33 @@ export default async function AdminUsersPage() {
 
                   <td>{user.username}</td>
 
-                  <td>
-                    {user.is_super_admin ? (
-                      <span className="status-badge status-super-admin">
-                        Super Admin
+                <td>
+                  {user.is_super_admin ? (
+                    <span className="status-badge status-super-admin">
+                      Super Admin
+                    </span>
+                  ) : (
+                    <div>
+                      <span
+                        className={`status-badge status-${user.role}`}
+                      >
+                        {user.role === "staff_admin"
+                          ? "Staff Admin"
+                          : user.role === "kepala_desa"
+                          ? "Kepala Desa"
+                          : user.role === "ex_kepala_desa"
+                          ? "Ex Kepala Desa"
+                          : user.role}
                       </span>
-                    ) : (
-                      <span className={`status-badge status-${user.role}`}>
-                        {user.role}
-                      </span>
-                    )}
-                  </td>
+
+                      {user.periode && (
+                        <div className="role-period">
+                          {user.periode}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </td>
 
                   <td>
                     {new Date(user.created_at).toLocaleDateString("id-ID")}

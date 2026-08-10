@@ -1,6 +1,7 @@
 import AdminSidebar from "@/app/components/AdminSidebar";
+import SessionGuard from "@/app/components/SessionGuard";
+
 import "@/app/styles/admin.css";
-import { cookies } from "next/headers";
 import "@/app/styles/sidebar.css";
 import "@/app/styles/table.css";
 import "@/app/styles/dashboard.css";
@@ -9,41 +10,77 @@ import "@/app/styles/form.css";
 import "@/app/styles/responsive.css";
 import "@/app/styles/button.css";
 
+import { redirect } from "next/navigation";
+import { getValidSession } from "@/lib/auth";
+
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
+  // =========================
+  // VALIDASI SESSION
+  // =========================
 
-  const session = cookieStore.get("session");
+  const user = await getValidSession();
 
-  let nama = "Admin";
-  let role = "Administrator";
-  let isSuperAdmin = false;
-
-  if (session) {
-    const user = JSON.parse(session.value);
-
-    nama = user.nama;
-
-    role =
-      user.role === "admin"
-        ? "Administrator"
-        : "Pimpinan";
-
-    isSuperAdmin =
-      user.is_super_admin ?? false;
+  // Kalau session sudah tidak valid
+  // atau role akun sudah berubah
+  if (!user) {
+    redirect("/api/logout?redirect=/login");
   }
+
+  // =========================
+  // DATA USER
+  // =========================
+
+  const nama = user.nama;
+
+  const role =
+    user.role === "staff_admin"
+      ? "Administrator"
+      : user.role === "kepala_desa"
+      ? "Kepala Desa"
+      : user.role === "ex_kepala_desa"
+      ? "Ex Kepala Desa"
+      : "Administrator";
+
+  const isSuperAdmin =
+    Boolean(user.is_super_admin);
+
+  // =========================
+  // LAYOUT
+  // =========================
 
   return (
     <div className="admin-layout">
+
+      {/* =========================
+          SESSION GUARD
+      ========================= */}
+
+      <SessionGuard />
+
+      {/* =========================
+          SIDEBAR
+      ========================= */}
+
       <AdminSidebar
         isSuperAdmin={isSuperAdmin}
       />
 
+      {/* =========================
+          CONTENT
+      ========================= */}
+
       <div className="admin-content">
+
+        {/* =========================
+            TOPBAR
+        ========================= */}
+
         <header className="topbar">
+
           <div>
             <h1 className="topbar-title">
               Dashboard Admin
@@ -54,7 +91,9 @@ export default async function AdminLayout({
             </p>
           </div>
 
+          {/* USER */}
           <div className="topbar-user">
+
             <div>
               <h3>{nama}</h3>
 
@@ -66,12 +105,23 @@ export default async function AdminLayout({
             </div>
 
             <div className="user-avatar">
-              {nama.charAt(0).toUpperCase()}
+              {nama
+                .charAt(0)
+                .toUpperCase()}
             </div>
+
           </div>
+
         </header>
 
-        <main>{children}</main>
+        {/* =========================
+            PAGE
+        ========================= */}
+
+        <main>
+          {children}
+        </main>
+
       </div>
     </div>
   );
