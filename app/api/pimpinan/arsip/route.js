@@ -7,14 +7,28 @@ export async function GET(req) {
 
     const q = (
       searchParams.get("q") || ""
-    ).toLowerCase();
+    )
+      .trim()
+      .toLowerCase();
 
     const [rows] = await db.query(`
       SELECT
         ps.id,
         ps.kode_tracking,
         ps.status,
-        ps.created_at,
+
+        COALESCE(
+          (
+            SELECT sal.created_at
+            FROM surat_activity_logs sal
+            WHERE sal.pengajuan_id = ps.id
+              AND sal.status = 'selesai'
+            ORDER BY sal.created_at DESC
+            LIMIT 1
+          ),
+          ps.created_at
+        ) AS created_at,
+
         ps.nomor_surat,
         ps.nama_penandatangan,
 
@@ -28,7 +42,7 @@ export async function GET(req) {
 
       WHERE ps.status = 'selesai'
 
-      ORDER BY ps.created_at DESC
+      ORDER BY created_at DESC
     `);
 
     let data = await Promise.all(
@@ -43,20 +57,26 @@ export async function GET(req) {
     );
 
     if (q) {
-      data = data.filter(
-        (item) =>
-          item.nama
-            ?.toLowerCase()
-            .includes(q) ||
+      data = data.filter((item) => {
+        const namaPemohon = String(
+          item.nama ?? ""
+        ).toLowerCase();
 
-          item.nama_surat
-            ?.toLowerCase()
-            .includes(q) ||
+        const namaSurat = String(
+          item.nama_surat ?? ""
+        ).toLowerCase();
 
-          item.nama_penandatangan
-            ?.toLowerCase()
-            .includes(q)
-      );
+        const namaPenandatangan =
+          String(
+            item.nama_penandatangan ?? ""
+          ).toLowerCase();
+
+        return (
+          namaPemohon.includes(q) ||
+          namaSurat.includes(q) ||
+          namaPenandatangan.includes(q)
+        );
+      });
     }
 
     return new Response(
@@ -70,7 +90,10 @@ export async function GET(req) {
       }
     );
   } catch (err) {
-    console.error(err);
+    console.error(
+      "ERROR API PIMPINAN ARSIP:",
+      err
+    );
 
     return new Response(
       JSON.stringify({
@@ -78,6 +101,10 @@ export async function GET(req) {
       }),
       {
         status: 500,
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
       }
     );
   }

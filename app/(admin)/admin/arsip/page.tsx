@@ -20,9 +20,21 @@ export default async function AdminArsipPage() {
         ps.id,
         ps.kode_tracking,
         ps.status,
-        ps.created_at,
-        ps.nomor_surat,
 
+        COALESCE(
+          (
+            SELECT sal.created_at
+            FROM surat_activity_logs sal
+            WHERE sal.pengajuan_id = ps.id
+              AND sal.status = 'selesai'
+            ORDER BY sal.created_at DESC
+            LIMIT 1
+          ),
+          ps.created_at
+        ) AS created_at,
+
+        ps.nomor_surat,
+      
         u.nama AS nama_penandatangan,
 
         js.nama_surat,
@@ -38,7 +50,7 @@ export default async function AdminArsipPage() {
 
       WHERE ps.status = 'selesai'
 
-      ORDER BY ps.created_at DESC
+      ORDER BY created_at DESC
     `);
 
     rows =
@@ -80,9 +92,7 @@ export default async function AdminArsipPage() {
           marginBottom: "22px",
         }}
       >
-        <h1 className="page-title">
-          Arsip Surat
-        </h1>
+        <h1>Arsip Surat</h1>
 
         <p className="page-subtitle">
           Daftar surat yang telah selesai dan

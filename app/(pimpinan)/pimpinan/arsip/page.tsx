@@ -20,9 +20,29 @@ export default async function PimpinanArsipPage() {
         ps.id,
         ps.kode_tracking,
         ps.status,
-        ps.created_at,
+
+        COALESCE(
+          (
+            SELECT sal.created_at
+            FROM surat_activity_logs sal
+            WHERE sal.pengajuan_id = ps.id
+              AND sal.status = 'selesai'
+            ORDER BY sal.created_at DESC
+            LIMIT 1
+          ),
+          ps.created_at
+        ) AS created_at,
+
         ps.nomor_surat,
-        ps.nama_penandatangan,
+
+        /*
+         * Ambil nama Kepala Desa langsung
+         * dari tabel users.
+         *
+         * Dengan begitu jika nama akun Kepala Desa
+         * berubah, nama di arsip juga ikut berubah.
+         */
+        u.nama AS nama_penandatangan,
 
         js.nama_surat,
         js.kode_surat
@@ -32,9 +52,12 @@ export default async function PimpinanArsipPage() {
       JOIN jenis_surat js
         ON js.id = ps.jenis_surat_id
 
+      LEFT JOIN users u
+        ON u.id = ps.kepala_desa_id
+
       WHERE ps.status = 'selesai'
 
-      ORDER BY ps.created_at DESC
+      ORDER BY created_at DESC
     `);
 
     rows =
@@ -71,10 +94,12 @@ export default async function PimpinanArsipPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: "22px" }}>
-        <h1 className="page-title">
-          Arsip Surat
-        </h1>
+      <div
+        style={{
+          marginBottom: "22px",
+        }}
+      >
+        <h1>Arsip Surat</h1>
 
         <p className="page-subtitle">
           Daftar surat yang telah disetujui

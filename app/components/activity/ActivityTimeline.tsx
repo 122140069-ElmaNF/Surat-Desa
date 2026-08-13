@@ -32,6 +32,33 @@ export default function ActivityTimeline({
     }).format(new Date(date));
   };
 
+  // =========================================
+  // FORMAT ROLE
+  // =========================================
+  const formatRole = (role: string | null) => {
+    if (!role) return "";
+
+    const roleMap: Record<string, string> = {
+      staff_admin: "Staff Admin",
+      kepala_desa: "Kepala Desa",
+      ex_kepala_desa: "Ex Kepala Desa",
+      super_admin: "Super Administrator",
+    };
+
+    // Kalau role sudah ada di mapping
+    if (roleMap[role]) {
+      return roleMap[role];
+    }
+
+    // Fallback:
+    // staff_operator -> Staff Operator
+    return role
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (char) =>
+        char.toUpperCase()
+      );
+  };
+
   const getColor = (
     status: string,
     aktivitas: string
@@ -63,7 +90,7 @@ export default function ActivityTimeline({
   };
 
   return (
-    <div className="activity-timeline">
+    <div>
       {showTitle && (
         <h3
           style={{
@@ -92,7 +119,9 @@ export default function ActivityTimeline({
               paddingBottom: 24,
             }}
           >
-            {/* Timeline */}
+            {/* =========================
+                TIMELINE
+            ========================= */}
             <div
               style={{
                 width: 28,
@@ -112,7 +141,8 @@ export default function ActivityTimeline({
                 }}
               />
 
-              {index !== activities.length - 1 && (
+              {index !==
+                activities.length - 1 && (
                 <div
                   style={{
                     position: "absolute",
@@ -125,7 +155,9 @@ export default function ActivityTimeline({
               )}
             </div>
 
-            {/* Card */}
+            {/* =========================
+                CARD
+            ========================= */}
             <div
               style={{
                 flex: 1,
@@ -137,6 +169,7 @@ export default function ActivityTimeline({
                   "0 1px 3px rgba(0,0,0,.06)",
               }}
             >
+              {/* AKTIVITAS */}
               <div
                 style={{
                   fontWeight: 600,
@@ -148,6 +181,7 @@ export default function ActivityTimeline({
                 {item.aktivitas}
               </div>
 
+              {/* USER + ROLE */}
               {showUserInfo &&
                 item.nama && (
                   <div
@@ -158,11 +192,15 @@ export default function ActivityTimeline({
                     }}
                   >
                     {item.nama}
+
                     {item.role &&
-                      ` • ${item.role}`}
+                      ` • ${formatRole(
+                        item.role
+                      )}`}
                   </div>
                 )}
 
+              {/* TANGGAL */}
               <div
                 style={{
                   fontSize: 13,

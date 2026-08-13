@@ -9,6 +9,7 @@ export default async function PimpinanLayout({
 }: {
   children: React.ReactNode;
 }) {
+  
   const user = await getValidSession();
 
   if (!user) {

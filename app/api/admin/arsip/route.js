@@ -20,8 +20,22 @@ export async function GET(req) {
         ps.id,
         ps.kode_tracking,
         ps.status,
-        ps.created_at,
+
+        COALESCE(
+          (
+            SELECT sal.created_at
+            FROM surat_activity_logs sal
+            WHERE sal.pengajuan_id = ps.id
+              AND sal.status = 'selesai'
+            ORDER BY sal.created_at DESC
+            LIMIT 1
+          ),
+          ps.created_at
+        ) AS created_at,
+
+        ps.nomor_surat,
         ps.nama_penandatangan,
+
         js.nama_surat,
         js.kode_surat
 
@@ -32,7 +46,7 @@ export async function GET(req) {
 
       WHERE ps.status = 'selesai'
 
-      ORDER BY ps.created_at DESC
+      ORDER BY created_at DESC
     `);
 
     // =========================================
@@ -76,22 +90,6 @@ export async function GET(req) {
         );
       });
     }
-
-    console.log(
-      "SEARCH ARSIP ADMIN:",
-      q
-    );
-
-    console.log(
-      "HASIL ARSIP ADMIN:",
-      data.map((item) => ({
-        id: item.id,
-        nama: item.nama,
-        nama_surat: item.nama_surat,
-        nama_penandatangan:
-          item.nama_penandatangan,
-      }))
-    );
 
     return new Response(
       JSON.stringify(data),

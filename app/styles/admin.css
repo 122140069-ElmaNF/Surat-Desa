@@ -502,3 +502,366 @@
     font-weight:700;
     color:#0f172a;
 }
+
+/* =========================================================
+   PROFIL PIMPINAN
+========================================================= */
+
+.profile-section {
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.06);
+  border: 1px solid #eef2f7;
+}
+
+.profile-section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.profile-section-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+.profile-section-header p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.profile-section-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   INFORMASI KEPALA DESA
+========================================================= */
+
+.profile-info-list {
+  border: 1px solid #e5e7eb;
+  border-radius: 15px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.profile-info-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 20px;
+  min-height: 82px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.profile-info-item:last-child {
+  border-bottom: none;
+}
+
+.profile-info-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: #eef2ff;
+  color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-info-icon.periode {
+  background: #ecfdf5;
+  color: #16a34a;
+}
+
+.profile-info-icon.nama {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.profile-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.profile-info-content span {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.profile-info-content strong {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* =========================================================
+   TANDA TANGAN
+========================================================= */
+
+.signature-section {
+  padding-bottom: 28px;
+}
+
+.signature-icon {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.signature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.signature-column {
+  min-width: 0;
+}
+
+.signature-label {
+  display: block;
+  margin-bottom: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* TTD SAAT INI */
+
+.current-signature {
+  height: 220px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fafcff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.current-signature img {
+  max-width: 90%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.empty-signature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #94a3b8;
+}
+
+.empty-signature span {
+  font-size: 14px;
+}
+
+.signature-status {
+  margin: 9px 0 0;
+  font-size: 12px;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+/* =========================================================
+   UPLOAD BOX
+========================================================= */
+
+.upload-box {
+  width: 100%;
+  height: 220px;
+  border: 2px dashed #bfdbfe;
+  border-radius: 16px;
+  background: #f8fbff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
+  color: #334155;
+  padding: 24px;
+}
+
+.upload-box:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.upload-box:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.upload-icon,
+.upload-success-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+.upload-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.upload-success-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.upload-box strong {
+  font-size: 14px;
+  color: #1e40af;
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-box span {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.upload-box small {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+}
+
+/* =========================================================
+   CATATAN UPLOAD
+========================================================= */
+
+.upload-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-radius: 11px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.upload-note span {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.upload-note p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+/* =========================================================
+   BUTTON SIMPAN
+========================================================= */
+
+.signature-action {
+  margin-top: 25px;
+}
+
+.save-signature-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 220px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 11px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.save-signature-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.22);
+}
+
+.save-signature-btn:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 800px) {
+  .signature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-section {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 500px) {
+  .profile-info-item {
+    padding: 15px;
+    gap: 12px;
+  }
+
+  .profile-info-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .profile-info-content strong {
+    font-size: 14px;
+  }
+
+  .profile-section-header h2 {
+    font-size: 18px;
+  }
+
+  .save-signature-btn {
+    width: 100%;
+  }
+}

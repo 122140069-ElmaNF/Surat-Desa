@@ -136,8 +136,8 @@ export default function EditAdminForm({
        *
        * Jangan kirim "super_admin" ke API.
        *
-       * Kita kirim role database aslinya.
-       * API juga sudah melindungi is_super_admin.
+       * Kirim role database aslinya.
+       * API sudah melindungi is_super_admin.
        */
       const roleForApi =
         user.is_super_admin
