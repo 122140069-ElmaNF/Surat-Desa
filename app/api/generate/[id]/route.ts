@@ -123,19 +123,19 @@ export async function GET(
     // SURAT BELUM SELESAI
     // Ambil Kepala Desa aktif dari USERS
     // =========================================
-
     else {
-      const [rows] = await db.query(
-        `
-        SELECT
-          id,
-          nama,
-          tanda_tangan
-        FROM users
-        WHERE role = 'kepala_desa'
-        LIMIT 1
-        `
-      );
+    const [rows] = await db.query(
+      `
+      SELECT
+        id,
+        nama,
+        jabatan,
+        tanda_tangan
+      FROM users
+      WHERE role = 'kepala_desa'
+      LIMIT 1
+      `
+    );
 
       const kepalaDesa =
         (rows as any[])[0];
@@ -146,7 +146,7 @@ export async function GET(
             kepalaDesa.nama ?? "",
 
           jabatan:
-            "Kepala Desa Sumberejo",
+            kepalaDesa.jabatan ?? "",
 
           tanda_tangan:
             kepalaDesa.tanda_tangan ?? "",

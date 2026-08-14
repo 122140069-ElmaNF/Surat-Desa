@@ -8,10 +8,8 @@ export default async function ProfilPimpinanPage() {
       u.nama,
       u.tanda_tangan,
       u.periode,
-      p.jabatan
+      u.jabatan
     FROM users u
-    LEFT JOIN profil_pimpinan p
-      ON p.user_id = u.id
     WHERE u.role = 'kepala_desa'
     LIMIT 1
   `);

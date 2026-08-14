@@ -28,24 +28,18 @@ export default async function buildSuratHtml({
 
   // =========================================
   // AMBIL KEPALA DESA AKTIF
-  // Nama & tanda tangan dari USERS
-  // Jabatan dari PROFIL_PIMPINAN
   // =========================================
 
-  const [rows] = await db.query(
-    `
-    SELECT
-      u.id,
-      u.nama,
-      u.tanda_tangan,
-      p.jabatan
-    FROM users u
-    LEFT JOIN profil_pimpinan p
-      ON p.user_id = u.id
-    WHERE u.role = 'kepala_desa'
-    LIMIT 1
-    `
-  );
+const [rows] = await db.query(`
+  SELECT
+    u.id,
+    u.nama,
+    u.tanda_tangan,
+    u.jabatan
+  FROM users u
+  WHERE u.role = 'kepala_desa'
+  LIMIT 1
+`);
 
   const kepalaDesa =
     (rows as any[])[0];

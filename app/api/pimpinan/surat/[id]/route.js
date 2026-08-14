@@ -12,6 +12,7 @@ export async function PATCH(req, context) {
     // ==========================
     // CEK SESSION
     // ==========================
+
     const cookieStore = await cookies();
     const session = cookieStore.get("session");
 
@@ -34,6 +35,7 @@ export async function PATCH(req, context) {
     // ==========================
     // TOLAK
     // ==========================
+
     if (action === "tolak") {
       await db.query(
         `
@@ -59,7 +61,7 @@ export async function PATCH(req, context) {
     }
 
     // ==========================
-    // ACC
+    // CEK AKSI
     // ==========================
 
     if (action !== "acc") {
@@ -76,7 +78,7 @@ export async function PATCH(req, context) {
 
     // ==========================
     // AMBIL DATA KEPALA DESA
-    // DARI USERS
+    // LANGSUNG DARI TABEL USERS
     // ==========================
 
     const [rows] = await db.query(
@@ -85,6 +87,7 @@ export async function PATCH(req, context) {
         id,
         nama,
         role,
+        jabatan,
         tanda_tangan
       FROM users
       WHERE id = ?
@@ -110,7 +113,18 @@ export async function PATCH(req, context) {
     }
 
     // ==========================
-    // UPDATE SURAT
+    // ACC SURAT
+    //
+    // Data nama, jabatan, dan
+    // tanda tangan disimpan sebagai
+    // SNAPSHOT ke pengajuan_surat.
+    //
+    // Dengan demikian, jika data
+    // Kepala Desa di users berubah
+    // setelah surat selesai,
+    // arsip surat lama tetap
+    // menggunakan data saat surat
+    // tersebut disahkan.
     // ==========================
 
     await db.query(
@@ -127,7 +141,7 @@ export async function PATCH(req, context) {
       [
         kepalaDesa.id,
         kepalaDesa.nama,
-        "Kepala Desa Sumberejo",
+        kepalaDesa.jabatan ?? "",
         kepalaDesa.tanda_tangan ?? null,
         id,
       ]
@@ -149,6 +163,7 @@ export async function PATCH(req, context) {
       success: true,
       status: "selesai",
     });
+
   } catch (error) {
     console.error(
       "Gagal memproses surat pimpinan:",
@@ -158,7 +173,8 @@ export async function PATCH(req, context) {
     return Response.json(
       {
         success: false,
-        message: "Terjadi kesalahan pada server.",
+        message:
+          "Terjadi kesalahan pada server.",
       },
       {
         status: 500,

@@ -53,9 +53,6 @@ export default function SuratPreview({
   tanggalSurat,
 }: Props) {
 
-  const tanggalSuratFormatted =
-    formatTanggalSurat(tanggalSurat);
-
   return (
     <SuratPaper mode={mode}>
       <SuratTemplate
@@ -64,9 +61,7 @@ export default function SuratPreview({
         useKop={useKop}
         status={status}
         profil={profil}
-        tanggalSurat={
-          tanggalSuratFormatted
-        }
+        tanggalSurat={tanggalSurat}
       />
     </SuratPaper>
   );
