@@ -34,7 +34,7 @@ export default function DomisiliTemplate({
   editable = false,
   editor,
 
-  onChange,
+ 
 }: Props) {
   return (
     <SuratCanvas useKop={useKop}>

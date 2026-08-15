@@ -1,6 +1,5 @@
 import "../surat.css";
 import SuratCanvas from "../SuratCanvas";
-import TandaTangan from "../TandaTangan";
 import LayoutTandaTangan from "../LayoutTandaTangan";
 import { Editor, EditorContent } from "@tiptap/react";
 import TandaTanganKepalaDesa from "../TandaTanganKepalaDesa";
@@ -36,7 +35,7 @@ export default function KehilanganTemplate({
   editable = false,
   editor,
 
-  onChange,
+ 
 }: Props) {
   return (
     <SuratCanvas useKop={useKop}>

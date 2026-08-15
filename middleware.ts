@@ -61,7 +61,7 @@ export function middleware(req: NextRequest) {
         }
       }
       
-    } catch (error) {
+    } catch {
       // Cookie rusak → hapus & kembali ke login
       const response = NextResponse.redirect(
         new URL("/login", req.url)

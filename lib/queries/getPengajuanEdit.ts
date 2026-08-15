@@ -75,7 +75,7 @@ type DetailRow = Record<string, any>;
 
 let detail: DetailRow | null = null;
 
-  let dokumen: Record<
+  const dokumen: Record<
     string,
     string
   > = {};
@@ -96,45 +96,26 @@ let detail: DetailRow | null = null;
     detail =
     ((detailRows as any[])[0] as DetailRow) ??
     null;
-
     if (detail) {
-
         FILE_COLUMNS.forEach((column) => {
-
         const value = detail?.[column];
-
         if (
             value &&
             String(value).trim() !== ""
         ) {
-
             dokumen[column] = value;
-
         }
-
         });
-
     }
-
   }
 
-  // ===========================
   // Return
-  // ===========================
-
   return {
-
     pengajuan,
-
     detail,
-
     dokumen,
-
     table,
-
     kodeSurat:
       pengajuan.kode_surat,
-
   };
-
 }
