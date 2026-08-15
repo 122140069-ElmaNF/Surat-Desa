@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       username,
       password,
       role,
+      jabatan,
       periode,
     } = body;
 
@@ -36,7 +37,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Nama, username, password, dan role wajib diisi.",
+          message:
+            "Nama, username, password, dan role wajib diisi.",
         },
         {
           status: 400,
@@ -48,8 +50,11 @@ export async function POST(req: Request) {
     // BERSIHKAN INPUT
     // =========================================
 
-    const namaClean = String(nama).trim();
-    const usernameClean = String(username).trim();
+    const namaClean =
+      String(nama).trim();
+
+    const usernameClean =
+      String(username).trim();
 
     // =========================================
     // VALIDASI NAMA
@@ -59,7 +64,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Nama minimal 3 karakter.",
+          message:
+            "Nama minimal 3 karakter.",
         },
         {
           status: 400,
@@ -75,7 +81,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Username minimal 3 karakter.",
+          message:
+            "Username minimal 3 karakter.",
         },
         {
           status: 400,
@@ -91,7 +98,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Password minimal 6 karakter.",
+          message:
+            "Password minimal 6 karakter.",
         },
         {
           status: 400,
@@ -112,7 +120,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          message: "Role yang dipilih tidak valid.",
+          message:
+            "Role yang dipilih tidak valid.",
         },
         {
           status: 400,
@@ -121,22 +130,26 @@ export async function POST(req: Request) {
     }
 
     // =========================================
-    // VALIDASI PERIODE
-    //
-    // Periode hanya wajib untuk Kepala Desa.
-    // Format: 2026-2027
+    // DATA KHUSUS KEPALA DESA
     // =========================================
 
+    let jabatanClean: string | null = null;
     let periodeClean: string | null = null;
 
     if (role === "kepala_desa") {
-      periodeClean = String(periode ?? "").trim();
+      // =======================================
+      // VALIDASI JABATAN
+      // =======================================
 
-      if (!periodeClean) {
+      jabatanClean =
+        String(jabatan ?? "").trim();
+
+      if (!jabatanClean) {
         return NextResponse.json(
           {
             success: false,
-            message: "Periode Kepala Desa wajib diisi.",
+            message:
+              "Jabatan Kepala Desa wajib diisi.",
           },
           {
             status: 400,
@@ -144,8 +157,32 @@ export async function POST(req: Request) {
         );
       }
 
-      // Format harus YYYY-YYYY
-      const periodeRegex = /^\d{4}-\d{4}$/;
+      // =======================================
+      // VALIDASI PERIODE
+      // =======================================
+
+      periodeClean =
+        String(periode ?? "").trim();
+
+      if (!periodeClean) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Periode Kepala Desa wajib diisi.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      // =======================================
+      // VALIDASI FORMAT PERIODE
+      // =======================================
+
+      const periodeRegex =
+        /^\d{4}-\d{4}$/;
 
       if (!periodeRegex.test(periodeClean)) {
         return NextResponse.json(
@@ -160,9 +197,16 @@ export async function POST(req: Request) {
         );
       }
 
-      // Tahun awal dan akhir
-      const [tahunAwal, tahunAkhir] =
-        periodeClean.split("-").map(Number);
+      // =======================================
+      // VALIDASI TAHUN
+      // =======================================
+
+      const [
+        tahunAwal,
+        tahunAkhir,
+      ] = periodeClean
+        .split("-")
+        .map(Number);
 
       if (tahunAkhir <= tahunAwal) {
         return NextResponse.json(
@@ -182,21 +226,25 @@ export async function POST(req: Request) {
     // CEK USERNAME
     // =========================================
 
-    const [checkUser] = await db.query(
-      `
-      SELECT id
-      FROM users
-      WHERE username = ?
-      LIMIT 1
-      `,
-      [usernameClean]
-    );
+    const [checkUser] =
+      await db.query(
+        `
+        SELECT id
+        FROM users
+        WHERE username = ?
+        LIMIT 1
+        `,
+        [usernameClean]
+      );
 
-    if ((checkUser as any[]).length > 0) {
+    if (
+      (checkUser as any[]).length > 0
+    ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Username sudah digunakan.",
+          message:
+            "Username sudah digunakan.",
         },
         {
           status: 400,
@@ -211,21 +259,28 @@ export async function POST(req: Request) {
     // =========================================
 
     if (role === "kepala_desa") {
-      const [activeKepalaDesa] =
-        await db.query(
-          `
-          SELECT id, nama, username
-          FROM users
-          WHERE role = 'kepala_desa'
-          LIMIT 1
-          `
-        );
+      const [
+        activeKepalaDesa,
+      ] = await db.query(
+        `
+        SELECT
+          id,
+          nama,
+          username
+        FROM users
+        WHERE role = 'kepala_desa'
+        LIMIT 1
+        `
+      );
 
       if (
-        (activeKepalaDesa as any[]).length > 0
+        (activeKepalaDesa as any[])
+          .length > 0
       ) {
         const kepalaDesa =
-          (activeKepalaDesa as any[])[0];
+          (
+            activeKepalaDesa as any[]
+          )[0];
 
         return NextResponse.json(
           {
@@ -249,7 +304,10 @@ export async function POST(req: Request) {
     // =========================================
 
     const hashedPassword =
-      await bcrypt.hash(password, 10);
+      await bcrypt.hash(
+        password,
+        10
+      );
 
     // =========================================
     // SIMPAN USER
@@ -263,16 +321,22 @@ export async function POST(req: Request) {
         username,
         password,
         role,
+        jabatan,
         periode
       )
       VALUES
-      (?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?)
       `,
       [
         namaClean,
         usernameClean,
         hashedPassword,
         role,
+
+        // Jabatan hanya untuk Kepala Desa
+        jabatanClean,
+
+        // Periode hanya untuk Kepala Desa
         periodeClean,
       ]
     );
@@ -288,6 +352,7 @@ export async function POST(req: Request) {
           ? "Kepala Desa berhasil ditambahkan."
           : "Staff Admin berhasil ditambahkan.",
     });
+
   } catch (err) {
     console.error(
       "ERROR POST /api/admin/users:",

@@ -26,10 +26,11 @@ export async function PATCH(
       password,
       role,
       periode,
+      jabatan,
     } = body;
 
     /* =====================================================
-       VALIDASI FIELD
+       VALIDASI FIELD DASAR
     ===================================================== */
 
     if (!nama || !username || !role) {
@@ -56,6 +57,8 @@ export async function PATCH(
         nama,
         username,
         role,
+        periode,
+        jabatan,
         is_super_admin
       FROM users
       WHERE id = ?
@@ -102,48 +105,29 @@ export async function PATCH(
       session.value
     );
 
-/* =====================================================
-   NORMALISASI ROLE
-===================================================== */
-
-let finalRole = role;
-
-// Kompatibilitas data lama
-if (finalRole === "pimpinan") {
-  finalRole = "kepala_desa";
-}
-
-/*
- * Jika target adalah Super Admin,
- * role Super Admin harus tetap dipertahankan.
- *
- * Super Admin boleh mengubah:
- * - nama
- * - username
- * - password
- *
- * Tetapi role-nya tidak boleh berubah.
- */
-if (Boolean(targetUser.is_super_admin)) {
-  finalRole = "super_admin";
-}
     /* =====================================================
-       KHUSUS SUPER ADMIN
-       
-       Jika target adalah Super Admin,
-       role TIDAK BOLEH berubah.
-       
-       Tetapi nama, username, password
-       tetap boleh diperbarui.
+       NORMALISASI ROLE
     ===================================================== */
 
+    let finalRole = role;
+
+    // Kompatibilitas data lama
+    if (finalRole === "pimpinan") {
+      finalRole = "kepala_desa";
+    }
+
+    /*
+     * Jika target adalah Super Admin,
+     * role harus tetap dipertahankan.
+     */
     if (Boolean(targetUser.is_super_admin)) {
-      finalRole = targetUser.role;
+      finalRole = "super_admin";
     }
 
     /* =====================================================
        VALIDASI ROLE
     ===================================================== */
+
     const allowedRoles = [
       "staff_admin",
       "kepala_desa",
@@ -162,6 +146,7 @@ if (Boolean(targetUser.is_super_admin)) {
         }
       );
     }
+
     /* =====================================================
        CEK USERNAME
     ===================================================== */
@@ -191,6 +176,40 @@ if (Boolean(targetUser.is_super_admin)) {
           status: 400,
         }
       );
+    }
+
+    /* =====================================================
+       VALIDASI JABATAN
+       
+       Jabatan hanya digunakan untuk:
+       - Kepala Desa
+       - Ex Kepala Desa
+       
+       Staff Admin dan Super Admin
+       tidak membutuhkan jabatan.
+    ===================================================== */
+
+    let finalJabatan: string | null = null;
+
+    if (
+      finalRole === "kepala_desa" ||
+      finalRole === "ex_kepala_desa"
+    ) {
+      finalJabatan =
+        String(jabatan ?? "").trim();
+
+      if (!finalJabatan) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Jabatan Kepala Desa wajib diisi.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
     }
 
     /* =====================================================
@@ -267,8 +286,8 @@ if (Boolean(targetUser.is_super_admin)) {
     /* =====================================================
        SUPER ADMIN
        
-       Super Admin tidak membutuhkan periode.
-       Pertahankan periode yang sudah ada jika ada.
+       Super Admin tidak membutuhkan periode
+       maupun jabatan.
     ===================================================== */
 
     if (
@@ -277,12 +296,15 @@ if (Boolean(targetUser.is_super_admin)) {
     ) {
       finalPeriode =
         targetUser.periode ?? null;
+
+      finalJabatan =
+        targetUser.jabatan ?? null;
     }
 
     /* =====================================================
        CEK KEPALA DESA AKTIF
        
-       Hanya untuk akun non-Super Admin.
+       Hanya satu Kepala Desa aktif.
     ===================================================== */
 
     if (
@@ -333,7 +355,8 @@ if (Boolean(targetUser.is_super_admin)) {
           nama = ?,
           username = ?,
           role = ?,
-          periode = ?
+          periode = ?,
+          jabatan = ?
         WHERE id = ?
         `,
         [
@@ -341,6 +364,7 @@ if (Boolean(targetUser.is_super_admin)) {
           username.trim(),
           finalRole,
           finalPeriode,
+          finalJabatan,
           id,
         ]
       );
@@ -378,7 +402,8 @@ if (Boolean(targetUser.is_super_admin)) {
           username = ?,
           password = ?,
           role = ?,
-          periode = ?
+          periode = ?,
+          jabatan = ?
         WHERE id = ?
         `,
         [
@@ -387,6 +412,7 @@ if (Boolean(targetUser.is_super_admin)) {
           hashedPassword,
           finalRole,
           finalPeriode,
+          finalJabatan,
           id,
         ]
       );
@@ -420,6 +446,8 @@ if (Boolean(targetUser.is_super_admin)) {
     );
   }
 }
+
+
 /* =========================================================
    DELETE USER
 ========================================================= */

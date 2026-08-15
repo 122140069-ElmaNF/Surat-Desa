@@ -20,6 +20,7 @@ export default function PimpinanSuratTable({
   surat: SuratPersetujuanRow[];
 }) {
   const router = useRouter();
+
   const [loading, setLoading] = useState<{
     id: number;
     action: "acc" | "tolak";
@@ -29,39 +30,102 @@ export default function PimpinanSuratTable({
     id: number,
     action: "acc" | "tolak"
   ) => {
+    // =========================================
+    // KONFIRMASI
+    // =========================================
+
     const yakin =
       action === "acc"
-        ? confirm("ACC surat ini dan tampilkan tanda tangan?")
-        : confirm("Tolak surat ini?");
+        ? confirm(
+            "ACC surat ini dan tampilkan tanda tangan?"
+          )
+        : confirm(
+            "Tolak surat ini?"
+          );
 
     if (!yakin) {
       return;
     }
 
-    setLoading({ id, action });
+    setLoading({
+      id,
+      action,
+    });
 
     try {
-      const res = await fetch(`/api/pimpinan/surat/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ action }),
-      });
+      // =========================================
+      // REQUEST KE API
+      // =========================================
+
+      const res = await fetch(
+        `/api/pimpinan/surat/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            action,
+          }),
+        }
+      );
+
+      // =========================================
+      // AMBIL RESPONSE JSON
+      // =========================================
+
+      const result = await res.json();
+
+      // =========================================
+      // JIKA GAGAL
+      // TAMPILKAN PESAN DARI BACKEND
+      // =========================================
 
       if (!res.ok) {
-        toast.error("Gagal memproses surat.");
+        toast.error(
+          result.message ||
+            "Gagal memproses surat."
+        );
+
         return;
       }
 
+      // =========================================
+      // JIKA BERHASIL ACC
+      // =========================================
+
       if (action === "acc") {
-        router.push(`/pimpinan/preview/${id}`);
-      } else {
-        router.refresh();
+        toast.success(
+          "Surat berhasil disetujui."
+        );
+
+        router.push(
+          `/pimpinan/preview/${id}`
+        );
+
+        return;
       }
+
+      // =========================================
+      // JIKA BERHASIL TOLAK
+      // =========================================
+
+      toast.success(
+        "Surat berhasil ditolak."
+      );
+
+      router.refresh();
+
     } catch (error) {
-      console.error("ERROR PERSETUJUAN:", error);
-      toast.error("Terjadi kesalahan");
+      console.error(
+        "ERROR PERSETUJUAN:",
+        error
+      );
+
+      toast.error(
+        "Terjadi kesalahan saat memproses surat."
+      );
     } finally {
       setLoading(null);
     }
@@ -77,7 +141,12 @@ export default function PimpinanSuratTable({
         }}
       >
         <thead>
-          <tr style={{ backgroundColor: "#f9fafb" }}>
+          <tr
+            style={{
+              backgroundColor:
+                "#f9fafb",
+            }}
+          >
             <Th>Kode Tracking</Th>
             <Th>Nama Pemohon</Th>
             <Th>Jenis Surat</Th>
@@ -86,6 +155,7 @@ export default function PimpinanSuratTable({
             <Th>Aksi</Th>
           </tr>
         </thead>
+
         <tbody>
           {surat.length === 0 ? (
             <tr>
@@ -97,61 +167,154 @@ export default function PimpinanSuratTable({
                   color: "#6b7280",
                 }}
               >
-                Tidak ada surat yang menunggu persetujuan.
+                Tidak ada surat yang
+                menunggu persetujuan.
               </td>
             </tr>
           ) : (
             surat.map((item) => (
-              <tr key={item.id} style={{ borderTop: "1px solid #e5e7eb" }}>
-                <Td label="Kode Tracking">{item.kode_tracking}</Td>
-                <Td label="Nama Pemohon">{item.nama || "-"}</Td>
-                <Td label="Jenis Surat">{item.nama_surat || "-"}</Td>
+              <tr
+                key={item.id}
+                style={{
+                  borderTop:
+                    "1px solid #e5e7eb",
+                }}
+              >
+                {/* KODE TRACKING */}
+
+                <Td label="Kode Tracking">
+                  {item.kode_tracking}
+                </Td>
+
+                {/* NAMA PEMOHON */}
+
+                <Td label="Nama Pemohon">
+                  {item.nama || "-"}
+                </Td>
+
+                {/* JENIS SURAT */}
+
+                <Td label="Jenis Surat">
+                  {item.nama_surat || "-"}
+                </Td>
+
+                {/* STATUS */}
+
                 <Td label="Status">
                   <span
                     style={{
-                      display: "inline-block",
-                      padding: "5px 10px",
-                      borderRadius: "999px",
-                      backgroundColor: "#dbeafe",
-                      color: "#1e40af",
-                      fontSize: "13px",
+                      display:
+                        "inline-block",
+                      padding:
+                        "5px 10px",
+                      borderRadius:
+                        "999px",
+                      backgroundColor:
+                        "#dbeafe",
+                      color:
+                        "#1e40af",
+                      fontSize:
+                        "13px",
                       fontWeight: 700,
                     }}
                   >
                     {item.status}
                   </span>
                 </Td>
-                <Td label="Tanggal">{formatTanggal(item.created_at)}</Td>
+
+                {/* TANGGAL */}
+
+                <Td label="Tanggal">
+                  {formatTanggal(
+                    item.created_at
+                  )}
+                </Td>
+
+                {/* AKSI */}
+
                 <Td label="Aksi">
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    <Link href={`/pimpinan/preview/${item.id}`}>
-                      <button style={outlineButtonStyle}>Preview</button>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      flexWrap:
+                        "wrap",
+                    }}
+                  >
+                    {/* PREVIEW */}
+
+                    <Link
+                      href={`/pimpinan/preview/${item.id}`}
+                    >
+                      <button
+                        style={
+                          outlineButtonStyle
+                        }
+                      >
+                        Preview
+                      </button>
                     </Link>
+
+                    {/* ACC */}
+
                     <button
-                      onClick={() => updatePersetujuan(item.id, "acc")}
-                      disabled={loading?.id === item.id}
+                      onClick={() =>
+                        updatePersetujuan(
+                          item.id,
+                          "acc"
+                        )
+                      }
+                      disabled={
+                        loading?.id ===
+                        item.id
+                      }
                       style={{
                         ...actionButtonStyle,
-                        backgroundColor: "#16a34a",
+                        backgroundColor:
+                          "#16a34a",
                         cursor:
-                          loading?.id === item.id ? "not-allowed" : "pointer",
+                          loading?.id ===
+                          item.id
+                            ? "not-allowed"
+                            : "pointer",
                       }}
                     >
-                      {loading?.id === item.id && loading.action === "acc"
+                      {loading?.id ===
+                        item.id &&
+                      loading.action ===
+                        "acc"
                         ? "..."
                         : "ACC"}
                     </button>
+
+                    {/* TOLAK */}
+
                     <button
-                      onClick={() => updatePersetujuan(item.id, "tolak")}
-                      disabled={loading?.id === item.id}
+                      onClick={() =>
+                        updatePersetujuan(
+                          item.id,
+                          "tolak"
+                        )
+                      }
+                      disabled={
+                        loading?.id ===
+                        item.id
+                      }
                       style={{
                         ...actionButtonStyle,
-                        backgroundColor: "#dc2626",
+                        backgroundColor:
+                          "#dc2626",
                         cursor:
-                          loading?.id === item.id ? "not-allowed" : "pointer",
+                          loading?.id ===
+                          item.id
+                            ? "not-allowed"
+                            : "pointer",
                       }}
                     >
-                      {loading?.id === item.id && loading.action === "tolak"
+                      {loading?.id ===
+                        item.id &&
+                      loading.action ===
+                        "tolak"
                         ? "..."
                         : "Tolak"}
                     </button>
@@ -166,7 +329,15 @@ export default function PimpinanSuratTable({
   );
 }
 
-function Th({ children }: { children: React.ReactNode }) {
+// =========================================
+// TABLE HEADER
+// =========================================
+
+function Th({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <th
       style={{
@@ -174,7 +345,8 @@ function Th({ children }: { children: React.ReactNode }) {
         textAlign: "left",
         color: "#374151",
         fontSize: "14px",
-        borderBottom: "1px solid #e5e7eb",
+        borderBottom:
+          "1px solid #e5e7eb",
       }}
     >
       {children}
@@ -182,20 +354,40 @@ function Th({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Td({ children, label }: { children: React.ReactNode; label: string }) {
+// =========================================
+// TABLE DATA
+// =========================================
+
+function Td({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  label: string;
+}) {
   return (
     <td
       data-label={label}
-      style={{ padding: "14px", color: "#111827", verticalAlign: "top" }}
+      style={{
+        padding: "14px",
+        color: "#111827",
+        verticalAlign:
+          "top",
+      }}
     >
       {children}
     </td>
   );
 }
 
+// =========================================
+// STYLE
+// =========================================
+
 const outlineButtonStyle = {
   padding: "8px 10px",
-  border: "1px solid #d1d5db",
+  border:
+    "1px solid #d1d5db",
   borderRadius: "5px",
   backgroundColor: "white",
   color: "#111827",
@@ -211,12 +403,23 @@ const actionButtonStyle = {
   fontWeight: 700,
 };
 
-function formatTanggal(value: string) {
-  return new Date(value).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+// =========================================
+// FORMAT TANGGAL
+// =========================================
+
+function formatTanggal(
+  value: string
+) {
+  return new Date(
+    value
+  ).toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  );
 }

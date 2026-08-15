@@ -33,38 +33,13 @@ export async function PATCH(req, context) {
     }
 
     // ==========================
-    // TOLAK
-    // ==========================
-
-    if (action === "tolak") {
-      await db.query(
-        `
-        UPDATE pengajuan_surat
-        SET status = 'ditolak'
-        WHERE id = ?
-        `,
-        [id]
-      );
-
-      await logActivity({
-        pengajuanId: Number(id),
-        userId: currentUser.id,
-        status: "ditolak",
-        aktivitas:
-          "Pengajuan surat ditolak oleh Kepala Desa.",
-      });
-
-      return Response.json({
-        success: true,
-        status: "ditolak",
-      });
-    }
-
-    // ==========================
     // CEK AKSI
     // ==========================
 
-    if (action !== "acc") {
+    if (
+      action !== "acc" &&
+      action !== "tolak"
+    ) {
       return Response.json(
         {
           success: false,
@@ -99,12 +74,16 @@ export async function PATCH(req, context) {
 
     const kepalaDesa = rows[0];
 
+    // ==========================
+    // CEK AKUN KEPALA DESA
+    // ==========================
+
     if (!kepalaDesa) {
       return Response.json(
         {
           success: false,
           message:
-            "Akun Kepala Desa tidak ditemukan atau tidak memiliki hak untuk menyetujui surat.",
+            "Akun Kepala Desa tidak ditemukan atau tidak memiliki hak untuk memproses surat.",
         },
         {
           status: 403,
@@ -113,18 +92,64 @@ export async function PATCH(req, context) {
     }
 
     // ==========================
-    // ACC SURAT
+    // CEK TANDA TANGAN
+    // ==========================
     //
-    // Data nama, jabatan, dan
-    // tanda tangan disimpan sebagai
-    // SNAPSHOT ke pengajuan_surat.
+    // Kepala Desa WAJIB upload
+    // tanda tangan sebelum dapat
+    // melakukan ACC maupun TOLAK.
     //
-    // Dengan demikian, jika data
-    // Kepala Desa di users berubah
-    // setelah surat selesai,
-    // arsip surat lama tetap
-    // menggunakan data saat surat
-    // tersebut disahkan.
+    // Jika belum ada TTD:
+    // - ACC tidak boleh
+    // - TOLAK tidak boleh
+    // ==========================
+
+    if (
+      !kepalaDesa.tanda_tangan ||
+      String(kepalaDesa.tanda_tangan).trim() === ""
+    ) {
+      return Response.json(
+        {
+          success: false,
+          message:
+            "Anda belum mengunggah tanda tangan. Silakan upload tanda tangan terlebih dahulu di menu Profil Pimpinan sebelum memproses surat.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ==========================
+    // TOLAK
+    // ==========================
+
+    if (action === "tolak") {
+      await db.query(
+        `
+        UPDATE pengajuan_surat
+        SET status = 'ditolak'
+        WHERE id = ?
+        `,
+        [id]
+      );
+
+      await logActivity({
+        pengajuanId: Number(id),
+        userId: currentUser.id,
+        status: "ditolak",
+        aktivitas:
+          "Pengajuan surat ditolak oleh Kepala Desa.",
+      });
+
+      return Response.json({
+        success: true,
+        status: "ditolak",
+      });
+    }
+
+    // ==========================
+    // ACC
     // ==========================
 
     await db.query(
@@ -142,7 +167,7 @@ export async function PATCH(req, context) {
         kepalaDesa.id,
         kepalaDesa.nama,
         kepalaDesa.jabatan ?? "",
-        kepalaDesa.tanda_tangan ?? null,
+        kepalaDesa.tanda_tangan,
         id,
       ]
     );
@@ -158,6 +183,10 @@ export async function PATCH(req, context) {
       aktivitas:
         "Surat telah disetujui oleh Kepala Desa.",
     });
+
+    // ==========================
+    // RESPONSE
+    // ==========================
 
     return Response.json({
       success: true,

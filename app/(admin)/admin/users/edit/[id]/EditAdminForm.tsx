@@ -11,6 +11,7 @@ type Props = {
     nama: string;
     username: string;
     role: string;
+    jabatan: string | null;
     periode: string | null;
     is_super_admin: boolean;
   };
@@ -28,17 +29,13 @@ export default function EditAdminForm({
   const [username, setUsername] =
     useState(user.username);
 
+  const [jabatan, setJabatan] = useState(
+    user.jabatan ?? ""
+  );
+
   const [password, setPassword] =
     useState("");
 
-  /*
-   * Kalau Super Admin,
-   * role UI dibuat "super_admin".
-   *
-   * Ini hanya untuk tampilan.
-   * Database tetap menggunakan role aslinya
-   * + is_super_admin = 1.
-   */
   const [role, setRole] = useState(
     user.is_super_admin
       ? "super_admin"
@@ -70,9 +67,27 @@ export default function EditAdminForm({
     }
 
     // =========================================
-    // VALIDASI PERIODE
+    // VALIDASI JABATAN
     //
-    // Super Admin tidak menggunakan periode.
+    // Jabatan wajib untuk:
+    // - Kepala Desa
+    // - Ex Kepala Desa
+    // =========================================
+
+    if (
+      !user.is_super_admin &&
+      (role === "kepala_desa" ||
+        role === "ex_kepala_desa") &&
+      !jabatan.trim()
+    ) {
+      toast.warning(
+        "Jabatan wajib diisi."
+      );
+      return;
+    }
+
+    // =========================================
+    // VALIDASI PERIODE
     // =========================================
 
     if (
@@ -133,11 +148,7 @@ export default function EditAdminForm({
 
       /*
        * Untuk Super Admin:
-       *
        * Jangan kirim "super_admin" ke API.
-       *
-       * Kirim role database aslinya.
-       * API sudah melindungi is_super_admin.
        */
       const roleForApi =
         user.is_super_admin
@@ -156,10 +167,25 @@ export default function EditAdminForm({
 
           body: JSON.stringify({
             nama: nama.trim(),
-            username: username.trim(),
+
+            username:
+              username.trim(),
+
             password,
+
             role: roleForApi,
 
+            // Jabatan hanya dikirim
+            // untuk Kepala Desa / Ex Kepala Desa
+            jabatan:
+              !user.is_super_admin &&
+              (role === "kepala_desa" ||
+                role === "ex_kepala_desa")
+                ? jabatan.trim()
+                : null,
+
+            // Periode hanya dikirim
+            // untuk Kepala Desa / Ex Kepala Desa
             periode:
               !user.is_super_admin &&
               (role === "kepala_desa" ||
@@ -343,16 +369,21 @@ export default function EditAdminForm({
 
                 setRole(newRole);
 
+                // Kalau Staff Admin,
+                // jabatan dan periode
+                // dikosongkan
                 if (
                   newRole ===
                   "staff_admin"
                 ) {
+                  setJabatan("");
                   setPeriode("");
                 }
               }}
             >
 
               {/* SUPER ADMIN */}
+
               {user.is_super_admin && (
                 <option value="super_admin">
                   Super Admin
@@ -396,6 +427,53 @@ export default function EditAdminForm({
             )}
 
           </div>
+
+          {/* =========================
+              JABATAN
+          ========================= */}
+
+          {!user.is_super_admin &&
+            (role ===
+              "kepala_desa" ||
+              role ===
+                "ex_kepala_desa") && (
+              <div
+                className="admin-form-group"
+                style={{
+                  marginTop: "-4px",
+                }}
+              >
+
+                <label>
+                  Jabatan
+                </label>
+
+                <input
+                  type="text"
+                  value={jabatan}
+                  onChange={(e) =>
+                    setJabatan(
+                      e.target.value
+                    )
+                  }
+                  placeholder="Contoh: Kepala Desa"
+                />
+
+                <small
+                  style={{
+                    display: "block",
+                    marginTop: "6px",
+                    color: "#64748b",
+                    fontSize: "12px",
+                  }}
+                >
+                  Masukkan jabatan Kepala
+                  Desa yang akan ditampilkan
+                  pada surat.
+                </small>
+
+              </div>
+            )}
 
           {/* =========================
               PERIODE

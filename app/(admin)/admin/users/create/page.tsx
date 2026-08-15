@@ -14,32 +14,54 @@ export default function CreateAdminPage() {
 
   const [role, setRole] = useState("staff_admin");
 
+  const [jabatan, setJabatan] = useState("");
   const [periode, setPeriode] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit() {
+    // =========================================
+    // VALIDASI FIELD DASAR
+    // =========================================
+
     if (!nama || !username || !password) {
       toast.warning("Semua field wajib diisi.");
       return;
     }
 
-    // Periode hanya wajib untuk Kepala Desa
-    if (role === "kepala_desa" && !periode) {
-      toast.warning("Periode jabatan Kepala Desa wajib diisi.");
-      return;
-    }
+    // =========================================
+    // VALIDASI KHUSUS KEPALA DESA
+    // =========================================
 
-    // Validasi format periode
-    if (
-      role === "kepala_desa" &&
-      !/^\d{4}-\d{4}$/.test(periode)
-    ) {
-      toast.warning(
-        "Format periode harus seperti 2026-2027."
-      );
-      return;
+    if (role === "kepala_desa") {
+      if (!jabatan.trim()) {
+        toast.warning("Jabatan Kepala Desa wajib diisi.");
+        return;
+      }
+
+      if (!periode.trim()) {
+        toast.warning("Periode jabatan Kepala Desa wajib diisi.");
+        return;
+      }
+
+      // Validasi format periode
+      if (!/^\d{4}-\d{4}$/.test(periode)) {
+        toast.warning(
+          "Format periode harus seperti 2026-2027."
+        );
+        return;
+      }
+
+      const [tahunAwal, tahunAkhir] =
+        periode.split("-").map(Number);
+
+      if (tahunAkhir <= tahunAwal) {
+        toast.warning(
+          "Tahun akhir periode harus lebih besar dari tahun awal."
+        );
+        return;
+      }
     }
 
     try {
@@ -57,9 +79,17 @@ export default function CreateAdminPage() {
           username,
           password,
           role,
+
+          // Jabatan hanya dikirim untuk Kepala Desa
+          jabatan:
+            role === "kepala_desa"
+              ? jabatan.trim()
+              : null,
+
+          // Periode hanya dikirim untuk Kepala Desa
           periode:
             role === "kepala_desa"
-              ? periode
+              ? periode.trim()
               : null,
         }),
       });
@@ -77,7 +107,10 @@ export default function CreateAdminPage() {
         toast.error(result.message);
       }
     } catch (error) {
-      console.error(error);
+      console.error(
+        "ERROR TAMBAH AKUN:",
+        error
+      );
 
       toast.error(
         "Terjadi kesalahan pada server."
@@ -117,7 +150,9 @@ export default function CreateAdminPage() {
       <section className="card">
         <div className="admin-form">
 
-          {/* NAMA */}
+          {/* =========================
+              NAMA
+          ========================= */}
 
           <div className="admin-form-group">
             <label>
@@ -134,7 +169,9 @@ export default function CreateAdminPage() {
             />
           </div>
 
-          {/* USERNAME */}
+          {/* =========================
+              USERNAME
+          ========================= */}
 
           <div className="admin-form-group">
             <label>
@@ -151,7 +188,9 @@ export default function CreateAdminPage() {
             />
           </div>
 
-          {/* PASSWORD */}
+          {/* =========================
+              PASSWORD
+          ========================= */}
 
           <div className="admin-form-group">
             <label>
@@ -190,7 +229,9 @@ export default function CreateAdminPage() {
             </div>
           </div>
 
-          {/* ROLE */}
+          {/* =========================
+              ROLE
+          ========================= */}
 
           <div className="admin-form-group">
             <label>
@@ -206,11 +247,12 @@ export default function CreateAdminPage() {
                 setRole(newRole);
 
                 // Kalau bukan Kepala Desa,
-                // kosongkan periode
+                // kosongkan data khusus Kepala Desa
                 if (
                   newRole !==
                   "kepala_desa"
                 ) {
+                  setJabatan("");
                   setPeriode("");
                 }
               }}
@@ -225,7 +267,51 @@ export default function CreateAdminPage() {
             </select>
           </div>
 
-          {/* PERIODE */}
+          {/* =========================
+              JABATAN
+              HANYA KEPALA DESA
+          ========================= */}
+
+          {role === "kepala_desa" && (
+            <div
+              className="admin-form-group"
+              style={{
+                marginTop: "-4px",
+              }}
+            >
+              <label>
+                Jabatan
+              </label>
+
+              <input
+                type="text"
+                value={jabatan}
+                onChange={(e) =>
+                  setJabatan(
+                    e.target.value
+                  )
+                }
+                placeholder="Contoh: Kepala Desa"
+              />
+
+              <small
+                style={{
+                  display: "block",
+                  marginTop: "6px",
+                  color: "#64748b",
+                  fontSize: "12px",
+                }}
+              >
+                Masukkan jabatan Kepala Desa yang
+                akan ditampilkan pada surat.
+              </small>
+            </div>
+          )}
+
+          {/* =========================
+              PERIODE
+              HANYA KEPALA DESA
+          ========================= */}
 
           {role === "kepala_desa" && (
             <div

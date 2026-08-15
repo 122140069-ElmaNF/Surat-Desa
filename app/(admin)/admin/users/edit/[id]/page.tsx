@@ -46,6 +46,7 @@ export default async function EditAdminPage({
         username: user.username,
         role: user.role,
         periode: user.periode ?? null,
+        jabatan: user.jabatan ?? null,
         is_super_admin:
           Boolean(user.is_super_admin),
       }}
