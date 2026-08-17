@@ -17,10 +17,18 @@ export default function PrintSuratPage() {
 
   const id = params.id;
 
-  const [kodeSurat, setKodeSurat] = useState("");
-  const [content, setContent] = useState("");
-  const [useKop, setUseKop] = useState(true);
-  const [status, setStatus] = useState("");
+  const [kodeSurat, setKodeSurat] =
+    useState("");
+
+  const [content, setContent] =
+    useState("");
+
+  const [useKop, setUseKop] =
+    useState(true);
+
+  const [status, setStatus] =
+    useState("");
+
   const [profil, setProfil] =
     useState<Profil | null>(null);
 
@@ -30,49 +38,119 @@ export default function PrintSuratPage() {
   const [loading, setLoading] =
     useState(true);
 
-    useEffect(() => {
-    document.title = `Surat-${id}`;
-    }, [id]);
+  // =========================================
+  // TITLE
+  // =========================================
 
   useEffect(() => {
     if (!id) return;
 
-    fetch(`/api/generate/${id}`)
-      .then((res) => res.json())
-      .then((res) => {
-        setContent(res.hasil);
-        setUseKop(res.use_kop);
-        setStatus(res.status ?? "");
-        setProfil(res.profil ?? null);
-        setTanggalSurat(res.tanggalSurat ?? "");
-        setKodeSurat(res.kodeSurat ?? "");
-
-        setLoading(false);
-      });
+    document.title = `Surat-${id}`;
   }, [id]);
 
-    useEffect(() => {
+  // =========================================
+  // AMBIL DATA SURAT
+  // =========================================
+
+  useEffect(() => {
+    if (!id) return;
+
+    async function loadSurat() {
+      try {
+        setLoading(true);
+
+        const res = await fetch(
+          `/api/generate/${id}`,
+          {
+            cache: "no-store",
+          }
+        );
+
+        const result =
+          await res.json();
+
+        if (!res.ok) {
+          throw new Error(
+            result.message ||
+              "Gagal mengambil data surat."
+          );
+        }
+
+        setContent(
+          result.hasil ?? ""
+        );
+
+        setUseKop(
+          Boolean(result.use_kop)
+        );
+
+        setStatus(
+          result.status ?? ""
+        );
+
+        setProfil(
+          result.profil ?? null
+        );
+
+        setTanggalSurat(
+          result.tanggalSurat ?? ""
+        );
+
+        setKodeSurat(
+          result.kodeSurat ?? ""
+        );
+      } catch (error) {
+        console.error(
+          "Gagal mengambil data surat:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadSurat();
+  }, [id]);
+
+  // =========================================
+  // PRINT MANUAL
+  // =========================================
+
+  useEffect(() => {
     if (loading) return;
 
-    const timer = setTimeout(() => {
+    const timer =
+      setTimeout(() => {
+        /*
+         * Halaman ini juga bisa dibuka
+         * langsung oleh browser untuk print.
+         *
+         * Puppeteer tidak masalah dengan
+         * adanya window.print().
+         */
+
         window.print();
 
         window.onafterprint = () => {
-        window.close();
+          window.close();
         };
+      }, 300);
 
-    }, 300);
+    return () =>
+      clearTimeout(timer);
+  }, [loading]);
 
-    return () => clearTimeout(timer);
-
-    }, [loading]);
+  // =========================================
+  // LOADING
+  // =========================================
 
   if (loading) {
     return (
       <div
         style={{
           display: "flex",
-          justifyContent: "center",
+          justifyContent:
+            "center",
           alignItems: "center",
           height: "100vh",
           fontSize: 18,
@@ -83,15 +161,27 @@ export default function PrintSuratPage() {
     );
   }
 
+  // =========================================
+  // RENDER SURAT
+  // =========================================
+
   return (
+    <div
+      data-pdf-ready="true"
+      style={{
+        background: "#ffffff",
+        minHeight: "100vh",
+      }}
+    >
       <SuratPreview
         mode="print"
-         kodeSurat={kodeSurat}
+        kodeSurat={kodeSurat}
         content={content}
         useKop={useKop}
         status={status}
         profil={profil}
         tanggalSurat={tanggalSurat}
-        />
+      />
+    </div>
   );
 }

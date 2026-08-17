@@ -260,6 +260,28 @@ const formatTanggalSingkat = (tanggal: string) => {
 
                 </div>
               )}
+
+              {data.status === "selesai" && (
+                <div
+                  style={{
+                    marginTop: "24px",
+                    paddingTop: "20px",
+                    borderTop:
+                      "1px solid #e5e7eb",
+                  }}
+                >
+                  <button
+                    className="tracking-btn"
+                    onClick={() => {
+                      window.location.href =
+                        `/api/surat/${data.id}/download`;
+                    }}
+                  >
+                    Download Surat PDF
+                  </button>
+                </div>
+              )}
+
               {data.activities?.length > 0 && (
                 <div style={{ marginTop: "28px" }}>
                   <ActivityTimeline
