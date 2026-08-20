@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import InputField from "@/app/components/form/InputField";
 import FileUploadField from "@/app/components/form/FileUploadField";
 import SubmitButton from "@/app/components/form/SubmitButton";
@@ -21,8 +22,6 @@ export default function TidakBerlanggananAirForm({
   role = "user",
   onSubmit,
 }: Props) {
-
-  console.log(initialData);
 
   const [form, setForm] = useState({
 
@@ -397,7 +396,7 @@ export default function TidakBerlanggananAirForm({
 
       if (!json.success) {
 
-        alert(
+        toast.error(
           json.message ??
           "Gagal menyimpan."
         );
@@ -414,7 +413,7 @@ export default function TidakBerlanggananAirForm({
         mode === "edit"
       ) {
 
-        alert(
+        toast.success(
           "Perbaikan berhasil dikirim."
         );
 
@@ -432,7 +431,7 @@ export default function TidakBerlanggananAirForm({
 
       console.error(err);
 
-      alert(
+      toast.error(
         "Terjadi kesalahan server."
       );
 

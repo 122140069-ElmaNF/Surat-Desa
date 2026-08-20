@@ -90,22 +90,29 @@ export async function POST(req: Request) {
       );
     }
 
-    // =========================================
-    // VALIDASI PASSWORD
-    // =========================================
+// =========================================
+// VALIDASI PASSWORD
+// Minimal 8 karakter
+// Harus mengandung huruf
+// Harus mengandung angka
+// Harus mengandung karakter spesial
+// =========================================
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Password minimal 6 karakter.",
-        },
-        {
-          status: 400,
-        }
-      );
+const passwordRegex =
+  /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+if (!passwordRegex.test(password)) {
+  return NextResponse.json(
+    {
+      success: false,
+      message:
+        "Password minimal 8 karakter dan harus mengandung huruf, angka, serta karakter spesial.",
+    },
+    {
+      status: 400,
     }
+  );
+}
 
     // =========================================
     // VALIDASI ROLE
@@ -231,7 +238,7 @@ export async function POST(req: Request) {
         `
         SELECT id
         FROM users
-        WHERE username = ?
+        WHERE BINARY username = ?
         LIMIT 1
         `,
         [usernameClean]

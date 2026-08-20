@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import InputField from "@/app/components/form/InputField";
 import SelectField from "@/app/components/form/SelectField";
 import FileUploadField from "@/app/components/form/FileUploadField";
@@ -279,7 +280,7 @@ async function handleSubmit(
       await res.json();
 
     if (!json.success) {
-      alert(
+      toast.error(
         json.message ??
           "Gagal menyimpan."
       );
@@ -290,7 +291,7 @@ async function handleSubmit(
     setFileKtp(null);
 
     if (mode === "edit") {
-      alert(
+      toast.success(
         "Perbaikan berhasil dikirim."
       );
 
@@ -301,7 +302,7 @@ async function handleSubmit(
   } catch (err) {
     console.error(err);
 
-    alert(
+    toast.error(
       "Terjadi kesalahan server."
     );
   }

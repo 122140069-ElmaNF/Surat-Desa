@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   usePathname,
 } from "next/navigation";
@@ -80,14 +81,14 @@ export default function PimpinanSidebar() {
       });
 
       if (!res.ok) {
-        alert("Logout gagal.");
+        toast.error("Logout gagal.");
         return;
       }
 
       window.location.href = "/login";
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     }
   }
 

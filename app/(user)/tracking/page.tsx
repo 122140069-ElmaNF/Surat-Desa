@@ -2,167 +2,264 @@
 
 import { useEffect, useState } from "react";
 import ActivityTimeline from "@/app/components/activity/ActivityTimeline";
-import { Search, FileText,} from "lucide-react";
+import { Search, FileText } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 export default function TrackingPage() {
   const searchParams = useSearchParams();
   const kodeTracking = searchParams.get("kode");
+
   const [kode, setKode] = useState("");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  
+  const [error, setError] = useState("");
+
+  // =========================================
+  // CEK KODE TRACKING DARI URL
+  // =========================================
+
   useEffect(() => {
+    if (!kodeTracking) return;
 
-  if (!kodeTracking) return;
+    setKode(kodeTracking);
+    setError("");
 
-  setKode(kodeTracking);
+    const timer = setTimeout(() => {
+      handleTracking(kodeTracking);
+    }, 100);
 
-  setTimeout(() => {
+    return () => clearTimeout(timer);
+  }, [kodeTracking]);
 
-    handleTracking(kodeTracking);
-
-  }, 100);
-
-}, [kodeTracking]);
+  // =========================================
+  // CEK STATUS TRACKING
+  // =========================================
 
   async function handleTracking(
-  kodeInput?: string
-) {
+    kodeInput?: string
+  ) {
+    const kodeCari =
+      kodeInput ?? kode;
 
-  const kodeCari =
-    kodeInput ?? kode;
+    // Reset error
+    setError("");
 
-  if (!kodeCari) {
-    alert("Masukkan kode tracking.");
-    return;
-  }
+    // =========================================
+    // VALIDASI KODE KOSONG
+    // =========================================
 
-  setLoading(true);
+    if (!kodeCari.trim()) {
+      setError("Masukkan kode tracking.");
+      setData(null);
+      return;
+    }
 
-  try {
+    setLoading(true);
 
-    const res =
-      await fetch(
-        `/api/tracking/${kodeCari}`
+    try {
+      // =========================================
+      // REQUEST API
+      // =========================================
+
+      const res = await fetch(
+        `/api/tracking/${kodeCari.trim()}`
       );
 
-    const result =
-      await res.json();
+      const result = await res.json();
 
-    if (res.ok) {
+      // =========================================
+      // BERHASIL
+      // =========================================
 
-      setData(result.data);
+      if (res.ok) {
+        setData(result.data);
+        setError("");
+      } else {
+        // =======================================
+        // DATA TIDAK DITEMUKAN
+        // =======================================
 
-    } else {
+        setError(
+          result.message ||
+            "Data tidak ditemukan."
+        );
 
-      alert(
-        result.message ||
-        "Data tidak ditemukan."
+        setData(null);
+      }
+    } catch (error) {
+      // =========================================
+      // ERROR SERVER / NETWORK
+      // =========================================
+
+      console.error(error);
+
+      setError(
+        "Terjadi kesalahan. Silakan coba lagi."
       );
 
       setData(null);
-
+    } finally {
+      setLoading(false);
     }
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert("Terjadi kesalahan.");
-
-    setData(null);
-
   }
 
-  setLoading(false);
-}
+  // =========================================
+  // FORMAT TANGGAL
+  // =========================================
 
-const formatTanggalSingkat = (tanggal: string) => {
-  const hariSingkat = [
-    "Min",
-    "Sen",
-    "Sel",
-    "Rab",
-    "Kam",
-    "Jum",
-    "Sab",
-  ];
+  const formatTanggalSingkat = (
+    tanggal: string
+  ) => {
+    const hariSingkat = [
+      "Min",
+      "Sen",
+      "Sel",
+      "Rab",
+      "Kam",
+      "Jum",
+      "Sab",
+    ];
 
-  const date = new Date(tanggal);
+    const date = new Date(tanggal);
 
-  const hari =
-    hariSingkat[date.getDay()];
+    const hari =
+      hariSingkat[date.getDay()];
 
-  const tanggalFormat =
-    new Intl.DateTimeFormat(
-      "id-ID",
-      {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }
-    ).format(date);
+    const tanggalFormat =
+      new Intl.DateTimeFormat(
+        "id-ID",
+        {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }
+      ).format(date);
 
-  const jam =
-    new Intl.DateTimeFormat(
-      "id-ID",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      }
-    ).format(date);
+    const jam =
+      new Intl.DateTimeFormat(
+        "id-ID",
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }
+      ).format(date);
 
-  return `${hari}, ${tanggalFormat} • ${jam} WIB`;
-};
+    return `${hari}, ${tanggalFormat} • ${jam} WIB`;
+  };
+
+  // =========================================
+  // RENDER
+  // =========================================
 
   return (
     <div className="tracking-page">
-      {/* HERO */}
+
+      {/* =====================================
+          HERO
+      ===================================== */}
+
       <section className="tracking-hero">
         <div className="tracking-hero-content">
+
           <Search size={55} />
 
-          <h1>Cek Status Pengajuan Surat</h1>
+          <h1>
+            Cek Status Pengajuan Surat
+          </h1>
 
           <p>
             Masukkan kode tracking yang Anda
-            peroleh setelah melakukan pengajuan surat.
+            peroleh setelah melakukan pengajuan
+            surat.
           </p>
+
         </div>
       </section>
 
-      {/* CONTENT */}
+      {/* =====================================
+          CONTENT
+      ===================================== */}
+
       <section className="tracking-content">
         <div className="tracking-card">
-          <h2>Kode Tracking</h2>
+
+          <h2>
+            Kode Tracking
+          </h2>
+
+          {/* ===================================
+              INPUT KODE TRACKING
+          =================================== */}
 
           <input
             type="text"
             placeholder="Contoh: SD-240626-0001"
             value={kode}
-            onChange={(e) =>
-              setKode(e.target.value)
-            }
+            onChange={(e) => {
+              setKode(e.target.value);
+
+              // Hilangkan pesan error ketika
+              // user mulai mengetik kembali
+              setError("");
+            }}
             className="tracking-input"
           />
 
+          {/* ===================================
+              ERROR MESSAGE
+          =================================== */}
+
+          <div className="tracking-error-wrapper">
+            {error && (
+              <div className="tracking-error">
+                <span className="tracking-error-icon">
+                  ⚠
+                </span>
+
+                <span>
+                  {error}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* ===================================
+              BUTTON CEK STATUS
+          =================================== */}
+
           <button
-            onClick={() => handleTracking()}
+            onClick={() =>
+              handleTracking()
+            }
             className="tracking-btn"
+            disabled={loading}
           >
             {loading
               ? "Memeriksa..."
               : "Cek Status"}
           </button>
 
+          {/* ===================================
+              STATUS PENGAJUAN
+          =================================== */}
+
           {data && (
             <div className="status-card">
+
+              {/* HEADER */}
+
               <div className="status-header">
+
                 <FileText size={24} />
-                <h3>Status Pengajuan</h3>
+
+                <h3>
+                  Status Pengajuan
+                </h3>
+
               </div>
+
+              {/* STATUS BADGE */}
 
               <div
                 className={`status-badge ${
@@ -176,9 +273,16 @@ const formatTanggalSingkat = (tanggal: string) => {
                 {data.status}
               </div>
 
+              {/* =================================
+                  INFORMASI SURAT
+              ================================= */}
+
               <div className="status-info">
 
+                {/* JENIS SURAT */}
+
                 <div className="status-row">
+
                   <span className="status-label">
                     Jenis Surat
                   </span>
@@ -190,9 +294,13 @@ const formatTanggalSingkat = (tanggal: string) => {
                   <span className="status-value">
                     {data.nama_surat}
                   </span>
+
                 </div>
 
+                {/* KODE TRACKING */}
+
                 <div className="status-row">
+
                   <span className="status-label">
                     Kode Tracking
                   </span>
@@ -204,9 +312,13 @@ const formatTanggalSingkat = (tanggal: string) => {
                   <span className="status-value">
                     {data.kode_tracking}
                   </span>
+
                 </div>
 
+                {/* NAMA PEMOHON */}
+
                 <div className="status-row">
+
                   <span className="status-label">
                     Nama Pemohon
                   </span>
@@ -218,9 +330,13 @@ const formatTanggalSingkat = (tanggal: string) => {
                   <span className="status-value">
                     {data.nama}
                   </span>
+
                 </div>
 
+                {/* WAKTU PENGAJUAN */}
+
                 <div className="status-row">
+
                   <span className="status-label">
                     Waktu Pengajuan
                   </span>
@@ -234,9 +350,15 @@ const formatTanggalSingkat = (tanggal: string) => {
                       data.created_at
                     )}
                   </span>
+
                 </div>
 
               </div>
+
+              {/* =================================
+                  STATUS DITOLAK
+              ================================= */}
+
               {data.status === "ditolak" && (
                 <div className="tracking-reject-box">
 
@@ -261,6 +383,10 @@ const formatTanggalSingkat = (tanggal: string) => {
                 </div>
               )}
 
+              {/* =================================
+                  STATUS SELESAI
+              ================================= */}
+
               {data.status === "selesai" && (
                 <div
                   style={{
@@ -270,6 +396,7 @@ const formatTanggalSingkat = (tanggal: string) => {
                       "1px solid #e5e7eb",
                   }}
                 >
+
                   <button
                     className="tracking-btn"
                     onClick={() => {
@@ -279,21 +406,37 @@ const formatTanggalSingkat = (tanggal: string) => {
                   >
                     Download Surat PDF
                   </button>
+
                 </div>
               )}
 
+              {/* =================================
+                  RIWAYAT AKTIVITAS
+              ================================= */}
+
               {data.activities?.length > 0 && (
-                <div style={{ marginTop: "28px" }}>
+                <div
+                  style={{
+                    marginTop: "28px",
+                  }}
+                >
+
                   <ActivityTimeline
-                    activities={data.activities}
+                    activities={
+                      data.activities
+                    }
                     showUserInfo={false}
                   />
+
                 </div>
               )}
+
             </div>
           )}
+
         </div>
       </section>
+
     </div>
   );
 }

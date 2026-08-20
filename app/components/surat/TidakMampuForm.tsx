@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import InputField from "@/app/components/form/InputField";
 import SelectField from "@/app/components/form/SelectField";
 import FileUploadField from "@/app/components/form/FileUploadField";
@@ -21,8 +22,6 @@ export default function TidakMampuForm({
   role = "user",
   onSubmit,
 }: Props) {
-
-  console.log(initialData);
 
   const [form, setForm] = useState({
     nama: "",
@@ -300,7 +299,7 @@ export default function TidakMampuForm({
 
       if (!json.success) {
 
-        alert(
+        toast.error(
           json.message ??
           "Gagal menyimpan."
         );
@@ -316,7 +315,7 @@ export default function TidakMampuForm({
         mode === "edit"
       ) {
 
-        alert(
+        toast.success(
           "Perbaikan berhasil dikirim."
         );
 
@@ -334,7 +333,7 @@ export default function TidakMampuForm({
 
       console.error(err);
 
-      alert(
+      toast.error(
         "Terjadi kesalahan server."
       );
 

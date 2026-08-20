@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Props = {
   id: number;
@@ -32,15 +33,15 @@ export default function DeleteUserButton({ id }: Props) {
       const data = await res.json();
 
       if (data.success) {
-        alert("Admin berhasil dihapus.");
+        toast.success("Admin berhasil dihapus.");
 
         router.refresh();
       } else {
-        alert("Gagal menghapus.");
+        toast.error("Gagal menghapus.");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setLoading(false);
     }

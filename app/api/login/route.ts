@@ -12,6 +12,10 @@ export async function POST(req: NextRequest) {
       password,
     } = body;
 
+    // =========================================
+    // VALIDASI INPUT
+    // =========================================
+
     if (!username || !password) {
       return NextResponse.json(
         {
@@ -25,6 +29,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // =========================================
+    // CARI USER
+    // Username dibuat CASE-SENSITIVE
+    // =========================================
+
     const [rows] = await db.query(
       `
       SELECT
@@ -35,7 +44,7 @@ export async function POST(req: NextRequest) {
         role,
         is_super_admin
       FROM users
-      WHERE username = ?
+      WHERE BINARY username = ?
       LIMIT 1
       `,
       [username]
@@ -43,11 +52,16 @@ export async function POST(req: NextRequest) {
 
     const user = (rows as any[])[0];
 
+    // =========================================
+    // USERNAME TIDAK DITEMUKAN
+    // =========================================
+
     if (!user) {
       return NextResponse.json(
         {
           success: false,
-          message: "Username tidak ditemukan.",
+          message:
+            "Username tidak ditemukan.",
         },
         {
           status: 404,
@@ -55,51 +69,68 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // =========================================
+    // CEK PASSWORD
+    // =========================================
+
     const cocok = await bcrypt.compare(
-    password,
-    user.password
+      password,
+      user.password
     );
 
     if (!cocok) {
-    return NextResponse.json(
+      return NextResponse.json(
         {
-        success: false,
-        message: "Password salah.",
+          success: false,
+          message: "Password salah.",
         },
         {
-        status: 401,
+          status: 401,
         }
-    );
+      );
     }
-    
+
+    // =========================================
+    // SIMPAN SESSION
+    // =========================================
+
     const cookieStore = await cookies();
 
-cookieStore.set(
-  "session",
-  JSON.stringify({
-    id: user.id,
-    nama: user.nama,
-    role: user.role,
-    is_super_admin: Boolean(user.is_super_admin),
-  }),
-  {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24,
-  }
-);
+    cookieStore.set(
+      "session",
+      JSON.stringify({
+        id: user.id,
+        nama: user.nama,
+        role: user.role,
+        is_super_admin: Boolean(
+          user.is_super_admin
+        ),
+      }),
+      {
+        httpOnly: true,
+        secure:
+          process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24,
+      }
+    );
 
-return NextResponse.json({
-    success: true,
-    role: user.role,
-    nama: user.nama,
-});
+    // =========================================
+    // LOGIN BERHASIL
+    // =========================================
+
+    return NextResponse.json({
+      success: true,
+      role: user.role,
+      nama: user.nama,
+    });
 
   } catch (err) {
-
-    console.error(err);
+    console.error(
+      "ERROR LOGIN:",
+      err
+    );
 
     return NextResponse.json(
       {

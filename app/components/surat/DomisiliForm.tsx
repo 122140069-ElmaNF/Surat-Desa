@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import InputField from "@/app/components/form/InputField";
 import SelectField from "@/app/components/form/SelectField";
 import FileUploadField from "@/app/components/form/FileUploadField";
@@ -21,8 +22,6 @@ export default function DomisiliForm({
   role = "user",
   onSubmit,
 }: Props) {
-
-  console.log(initialData);
 
   const [form, setForm] = useState({
     nama: "",
@@ -265,24 +264,30 @@ try {
 
   const json = await res.json();
 
-  if (!json.success) {
-    alert(json.message ?? "Gagal menyimpan.");
-    return;
-  }
+if (!json.success) {
+  toast.error(json.message ?? "Gagal menyimpan.");
+  return;
+}
 
   setErrors({});
   setFileKtp(null);
 
   if (mode === "edit") {
-    alert("Perbaikan berhasil dikirim.");
-    window.location.href = `/tracking/${initialData.kode_tracking}`;
+    toast.success("Perbaikan berhasil dikirim.");
+
+    setTimeout(() => {
+      window.location.href =
+        `/tracking/${initialData.kode_tracking}`;
+    }, 1000);
   } else {
-    window.location.href = `/success/${json.kode_tracking}`;
+    window.location.href =
+      `/success/${json.kode_tracking}`;
   }
-} catch (err) {
-  console.error(err);
-  alert("Terjadi kesalahan server.");
-}}
+
+  } catch (err) {
+    console.error(err);
+    toast.error("Terjadi kesalahan server.");
+  }}
 
   // RENDER
   return (

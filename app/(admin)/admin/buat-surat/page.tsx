@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import DomisiliForm from "@/app/components/surat/DomisiliForm";
 import ListrikForm from "@/app/components/surat/ListrikForm";
@@ -98,7 +99,7 @@ export default function AdminBuatSuratPage() {
 
       console.error(err);
 
-      alert(
+      toast.error(
         "Terjadi kesalahan server."
       );
 

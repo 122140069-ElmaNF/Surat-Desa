@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import {
   UserRound,
   BriefcaseBusiness,
@@ -43,7 +44,7 @@ export default function ProfilForm({
     const fileInput = fileInputRef.current;
 
     if (!fileInput?.files?.length) {
-      alert(
+      toast.error(
         "Silakan pilih tanda tangan baru terlebih dahulu."
       );
       return;
@@ -71,11 +72,17 @@ export default function ProfilForm({
         );
       }
 
-      alert(data.message);
+      toast.success(
+        data.message ||
+          "Tanda tangan Kepala Desa berhasil disimpan."
+      );
 
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 800);
+
     } catch (error: any) {
-      alert(
+      toast.error(
         error.message ||
           "Terjadi kesalahan saat menyimpan tanda tangan."
       );

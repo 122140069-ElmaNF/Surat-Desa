@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   CheckCircle2,
   ShieldCheck,
@@ -19,9 +20,14 @@ export default function SuccessClient({
   const copyKode = async () => {
     try {
       await navigator.clipboard.writeText(kode);
-      alert("Kode tracking berhasil disalin.");
+
+      toast.success(
+        "Kode tracking berhasil disalin."
+      );
     } catch {
-      alert("Gagal menyalin kode.");
+      toast.error(
+        "Gagal menyalin kode."
+      );
     }
   };
 
@@ -31,7 +37,10 @@ export default function SuccessClient({
       <section className="success-hero">
         <div className="success-hero-content">
           <div className="success-icon">
-            <CheckCircle2 size={52} strokeWidth={2.5} />
+            <CheckCircle2
+              size={52}
+              strokeWidth={2.5}
+            />
           </div>
 
           <h1 className="success-title">
@@ -39,13 +48,13 @@ export default function SuccessClient({
           </h1>
 
           <p className="success-desc">
-            Terima kasih. Pengajuan surat Anda telah berhasil
-            dikirim.
+            Terima kasih. Pengajuan surat Anda telah
+            berhasil dikirim.
           </p>
 
           <p className="success-desc">
-            Simpan kode tracking berikut untuk memantau status
-            pengajuan surat Anda.
+            Simpan kode tracking berikut untuk memantau
+            status pengajuan surat Anda.
           </p>
         </div>
       </section>

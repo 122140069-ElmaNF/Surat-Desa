@@ -155,7 +155,7 @@ export async function PATCH(
       `
       SELECT id
       FROM users
-      WHERE username = ?
+      WHERE BINARY username = ?
       AND id <> ?
       LIMIT 1
       `,
@@ -370,29 +370,72 @@ export async function PATCH(
       );
     }
 
-    /* =====================================================
-       UPDATE DENGAN PASSWORD
-    ===================================================== */
+else {
+  // =========================================
+  // VALIDASI PASSWORD
+  // Minimal 8 karakter
+  // Ada huruf
+  // Ada angka
+  // Ada karakter spesial
+  // =========================================
 
-    else {
-      if (password.length < 6) {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "Password minimal 6 karakter.",
-          },
-          {
-            status: 400,
-          }
-        );
+  if (password.length < 8) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Password minimal 8 karakter.",
+      },
+      {
+        status: 400,
       }
+    );
+  }
 
-      const hashedPassword =
-        await bcrypt.hash(
-          password,
-          10
-        );
+  if (!/[A-Za-z]/.test(password)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Password harus mengandung minimal 1 huruf.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  if (!/[0-9]/.test(password)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Password harus mengandung minimal 1 angka.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "Password harus mengandung minimal 1 karakter spesial.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  const hashedPassword =
+    await bcrypt.hash(
+      password,
+      10
+    );
 
       await db.query(
         `

@@ -628,6 +628,27 @@
   color: #991b1b;
 }
 
+.tracking-error-wrapper {
+  min-height: 28px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.tracking-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.tracking-error-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
 /* ================================
    ROLE BADGE - MANAJEMEN ADMIN
 ================================ */

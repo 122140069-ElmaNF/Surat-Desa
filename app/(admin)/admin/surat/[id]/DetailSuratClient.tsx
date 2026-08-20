@@ -61,11 +61,8 @@ async function handleApproval() {
     const result = await res.json();
 
     if (!result.success) {
-
       alert(result.message);
-
       return;
-
     }
 
     toast.success("Surat berhasil dikirim ke Kepala Desa.");

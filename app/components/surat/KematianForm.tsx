@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import InputField from "@/app/components/form/InputField";
 import FileUploadField from "@/app/components/form/FileUploadField";
 import SelectField from "@/app/components/form/SelectField";
@@ -308,7 +309,7 @@ export default function KematianForm({
 
       if (!json.success) {
 
-        alert(
+        toast.error(
           json.message ??
             "Gagal menyimpan."
         );
@@ -322,7 +323,7 @@ export default function KematianForm({
 
       if (mode === "edit") {
 
-        alert(
+        toast.success(
           "Perbaikan berhasil dikirim."
         );
 
@@ -340,8 +341,8 @@ export default function KematianForm({
 
       console.error(err);
 
-      alert(
-        "Terjadi kesalahan server."
+        toast.error(
+          "Terjadi kesalahan server."
       );
 
     }

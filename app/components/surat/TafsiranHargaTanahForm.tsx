@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import InputField from "@/app/components/form/InputField";
 import SelectField from "@/app/components/form/SelectField";
 import FileUploadField from "@/app/components/form/FileUploadField";
@@ -21,8 +22,6 @@ export default function TafsiranHargaTanahForm({
   role = "user",
   onSubmit,
 }: Props) {
-
-  console.log(initialData);
 
   const [form, setForm] = useState({
 
@@ -392,7 +391,7 @@ export default function TafsiranHargaTanahForm({
 
       if (!json.success) {
 
-        alert(
+        toast.error(
           json.message ??
           "Gagal menyimpan."
         );
@@ -406,7 +405,7 @@ export default function TafsiranHargaTanahForm({
 
       if (mode === "edit") {
 
-        alert(
+        toast.success(
           "Perbaikan berhasil dikirim."
         );
 
@@ -424,7 +423,7 @@ export default function TafsiranHargaTanahForm({
 
       console.error(err);
 
-      alert(
+      toast.error(
         "Terjadi kesalahan server."
       );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { toast } from "sonner";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -105,14 +106,14 @@ export default function AdminSidebar({
       });
 
       if (!res.ok) {
-        alert("Logout gagal.");
+        toast.error("Logout gagal.");
         return;
       }
 
       window.location.href = "/login";
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     }
   }
 

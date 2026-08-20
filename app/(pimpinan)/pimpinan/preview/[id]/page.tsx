@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   useParams,
   useRouter,
@@ -106,7 +107,7 @@ export default function PimpinanPreviewPage() {
         await res.json();
 
       if (!res.ok) {
-        alert(
+        toast.error(
           result.message ||
             "Gagal memproses surat."
         );
@@ -172,7 +173,7 @@ export default function PimpinanPreviewPage() {
     } catch (err) {
       console.error(err);
 
-      alert(
+      toast.error(
         "Terjadi kesalahan."
       );
     } finally {

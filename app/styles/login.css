@@ -246,3 +246,21 @@
     }
 
 }
+
+.login-error {
+  margin: 6px 0 0;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.login-general-error {
+  margin: -4px 0 4px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.login-input-error {
+  border-color: #dc2626 !important;
+}

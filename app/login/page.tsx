@@ -25,11 +25,49 @@ export default function LoginPage() {
   const [loading, setLoading] =
     useState(false);
 
+  // =========================================
+  // ERROR
+  // =========================================
+
+  const [usernameError, setUsernameError] =
+    useState("");
+
+  const [passwordError, setPasswordError] =
+    useState("");
+
+  const [generalError, setGeneralError] =
+    useState("");
+
+  // =========================================
+  // LOGIN
+  // =========================================
+
   async function handleLogin() {
-    if (!username || !password) {
-      alert(
-        "Username dan Password wajib diisi."
+    // Reset error sebelumnya
+    setUsernameError("");
+    setPasswordError("");
+    setGeneralError("");
+
+    // =========================================
+    // VALIDASI FORM
+    // =========================================
+
+    if (!username.trim()) {
+      setUsernameError(
+        "Username wajib diisi."
       );
+    }
+
+    if (!password) {
+      setPasswordError(
+        "Password wajib diisi."
+      );
+    }
+
+    if (
+      !username.trim() ||
+      !password
+    ) {
       return;
     }
 
@@ -56,31 +94,59 @@ export default function LoginPage() {
       const result =
         await res.json();
 
+      // =========================================
+      // LOGIN GAGAL
+      // =========================================
+
       if (!result.success) {
-        alert(result.message);
+        if (res.status === 404) {
+          setUsernameError(
+            "Username tidak ditemukan."
+          );
+        } else if (res.status === 401) {
+          setPasswordError(
+            "Password salah."
+          );
+        } else {
+          setGeneralError(
+            result.message ||
+              "Login gagal."
+          );
+        }
+
         return;
       }
 
-      // Redirect berdasarkan role
-    if (
-      result.role === "super_admin" ||
-      result.role === "staff_admin"
-    ) {
-      router.push("/admin");
-    } else if (result.role === "kepala_desa") {
-      router.push("/pimpinan");
-    } else if (result.role === "ex_kepala_desa") {
-      alert(
-        "Masa jabatan Anda telah berakhir. Akun ini tidak dapat digunakan untuk mengakses dashboard."
-      );
-    } else {
-      alert("Role tidak dikenali.");
-    }
+      // =========================================
+      // REDIRECT BERDASARKAN ROLE
+      // =========================================
 
+      if (
+        result.role === "super_admin" ||
+        result.role === "staff_admin"
+      ) {
+        router.push("/admin");
+      } else if (
+        result.role === "kepala_desa"
+      ) {
+        router.push("/pimpinan");
+      } else if (
+        result.role === "ex_kepala_desa"
+      ) {
+        setGeneralError(
+          "Masa jabatan Anda telah berakhir. Akun ini tidak dapat digunakan untuk mengakses dashboard."
+        );
+      } else {
+        setGeneralError(
+          "Role akun tidak dikenali."
+        );
+      }
     } catch (err) {
       console.error(err);
 
-      alert("Terjadi kesalahan.");
+      setGeneralError(
+        "Terjadi kesalahan saat menghubungi server."
+      );
     } finally {
       setLoading(false);
     }
@@ -89,7 +155,11 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        {/* Logo */}
+
+        {/* =========================================
+            LOGO
+        ========================================= */}
+
         <div className="login-logo">
           <div className="logo-circle">
             <ShieldCheck size={42} />
@@ -104,37 +174,76 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Form */}
+        {/* =========================================
+            FORM
+        ========================================= */}
+
         <div className="login-form">
-          {/* Username */}
+
+          {/* =========================================
+              USERNAME
+          ========================================= */}
+
           <div className="login-group">
             <label>
               Username
             </label>
 
-            <div className="login-input">
+            <div
+              className={`login-input ${
+                usernameError
+                  ? "login-input-error"
+                  : ""
+              }`}
+            >
               <User size={18} />
 
               <input
                 type="text"
                 placeholder="Masukkan username"
                 value={username}
-                onChange={(e) =>
+                onChange={(e) => {
                   setUsername(
                     e.target.value
-                  )
-                }
+                  );
+
+                  // Hapus error saat user mengetik
+                  if (usernameError) {
+                    setUsernameError("");
+                  }
+
+                  if (generalError) {
+                    setGeneralError("");
+                  }
+                }}
               />
             </div>
+
+            {/* ERROR USERNAME */}
+
+            {usernameError && (
+              <p className="login-error">
+                {usernameError}
+              </p>
+            )}
           </div>
 
-          {/* Password */}
+          {/* =========================================
+              PASSWORD
+          ========================================= */}
+
           <div className="login-group">
             <label>
               Password
             </label>
 
-            <div className="login-input">
+            <div
+              className={`login-input ${
+                passwordError
+                  ? "login-input-error"
+                  : ""
+              }`}
+            >
               <Lock size={18} />
 
               <input
@@ -145,11 +254,20 @@ export default function LoginPage() {
                 }
                 placeholder="Masukkan password"
                 value={password}
-                onChange={(e) =>
+                onChange={(e) => {
                   setPassword(
                     e.target.value
-                  )
-                }
+                  );
+
+                  // Hapus error saat user mengetik
+                  if (passwordError) {
+                    setPasswordError("");
+                  }
+
+                  if (generalError) {
+                    setGeneralError("");
+                  }
+                }}
               />
 
               <button
@@ -167,9 +285,30 @@ export default function LoginPage() {
                 )}
               </button>
             </div>
+
+            {/* ERROR PASSWORD */}
+
+            {passwordError && (
+              <p className="login-error">
+                {passwordError}
+              </p>
+            )}
           </div>
 
-          {/* Button */}
+          {/* =========================================
+              GENERAL ERROR
+          ========================================= */}
+
+          {generalError && (
+            <p className="login-general-error">
+              {generalError}
+            </p>
+          )}
+
+          {/* =========================================
+              BUTTON
+          ========================================= */}
+
           <button
             className="login-btn"
             onClick={handleLogin}
@@ -181,7 +320,10 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Footer */}
+        {/* =========================================
+            FOOTER
+        ========================================= */}
+
         <div className="login-footer">
           © {new Date().getFullYear()}{" "}
           Pemerintah Desa
