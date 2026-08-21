@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
 import ActivityTimeline from "@/app/components/activity/ActivityTimeline";
 import { Search, FileText } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-export default function TrackingPage() {
+function TrackingContent() {
   const searchParams = useSearchParams();
   const kodeTracking = searchParams.get("kode");
 
@@ -41,12 +45,7 @@ export default function TrackingPage() {
     const kodeCari =
       kodeInput ?? kode;
 
-    // Reset error
     setError("");
-
-    // =========================================
-    // VALIDASI KODE KOSONG
-    // =========================================
 
     if (!kodeCari.trim()) {
       setError("Masukkan kode tracking.");
@@ -57,28 +56,16 @@ export default function TrackingPage() {
     setLoading(true);
 
     try {
-      // =========================================
-      // REQUEST API
-      // =========================================
-
       const res = await fetch(
         `/api/tracking/${kodeCari.trim()}`
       );
 
       const result = await res.json();
 
-      // =========================================
-      // BERHASIL
-      // =========================================
-
       if (res.ok) {
         setData(result.data);
         setError("");
       } else {
-        // =======================================
-        // DATA TIDAK DITEMUKAN
-        // =======================================
-
         setError(
           result.message ||
             "Data tidak ditemukan."
@@ -87,10 +74,6 @@ export default function TrackingPage() {
         setData(null);
       }
     } catch (error) {
-      // =========================================
-      // ERROR SERVER / NETWORK
-      // =========================================
-
       console.error(error);
 
       setError(
@@ -155,9 +138,7 @@ export default function TrackingPage() {
   return (
     <div className="tracking-page">
 
-      {/* =====================================
-          HERO
-      ===================================== */}
+      {/* HERO */}
 
       <section className="tracking-hero">
         <div className="tracking-hero-content">
@@ -177,9 +158,7 @@ export default function TrackingPage() {
         </div>
       </section>
 
-      {/* =====================================
-          CONTENT
-      ===================================== */}
+      {/* CONTENT */}
 
       <section className="tracking-content">
         <div className="tracking-card">
@@ -188,31 +167,21 @@ export default function TrackingPage() {
             Kode Tracking
           </h2>
 
-          {/* ===================================
-              INPUT KODE TRACKING
-          =================================== */}
-
           <input
             type="text"
             placeholder="Contoh: SD-240626-0001"
             value={kode}
             onChange={(e) => {
               setKode(e.target.value);
-
-              // Hilangkan pesan error ketika
-              // user mulai mengetik kembali
               setError("");
             }}
             className="tracking-input"
           />
 
-          {/* ===================================
-              ERROR MESSAGE
-          =================================== */}
-
           <div className="tracking-error-wrapper">
             {error && (
               <div className="tracking-error">
+
                 <span className="tracking-error-icon">
                   ⚠
                 </span>
@@ -220,13 +189,10 @@ export default function TrackingPage() {
                 <span>
                   {error}
                 </span>
+
               </div>
             )}
           </div>
-
-          {/* ===================================
-              BUTTON CEK STATUS
-          =================================== */}
 
           <button
             onClick={() =>
@@ -240,14 +206,10 @@ export default function TrackingPage() {
               : "Cek Status"}
           </button>
 
-          {/* ===================================
-              STATUS PENGAJUAN
-          =================================== */}
+          {/* STATUS PENGAJUAN */}
 
           {data && (
             <div className="status-card">
-
-              {/* HEADER */}
 
               <div className="status-header">
 
@@ -258,8 +220,6 @@ export default function TrackingPage() {
                 </h3>
 
               </div>
-
-              {/* STATUS BADGE */}
 
               <div
                 className={`status-badge ${
@@ -273,13 +233,7 @@ export default function TrackingPage() {
                 {data.status}
               </div>
 
-              {/* =================================
-                  INFORMASI SURAT
-              ================================= */}
-
               <div className="status-info">
-
-                {/* JENIS SURAT */}
 
                 <div className="status-row">
 
@@ -297,8 +251,6 @@ export default function TrackingPage() {
 
                 </div>
 
-                {/* KODE TRACKING */}
-
                 <div className="status-row">
 
                   <span className="status-label">
@@ -315,8 +267,6 @@ export default function TrackingPage() {
 
                 </div>
 
-                {/* NAMA PEMOHON */}
-
                 <div className="status-row">
 
                   <span className="status-label">
@@ -332,8 +282,6 @@ export default function TrackingPage() {
                   </span>
 
                 </div>
-
-                {/* WAKTU PENGAJUAN */}
 
                 <div className="status-row">
 
@@ -355,9 +303,7 @@ export default function TrackingPage() {
 
               </div>
 
-              {/* =================================
-                  STATUS DITOLAK
-              ================================= */}
+              {/* STATUS DITOLAK */}
 
               {data.status === "ditolak" && (
                 <div className="tracking-reject-box">
@@ -383,9 +329,7 @@ export default function TrackingPage() {
                 </div>
               )}
 
-              {/* =================================
-                  STATUS SELESAI
-              ================================= */}
+              {/* STATUS SELESAI */}
 
               {data.status === "selesai" && (
                 <div
@@ -410,9 +354,7 @@ export default function TrackingPage() {
                 </div>
               )}
 
-              {/* =================================
-                  RIWAYAT AKTIVITAS
-              ================================= */}
+              {/* RIWAYAT AKTIVITAS */}
 
               {data.activities?.length > 0 && (
                 <div
@@ -438,5 +380,28 @@ export default function TrackingPage() {
       </section>
 
     </div>
+  );
+}
+
+
+// =========================================
+// PAGE
+// =========================================
+
+export default function TrackingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="tracking-page">
+          <section className="tracking-content">
+            <div className="tracking-card">
+              Memuat halaman tracking...
+            </div>
+          </section>
+        </div>
+      }
+    >
+      <TrackingContent />
+    </Suspense>
   );
 }
