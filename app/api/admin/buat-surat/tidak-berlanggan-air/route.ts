@@ -3,32 +3,38 @@ import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
+
 import { generateSurat } from "@/lib/surat/generateSurat";
 import getJenisSurat from "@/lib/surat/getJenisSurat";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: Request) {
-
   const conn = await db.getConnection();
 
   try {
-
     await conn.beginTransaction();
 
     const formData =
       await request.formData();
 
     // ===============================
-    // Data Orang Tua / Wali
+    // DATA ORANG TUA / WALI
     // ===============================
 
     const nama_pertama =
-      formData.get("nama_pertama") as string;
+      formData.get(
+        "nama_pertama"
+      ) as string;
 
     const ttl_pertama =
-      formData.get("ttl_pertama") as string;
+      formData.get(
+        "ttl_pertama"
+      ) as string;
 
     const nik_pertama =
-      formData.get("nik_pertama") as string;
+      formData.get(
+        "nik_pertama"
+      ) as string;
 
     const status_perkawinan_pertama =
       formData.get(
@@ -46,26 +52,36 @@ export async function POST(request: Request) {
       ) as string;
 
     // ===============================
-    // Data Calon Mahasiswa
+    // DATA CALON MAHASISWA
     // ===============================
 
     const nama_kedua =
-      formData.get("nama_kedua") as string;
+      formData.get(
+        "nama_kedua"
+      ) as string;
 
     const ttl_kedua =
-      formData.get("ttl_kedua") as string;
+      formData.get(
+        "ttl_kedua"
+      ) as string;
 
     const nik_kedua =
-      formData.get("nik_kedua") as string;
+      formData.get(
+        "nik_kedua"
+      ) as string;
 
     const prodi_kedua =
-      formData.get("prodi_kedua") as string;
+      formData.get(
+        "prodi_kedua"
+      ) as string;
 
     const alamat_kedua =
-      formData.get("alamat_kedua") as string;
+      formData.get(
+        "alamat_kedua"
+      ) as string;
 
     // ===============================
-    // File
+    // FILE KTP
     // ===============================
 
     const fileKtp =
@@ -74,7 +90,6 @@ export async function POST(request: Request) {
       ) as File | null;
 
     if (!fileKtp) {
-
       return NextResponse.json(
         {
           success: false,
@@ -85,8 +100,60 @@ export async function POST(request: Request) {
           status: 400,
         }
       );
-
     }
+
+    // ===============================
+    // VALIDASI TIPE FILE
+    // ===============================
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        fileKtp.type
+      )
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "File harus berupa JPG atau PNG.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===============================
+    // VALIDASI UKURAN FILE
+    // ===============================
+
+    const maxSize =
+      5 * 1024 * 1024;
+
+    if (
+      fileKtp.size >
+      maxSize
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Ukuran file maksimal 5 MB.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===============================
+    // UPLOAD FILE KTP
+    // ===============================
 
     const bytes =
       await fileKtp.arrayBuffer();
@@ -97,17 +164,23 @@ export async function POST(request: Request) {
     const ext =
       fileKtp.name
         .split(".")
-        .pop();
+        .pop()
+        ?.toLowerCase();
 
     const fileName =
       `${randomUUID()}.${ext}`;
 
-    const uploadPath =
+    const uploadDir =
       path.join(
         process.cwd(),
         "public",
         "uploads",
-        "ktp",
+        "ktp"
+      );
+
+    const uploadPath =
+      path.join(
+        uploadDir,
         fileName
       );
 
@@ -116,8 +189,8 @@ export async function POST(request: Request) {
       buffer
     );
 
-        // ===============================
-    // Ambil data jenis surat
+    // ===============================
+    // AMBIL JENIS SURAT
     // ===============================
 
     const jenis =
@@ -132,10 +205,11 @@ export async function POST(request: Request) {
       jenis.kode_surat;
 
     const templateSurat =
-      jenis.template_surat ?? "";
+      jenis.template_surat ??
+      "";
 
     // ===============================
-    // Generate Tracking
+    // GENERATE TRACKING
     // ===============================
 
     const sekarang =
@@ -144,9 +218,15 @@ export async function POST(request: Request) {
     const tanggal =
       `${String(
         sekarang.getDate()
-      ).padStart(2, "0")}${String(
+      ).padStart(
+        2,
+        "0"
+      )}${String(
         sekarang.getMonth() + 1
-      ).padStart(2, "0")}${String(
+      ).padStart(
+        2,
+        "0"
+      )}${String(
         sekarang.getFullYear()
       ).slice(-2)}`;
 
@@ -162,14 +242,18 @@ export async function POST(request: Request) {
 
     const urut =
       String(
-        countRows[0].total + 1
-      ).padStart(4, "0");
+        countRows[0].total +
+          1
+      ).padStart(
+        4,
+        "0"
+      );
 
     const kode_tracking =
       `${kodeSurat}-${tanggal}-${urut}`;
 
     // ===============================
-    // Insert Pengajuan
+    // INSERT PENGAJUAN
     // ===============================
 
     const [result]: any =
@@ -194,8 +278,8 @@ export async function POST(request: Request) {
     const pengajuan_id =
       result.insertId;
 
-        // ===============================
-    // Insert Tidak Berlangganan Air
+    // ===============================
+    // INSERT TIDAK BERLANGGANAN AIR
     // ===============================
 
     await conn.query(
@@ -243,23 +327,22 @@ export async function POST(request: Request) {
     );
 
     // ===============================
-    // Generate Isi Surat
+    // GENERATE ISI SURAT
     // ===============================
 
-    console.log("templateSurat =", templateSurat);
-    console.log("typeof =", typeof templateSurat);
-
-    const replaceFields: Record<string, string> = {
+    const replaceFields:
+      Record<string, string> = {
       nomor_surat: "",
 
-      tanggal: new Date().toLocaleDateString(
-        "id-ID",
-        {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        }
-      ),
+      tanggal:
+        new Date().toLocaleDateString(
+          "id-ID",
+          {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          }
+        ),
 
       nama_pertama,
       ttl_pertama,
@@ -280,12 +363,13 @@ export async function POST(request: Request) {
         templateSurat,
         replaceFields,
         {
-          preserveSystemFields: true,
+          preserveSystemFields:
+            true,
         }
       );
 
     // ===============================
-    // Simpan Isi Surat
+    // SIMPAN ISI SURAT
     // ===============================
 
     await conn.query(
@@ -300,17 +384,42 @@ export async function POST(request: Request) {
       ]
     );
 
+    // ===============================
+    // ACTIVITY LOG
+    // ===============================
+
+    await logActivity({
+      pengajuanId:
+        pengajuan_id,
+
+      status:
+        "draft",
+
+      aktivitas:
+        "Surat dibuat oleh Admin.",
+
+      conn,
+    });
+
+    // ===============================
+    // COMMIT
+    // ===============================
+
     await conn.commit();
+
+    // ===============================
+    // RESPONSE
+    // ===============================
 
     return NextResponse.json({
       success: true,
       pengajuan_id,
       kode_tracking,
-      message: "Surat berhasil dibuat.",
+      message:
+        "Surat berhasil dibuat.",
     });
 
   } catch (err) {
-
     await conn.rollback();
 
     console.error(err);
@@ -318,7 +427,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan server.",
+        message:
+          "Terjadi kesalahan server.",
       },
       {
         status: 500,
@@ -326,9 +436,6 @@ export async function POST(request: Request) {
     );
 
   } finally {
-
     conn.release();
-
   }
-
 }

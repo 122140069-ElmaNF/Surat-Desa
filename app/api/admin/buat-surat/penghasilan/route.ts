@@ -1,16 +1,17 @@
 import db from "@/lib/db";
+import { writeFile } from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: Request) {
-
   const conn = await db.getConnection();
 
   try {
-
     await conn.beginTransaction();
 
-    const formData =
-      await request.formData();
+    const formData = await request.formData();
 
     // ==========================
     // Kepala Keluarga
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
       formData.get("alamat_kepala_keluarga") as string;
 
     // ==========================
-    // Data Anak
+    // Anak
     // ==========================
 
     const nama_anak =
@@ -76,6 +77,98 @@ export async function POST(request: Request) {
       formData.get("penghasilan") as string;
 
     // ==========================
+    // File KTP
+    // ==========================
+
+    const fileKtp =
+      formData.get("file_ktp") as File | null;
+
+    if (!fileKtp) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "File KTP wajib diupload.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ==========================
+    // Validasi File
+    // ==========================
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+    ];
+
+    if (!allowedTypes.includes(fileKtp.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "File harus berupa JPG atau PNG.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+
+    if (fileKtp.size > maxSize) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Ukuran file maksimal 5 MB.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ==========================
+    // Upload File
+    // ==========================
+
+    const bytes =
+      await fileKtp.arrayBuffer();
+
+    const buffer =
+      Buffer.from(bytes);
+
+    const ext =
+      fileKtp.name
+        .split(".")
+        .pop()
+        ?.toLowerCase();
+
+    const fileName =
+      `${randomUUID()}.${ext}`;
+
+    const uploadDir =
+      path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "ktp"
+      );
+
+    const uploadPath =
+      path.join(
+        uploadDir,
+        fileName
+      );
+
+    await writeFile(
+      uploadPath,
+      buffer
+    );
+
+    // ==========================
     // Ambil Jenis Surat
     // ==========================
 
@@ -84,7 +177,7 @@ export async function POST(request: Request) {
         `
         SELECT id, kode_surat
         FROM jenis_surat
-        WHERE kode_surat='SKP'
+        WHERE kode_surat = 'SKPHS'
         `
       );
 
@@ -94,11 +187,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const jenisSuratId =
-      jenisRows[0].id;
-
     const kodeSurat =
       jenisRows[0].kode_surat;
+
+    const jenisSuratId =
+      jenisRows[0].id;
 
     // ==========================
     // Generate Tracking
@@ -121,7 +214,7 @@ export async function POST(request: Request) {
         `
         SELECT COUNT(*) total
         FROM pengajuan_surat
-        WHERE jenis_surat_id=?
+        WHERE jenis_surat_id = ?
         `,
         [jenisSuratId]
       );
@@ -152,7 +245,7 @@ export async function POST(request: Request) {
         `,
         [
           jenisSuratId,
-          "selesai",
+          "draft",
           kode_tracking,
         ]
       );
@@ -188,13 +281,13 @@ export async function POST(request: Request) {
         pekerjaan_anak,
         alamat_anak,
 
-        penghasilan
+        penghasilan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
-
         pengajuan_id,
 
         nama_kepala_keluarga,
@@ -216,22 +309,31 @@ export async function POST(request: Request) {
         alamat_anak,
 
         penghasilan,
-
+        fileName,
       ]
     );
+
+    // ==========================
+    // Activity Log
+    // ==========================
+
+    await logActivity({
+      pengajuanId: pengajuan_id,
+      status: "draft",
+      aktivitas: "Surat dibuat oleh Admin.",
+      conn,
+    });
 
     await conn.commit();
 
     return NextResponse.json({
-
       success: true,
       message: "Surat berhasil dibuat.",
+      pengajuan_id,
       kode_tracking,
-
     });
 
   } catch (error) {
-
     await conn.rollback();
 
     console.error(error);
@@ -247,9 +349,6 @@ export async function POST(request: Request) {
     );
 
   } finally {
-
     conn.release();
-
   }
-
 }

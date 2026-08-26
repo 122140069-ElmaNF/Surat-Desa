@@ -6,83 +6,186 @@ import path from "path";
 
 import { generateSurat } from "@/lib/surat/generateSurat";
 import getJenisSurat from "@/lib/surat/getJenisSurat";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: Request) {
-
   const conn = await db.getConnection();
 
   try {
-
     await conn.beginTransaction();
 
-    const formData = await request.formData();
+    const formData =
+      await request.formData();
 
-    const nama = formData.get("nama") as string;
-    const ttl = formData.get("ttl") as string;
-    const nik = formData.get("nik") as string;
-    const agama = formData.get("agama") as string;
-    const jenis_kelamin = formData.get("jenis_kelamin") as string;
-    const pekerjaan = formData.get("pekerjaan") as string;
-    const alamat = formData.get("alamat") as string;
+    // ===========================
+    // DATA PEMOHON
+    // ===========================
+
+    const nama =
+      formData.get("nama") as string;
+
+    const ttl =
+      formData.get("ttl") as string;
+
+    const nik =
+      formData.get("nik") as string;
+
+    const agama =
+      formData.get("agama") as string;
+
+    const jenis_kelamin =
+      formData.get("jenis_kelamin") as string;
+
+    const pekerjaan =
+      formData.get("pekerjaan") as string;
+
+    const alamat =
+      formData.get("alamat") as string;
+
+    // ===========================
+    // DATA KEGIATAN
+    // ===========================
 
     const jenis_kegiatan =
-      formData.get("jenis_kegiatan") as string;
+      formData.get(
+        "jenis_kegiatan"
+      ) as string;
 
     const tanggal_kegiatan =
-      formData.get("tanggal_kegiatan") as string;
+      formData.get(
+        "tanggal_kegiatan"
+      ) as string;
 
     const jam_kegiatan =
-      formData.get("jam_kegiatan") as string;
+      formData.get(
+        "jam_kegiatan"
+      ) as string;
 
     const acara =
       formData.get("acara") as string;
 
     const kewarganegaraan =
-      formData.get("kewarganegaraan") as string;
+      formData.get(
+        "kewarganegaraan"
+      ) as string;
+
+    // ===========================
+    // FILE KTP
+    // ===========================
 
     const fileKtp =
-      formData.get("file_ktp") as File | null;
+      formData.get(
+        "file_ktp"
+      ) as File | null;
 
     if (!fileKtp) {
-
       return NextResponse.json(
         {
           success: false,
-          message: "File KTP wajib diupload.",
+          message:
+            "File KTP wajib diupload.",
         },
         {
           status: 400,
         }
       );
-
     }
 
-    const bytes = await fileKtp.arrayBuffer();
+    // ===========================
+    // VALIDASI TIPE FILE
+    // ===========================
 
-    const buffer = Buffer.from(bytes);
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+    ];
+
+    if (
+      !allowedTypes.includes(
+        fileKtp.type
+      )
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "File harus berupa JPG atau PNG.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===========================
+    // VALIDASI UKURAN FILE
+    // ===========================
+
+    const maxSize =
+      5 * 1024 * 1024;
+
+    if (
+      fileKtp.size >
+      maxSize
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Ukuran file maksimal 5 MB.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===========================
+    // UPLOAD FILE KTP
+    // ===========================
+
+    const bytes =
+      await fileKtp.arrayBuffer();
+
+    const buffer =
+      Buffer.from(bytes);
 
     const ext =
-      fileKtp.name.split(".").pop();
+      fileKtp.name
+        .split(".")
+        .pop()
+        ?.toLowerCase();
 
     const fileName =
       `${randomUUID()}.${ext}`;
 
-    const uploadPath = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "ktp",
-      fileName
-    );
+    const uploadDir =
+      path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "ktp"
+      );
 
-    await writeFile(uploadPath, buffer);
+    const uploadPath =
+      path.join(
+        uploadDir,
+        fileName
+      );
+
+    await writeFile(
+      uploadPath,
+      buffer
+    );
 
     // ===========================
     // AMBIL JENIS SURAT
     // ===========================
 
     const jenis =
-      await getJenisSurat("SKIK");
+      await getJenisSurat(
+        "SKIK"
+      );
 
     const jenisSuratId =
       jenis.id;
@@ -91,18 +194,28 @@ export async function POST(request: Request) {
       jenis.kode_surat;
 
     const templateSurat =
-      jenis.template_surat ?? "";
+      jenis.template_surat ??
+      "";
 
     // ===========================
     // GENERATE TRACKING
     // ===========================
 
-    const sekarang = new Date();
+    const sekarang =
+      new Date();
 
     const tanggal =
-      `${String(sekarang.getDate()).padStart(2, "0")}${String(
+      `${String(
+        sekarang.getDate()
+      ).padStart(
+        2,
+        "0"
+      )}${String(
         sekarang.getMonth() + 1
-      ).padStart(2, "0")}${String(
+      ).padStart(
+        2,
+        "0"
+      )}${String(
         sekarang.getFullYear()
       ).slice(-2)}`;
 
@@ -117,7 +230,13 @@ export async function POST(request: Request) {
       );
 
     const urut =
-      String(countRows[0].total + 1).padStart(4, "0");
+      String(
+        countRows[0].total +
+          1
+      ).padStart(
+        4,
+        "0"
+      );
 
     const kode_tracking =
       `${kodeSurat}-${tanggal}-${urut}`;
@@ -176,6 +295,7 @@ export async function POST(request: Request) {
       `,
       [
         pengajuan_id,
+
         nama,
         ttl,
         nik,
@@ -183,29 +303,44 @@ export async function POST(request: Request) {
         jenis_kelamin,
         pekerjaan,
         alamat,
+
         jenis_kegiatan,
         tanggal_kegiatan,
         jam_kegiatan,
         acara,
         kewarganegaraan,
+
         fileName,
       ]
     );
-        // ===========================
+
+    // ===========================
     // GENERATE ISI SURAT
     // ===========================
 
-    console.log("templateSurat =", templateSurat);
-    console.log("typeof =", typeof templateSurat);
+    console.log(
+      "templateSurat =",
+      templateSurat
+    );
 
-    const replaceFields: Record<string, string> = {
+    console.log(
+      "typeof =",
+      typeof templateSurat
+    );
+
+    const replaceFields:
+      Record<string, string> = {
       nomor_surat: "",
 
-      tanggal: new Date().toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      }),
+      tanggal:
+        new Date().toLocaleDateString(
+          "id-ID",
+          {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          }
+        ),
 
       nama,
       ttl,
@@ -214,6 +349,7 @@ export async function POST(request: Request) {
       jenis_kelamin,
       pekerjaan,
       alamat,
+
       jenis_kegiatan,
       tanggal_kegiatan,
       jam_kegiatan,
@@ -221,13 +357,15 @@ export async function POST(request: Request) {
       kewarganegaraan,
     };
 
-    const isiSurat = generateSurat(
-      templateSurat,
-      replaceFields,
-      {
-        preserveSystemFields: true,
-      }
-    );
+    const isiSurat =
+      generateSurat(
+        templateSurat,
+        replaceFields,
+        {
+          preserveSystemFields:
+            true,
+        }
+      );
 
     // ===========================
     // SIMPAN ISI SURAT
@@ -245,17 +383,42 @@ export async function POST(request: Request) {
       ]
     );
 
+    // ===========================
+    // ACTIVITY LOG
+    // ===========================
+
+    await logActivity({
+      pengajuanId:
+        pengajuan_id,
+
+      status:
+        "draft",
+
+      aktivitas:
+        "Surat dibuat oleh Admin.",
+
+      conn,
+    });
+
+    // ===========================
+    // COMMIT
+    // ===========================
+
     await conn.commit();
+
+    // ===========================
+    // RESPONSE
+    // ===========================
 
     return NextResponse.json({
       success: true,
       pengajuan_id,
       kode_tracking,
-      message: "Surat berhasil dibuat.",
+      message:
+        "Surat berhasil dibuat.",
     });
 
   } catch (err) {
-
     await conn.rollback();
 
     console.error(err);
@@ -263,7 +426,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan server.",
+        message:
+          "Terjadi kesalahan server.",
       },
       {
         status: 500,
@@ -271,9 +435,6 @@ export async function POST(request: Request) {
     );
 
   } finally {
-
     conn.release();
-
   }
-
 }

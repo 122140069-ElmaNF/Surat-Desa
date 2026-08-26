@@ -1,22 +1,20 @@
 import db from "@/lib/db";
-import { NextResponse } from "next/server";
 import { writeFile } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
+import { NextResponse } from "next/server";
 
 import { generateSurat } from "@/lib/surat/generateSurat";
 import getJenisSurat from "@/lib/surat/getJenisSurat";
+import { logActivity } from "@/lib/activity";
 
 export async function POST(request: Request) {
-
   const conn = await db.getConnection();
 
   try {
-
     await conn.beginTransaction();
 
-    const formData =
-      await request.formData();
+    const formData = await request.formData();
 
     // ===============================
     // IDENTITAS LAMA
@@ -32,19 +30,13 @@ export async function POST(request: Request) {
       formData.get("nik_lama") as string;
 
     const jenis_kelamin_lama =
-      formData.get(
-        "jenis_kelamin_lama"
-      ) as string;
+      formData.get("jenis_kelamin_lama") as string;
 
     const pekerjaan_lama =
-      formData.get(
-        "pekerjaan_lama"
-      ) as string;
+      formData.get("pekerjaan_lama") as string;
 
     const alamat_lama =
-      formData.get(
-        "alamat_lama"
-      ) as string;
+      formData.get("alamat_lama") as string;
 
     // ===============================
     // IDENTITAS BARU
@@ -60,52 +52,79 @@ export async function POST(request: Request) {
       formData.get("nik_baru") as string;
 
     const jenis_kelamin_baru =
-      formData.get(
-        "jenis_kelamin_baru"
-      ) as string;
+      formData.get("jenis_kelamin_baru") as string;
 
     const pekerjaan_baru =
-      formData.get(
-        "pekerjaan_baru"
-      ) as string;
+      formData.get("pekerjaan_baru") as string;
 
     const alamat_baru =
-      formData.get(
-        "alamat_baru"
-      ) as string;
+      formData.get("alamat_baru") as string;
 
     // ===============================
     // KETERANGAN
     // ===============================
 
     const isi_keterangan =
-      formData.get(
-        "isi_keterangan"
-      ) as string;
+      formData.get("isi_keterangan") as string;
 
     // ===============================
-    // FILE
+    // FILE KTP
     // ===============================
 
     const fileKtp =
-      formData.get("file_ktp") as
-        | File
-        | null;
+      formData.get("file_ktp") as File | null;
 
     if (!fileKtp) {
-
       return NextResponse.json(
         {
           success: false,
-          message:
-            "File KTP wajib diupload.",
+          message: "File KTP wajib diupload.",
         },
         {
           status: 400,
         }
       );
-
     }
+
+    // ===============================
+    // VALIDASI FILE
+    // ===============================
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+    ];
+
+    if (!allowedTypes.includes(fileKtp.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "File harus berupa JPG atau PNG.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const maxSize =
+      5 * 1024 * 1024;
+
+    if (fileKtp.size > maxSize) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Ukuran file maksimal 5 MB.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===============================
+    // UPLOAD FILE
+    // ===============================
 
     const bytes =
       await fileKtp.arrayBuffer();
@@ -116,17 +135,23 @@ export async function POST(request: Request) {
     const ext =
       fileKtp.name
         .split(".")
-        .pop();
+        .pop()
+        ?.toLowerCase();
 
     const fileName =
       `${randomUUID()}.${ext}`;
 
-    const uploadPath =
+    const uploadDir =
       path.join(
         process.cwd(),
         "public",
         "uploads",
-        "ktp",
+        "ktp"
+      );
+
+    const uploadPath =
+      path.join(
+        uploadDir,
         fileName
       );
 
@@ -140,9 +165,7 @@ export async function POST(request: Request) {
     // ===============================
 
     const jenis =
-      await getJenisSurat(
-        "SKBNI"
-      );
+      await getJenisSurat("SKBNI");
 
     const jenisSuratId =
       jenis.id;
@@ -266,7 +289,8 @@ export async function POST(request: Request) {
         fileName,
       ]
     );
-        // ===============================
+
+    // ===============================
     // GENERATE ISI SURAT
     // ===============================
 
@@ -274,7 +298,6 @@ export async function POST(request: Request) {
       string,
       string
     > = {
-
       nomor_surat: "",
 
       tanggal:
@@ -302,7 +325,6 @@ export async function POST(request: Request) {
       alamat_baru,
 
       isi_keterangan,
-
     };
 
     const isiSurat =
@@ -330,18 +352,31 @@ export async function POST(request: Request) {
       ]
     );
 
+    // ===============================
+    // ACTIVITY LOG
+    // ===============================
+
+    await logActivity({
+      pengajuanId: pengajuan_id,
+      status: "draft",
+      aktivitas: "Surat dibuat oleh Admin.",
+      conn,
+    });
+
+    // ===============================
+    // COMMIT
+    // ===============================
+
     await conn.commit();
 
     return NextResponse.json({
       success: true,
       pengajuan_id,
       kode_tracking,
-      message:
-        "Surat berhasil dibuat.",
+      message: "Surat berhasil dibuat.",
     });
 
   } catch (err) {
-
     await conn.rollback();
 
     console.error(err);
@@ -358,7 +393,6 @@ export async function POST(request: Request) {
     );
 
   } finally {
-
     conn.release();
   }
 }
