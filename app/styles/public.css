@@ -1034,3 +1034,244 @@
 
     line-height:1.7;
 }
+/* ============================
+   TRACKING RESPONSIVE MOBILE
+============================ */
+
+@media (max-width: 640px) {
+
+  .tracking-page {
+    min-height: 100vh;
+  }
+
+  /* ============================
+     HERO
+  ============================ */
+
+  .tracking-hero {
+    padding: 45px 18px 95px;
+  }
+
+  .tracking-hero-content {
+    max-width: 100%;
+  }
+
+  .tracking-hero svg {
+    width: 42px;
+    height: 42px;
+    margin-bottom: 14px;
+  }
+
+  .tracking-hero h1 {
+    font-size: 32px;
+    line-height: 1.2;
+    margin-bottom: 14px;
+  }
+
+  .tracking-hero p {
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0 auto;
+    max-width: 330px;
+  }
+
+  /* ============================
+     CONTENT
+  ============================ */
+
+  .tracking-content {
+    margin-top: -55px;
+    padding: 0 14px 60px;
+  }
+
+  /* ============================
+     CARD
+  ============================ */
+
+  .tracking-card {
+    max-width: 100%;
+    padding: 25px 20px;
+    border-radius: 22px;
+  }
+
+  .tracking-card h2 {
+    font-size: 26px;
+    margin-bottom: 22px;
+  }
+
+  /* ============================
+     INPUT
+  ============================ */
+
+  .tracking-input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    border-radius: 14px;
+    margin-bottom: 18px;
+  }
+
+  /* ============================
+     ERROR
+  ============================ */
+
+  .tracking-error-wrapper {
+    min-height: 24px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+
+  .tracking-error {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  /* ============================
+     BUTTON
+  ============================ */
+
+  .tracking-btn {
+    padding: 14px;
+    font-size: 16px;
+    border-radius: 14px;
+    margin-bottom: 25px;
+  }
+
+  /* ============================
+     STATUS CARD
+  ============================ */
+
+  .status-card {
+    margin-top: 24px;
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .status-header {
+    gap: 9px;
+    margin-bottom: 18px;
+  }
+
+  .status-header svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .status-header h3 {
+    font-size: 21px;
+  }
+
+  /* ============================
+     STATUS BADGE
+  ============================ */
+
+  .status-badge {
+    padding: 8px 16px;
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  /* ============================
+     STATUS INFO
+  ============================ */
+
+  .status-info {
+    gap: 12px;
+  }
+
+  .status-info p {
+    font-size: 14px;
+  }
+
+  /* ============================
+     PENOLAKAN
+  ============================ */
+
+  .tracking-reject-box {
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .tracking-reject-box h4 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .tracking-reject-box p {
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+}
+
+/* =========================================
+   TRACKING MOBILE - FINAL FIX
+========================================= */
+
+@media (max-width: 640px) {
+
+  .tracking-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .status-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  .status-info {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 12px !important;
+  }
+
+  .status-row {
+    display: grid !important;
+    grid-template-columns: 90px 10px minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    align-items: start !important;
+    gap: 0 !important;
+  }
+
+  .status-label {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+  }
+
+  .status-separator {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    text-align: center !important;
+  }
+
+  .status-value {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    white-space: normal !important;
+
+    /* PENTING */
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+
+    display: block !important;
+  }
+
+}

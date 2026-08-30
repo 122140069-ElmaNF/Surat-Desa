@@ -16,7 +16,7 @@ export default function LayoutTandaTanganSKTM({
   return (
     <div
       style={{
-        marginTop: "70px",
+        marginTop: "25px",
         width: "100%",
       }}
     >
@@ -69,7 +69,6 @@ export default function LayoutTandaTanganSKTM({
       {/* ================= BARIS BAWAH ================= */}
       <div
         style={{
-          marginTop: "50px",
           display: "flex",
           justifyContent: "center",
         }}

@@ -89,6 +89,12 @@ if (pengajuan.status === "selesai") {
     fields[item.key] = String(item.value ?? "");
   });
 
+  //khusus surat kematian
+  if (pengajuan.kode_surat === "SKM") {
+  fields.tanggal_kematian =
+    fields.tanggal ?? "";
+}
+
   fields.nomor_surat =
     pengajuan.nomor_surat ?? "";
 

@@ -34,14 +34,42 @@ export async function GET(
     const fields: Record<string, string> = {};
 
     detail.forEach((item) => {
-      fields[item.key] = String(
-        item.value ?? ""
-      );
+      const key = String(item.key);
+      const value = String(item.value ?? "");
+
+      // =========================================
+      // KHUSUS SURAT KETERANGAN KEMATIAN
+      // =========================================
+      // Field "tanggal" pada tabel kematian
+      // merupakan tanggal meninggal.
+      //
+      // Field ini dipisahkan menjadi
+      // "tanggal_kematian" agar tidak bentrok
+      // dengan "tanggal" milik surat.
+      // =========================================
+
+      if (
+        pengajuan.kode_surat === "SKM" &&
+        key === "tanggal"
+      ) {
+        fields.tanggal_kematian =
+          formatTanggalIndonesia(value);
+
+        return;
+      }
+
+      fields[key] = value;
     });
+
+    // =========================================
+    // SYSTEM FIELDS
+    // =========================================
 
     fields.nomor_surat =
       pengajuan.nomor_surat ?? "";
 
+    // "tanggal" digunakan untuk tanggal
+    // surat diterbitkan.
     fields.tanggal =
       pengajuan.tanggal_surat
         ? new Date(
@@ -57,20 +85,21 @@ export async function GET(
     // TEMPLATE SURAT
     // =========================================
 
-      let hasil = "";
+    let hasil = "";
 
-      if (pengajuan.status === "selesai") {
-        // Surat selesai menggunakan snapshot terakhir
-        hasil =
-          pengajuan.isi_surat &&
-          pengajuan.isi_surat.trim() !== ""
-            ? pengajuan.isi_surat
-            : pengajuan.template_surat || "";
-      } else {
-        // Surat belum selesai selalu generate ulang
-        // dari template + data terbaru
-        hasil = pengajuan.template_surat || "";
-      }
+    if (pengajuan.status === "selesai") {
+      // Surat selesai menggunakan snapshot terakhir
+      hasil =
+        pengajuan.isi_surat &&
+        pengajuan.isi_surat.trim() !== ""
+          ? pengajuan.isi_surat
+          : pengajuan.template_surat || "";
+    } else {
+      // Surat belum selesai selalu generate ulang
+      // dari template + data terbaru
+      hasil =
+        pengajuan.template_surat || "";
+    }
 
     // =========================================
     // REPLACE FIELD
@@ -123,19 +152,20 @@ export async function GET(
     // SURAT BELUM SELESAI
     // Ambil Kepala Desa aktif dari USERS
     // =========================================
+
     else {
-    const [rows] = await db.query(
-      `
-      SELECT
-        id,
-        nama,
-        jabatan,
-        tanda_tangan
-      FROM users
-      WHERE role = 'kepala_desa'
-      LIMIT 1
-      `
-    );
+      const [rows] = await db.query(
+        `
+        SELECT
+          id,
+          nama,
+          jabatan,
+          tanda_tangan
+        FROM users
+        WHERE role = 'kepala_desa'
+        LIMIT 1
+        `
+      );
 
       const kepalaDesa =
         (rows as any[])[0];
@@ -211,9 +241,23 @@ function formatValue(
 
   // =========================================
   // TTL
+  //
+  // Menangani:
+  // ttl
+  // ttl_kepala_keluarga
+  // ttl_anak
+  // ttl_pertama
+  // ttl_kedua
+  // ttl_lama
+  // ttl_baru
   // =========================================
 
-  if (key === "ttl") {
+  if (
+    key === "ttl" ||
+    key.startsWith("ttl ") ||
+    key.includes("tempat tgl lahir") ||
+    key.includes("tempat tanggal lahir")
+  ) {
     const parts = value
       .split(",")
       .map((v) => v.trim());
@@ -256,7 +300,9 @@ function formatValue(
 // FORMAT JAM
 // =========================================
 
-function formatJamIndonesia(value: string) {
+function formatJamIndonesia(
+  value: string
+) {
   if (!value) return "";
 
   const match = value.match(
@@ -279,7 +325,10 @@ function formatTanggalIndonesia(
 ) {
   if (!value) return "";
 
-  // Format YYYY-MM-DD
+  // =========================================
+  // FORMAT YYYY-MM-DD
+  // =========================================
+
   const match = value.match(
     /^(\d{4})-(\d{2})-(\d{2})$/
   );
@@ -311,6 +360,10 @@ function formatTanggalIndonesia(
       bulan[Number(month) - 1]
     } ${year}`;
   }
+
+  // =========================================
+  // FORMAT DATE STRING
+  // =========================================
 
   const date = new Date(value);
 

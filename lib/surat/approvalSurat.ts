@@ -94,7 +94,6 @@ if (nomorUrutManual) {
     pengajuanId,
     nomorSurat,
     tanggalSurat,
-    isiSurat: pengajuan.isi_surat,
     templateSurat: pengajuan.template_surat,
   });
 console.log(currentUser);

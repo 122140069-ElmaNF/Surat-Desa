@@ -17,7 +17,6 @@ export default function TandaTangan({
   tempat = "Sumberejo",
   tanggal,
 }: Props) {
-
   const tanggalFormat = tanggal
     ? new Date(tanggal).toLocaleDateString("id-ID", {
         day: "2-digit",
@@ -89,12 +88,15 @@ export default function TandaTangan({
         {jabatan}
       </div>
 
+      {/* =========================
+          AREA TANDA TANGAN
+      ========================= */}
       <div
         style={{
-          height: "90px",
+          height: "70px",
           display: "flex",
           justifyContent: "flex-start",
-          alignItems: "left",
+          alignItems: "flex-start",
         }}
       >
         {showImage && image && (
@@ -103,7 +105,7 @@ export default function TandaTangan({
             alt="Tanda Tangan"
             style={{
               maxWidth: "170px",
-              maxHeight: "85px",
+              maxHeight: "70px",
               objectFit: "contain",
               marginLeft: "30px",
             }}
@@ -111,6 +113,9 @@ export default function TandaTangan({
         )}
       </div>
 
+      {/* =========================
+          NAMA
+      ========================= */}
       <div
         style={{
           fontWeight: "bold",

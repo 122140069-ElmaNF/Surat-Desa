@@ -24,6 +24,10 @@ const BULAN = [
   "Desember",
 ];
 
+// ==========================================
+// FORMAT TANGGAL INDONESIA
+// ==========================================
+
 function formatTanggalIndonesia(value: string) {
   if (!value) {
     return "";
@@ -40,13 +44,20 @@ function formatTanggalIndonesia(value: string) {
   if (match) {
     const [, year, month, day] = match;
 
-    return `${day} ${
-      BULAN[Number(month) - 1]
-    } ${year}`;
+    const monthIndex =
+      Number(month) - 1;
+
+    if (
+      monthIndex >= 0 &&
+      monthIndex < BULAN.length
+    ) {
+      return `${day} ${BULAN[monthIndex]} ${year}`;
+    }
   }
 
   // ==========================================
   // JS Date string
+  // Contoh:
   // Thu Aug 04 2026 ...
   // ==========================================
 
@@ -69,6 +80,10 @@ function formatTanggalIndonesia(value: string) {
   return value;
 }
 
+// ==========================================
+// FORMAT FIELD
+// ==========================================
+
 function formatFieldValue(
   key: string,
   value: string
@@ -77,26 +92,43 @@ function formatFieldValue(
     return "";
   }
 
+  const keyLower = key.toLowerCase();
+
   // ==========================================
   // TTL
-  // contoh:
-  // lampung, 2026-08-04
-  // menjadi:
-  // lampung, 04 Agustus 2026
+  //
+  // Menangani:
+  // ttl
+  // ttl_kepala_keluarga
+  // ttl_anak
+  // ttl_pertama
+  // ttl_kedua
+  // ttl_lama
+  // ttl_baru
+  //
+  // Contoh:
+  // Lampung, 2026-08-04
+  //
+  // Menjadi:
+  // Lampung, 04 Agustus 2026
   // ==========================================
 
   if (
-    key === "ttl" ||
-    key.includes("tempat_tgl_lahir") ||
-    key.includes("tempat_tanggal_lahir")
+    keyLower === "ttl" ||
+    keyLower.startsWith("ttl_") ||
+    keyLower.includes("tempat_tgl_lahir") ||
+    keyLower.includes("tempat_tanggal_lahir")
   ) {
     const parts = value
       .split(",")
       .map((item) => item.trim());
 
     if (parts.length === 2) {
-      return `${parts[0]}, ${formatTanggalIndonesia(
-        parts[1]
+      const tempat = parts[0];
+      const tanggal = parts[1];
+
+      return `${tempat}, ${formatTanggalIndonesia(
+        tanggal
       )}`;
     }
   }
@@ -106,14 +138,18 @@ function formatFieldValue(
   // ==========================================
 
   if (
-    key.includes("tanggal") ||
-    key.includes("tgl")
+    keyLower.includes("tanggal") ||
+    keyLower.includes("tgl")
   ) {
     return formatTanggalIndonesia(value);
   }
 
   return value;
 }
+
+// ==========================================
+// GENERATE SURAT
+// ==========================================
 
 export function generateSurat(
   template: string,
@@ -124,6 +160,11 @@ export function generateSurat(
 
   Object.entries(fields).forEach(
     ([key, value]) => {
+
+      // ==========================================
+      // SYSTEM FIELDS
+      // ==========================================
+
       if (
         options.preserveSystemFields &&
         SYSTEM_FIELDS.includes(key)
@@ -131,11 +172,19 @@ export function generateSurat(
         return;
       }
 
+      // ==========================================
+      // FORMAT NILAI FIELD
+      // ==========================================
+
       const formattedValue =
         formatFieldValue(
           key,
           value ?? ""
         );
+
+      // ==========================================
+      // GANTI PLACEHOLDER
+      // ==========================================
 
       hasil = hasil.replaceAll(
         `{{${key}}}`,

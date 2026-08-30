@@ -53,7 +53,8 @@ export async function getPengajuanDetail(
     [id]
   );
 
-  const pengajuan = (rows as any[])[0];
+  const pengajuan =
+    (rows as any[])[0];
 
   if (!pengajuan) {
     return null;
@@ -80,49 +81,61 @@ export async function getPengajuanDetail(
   }[] = [];
 
   if (table) {
-    const [detailRows] = await db.query(
-      `
-      SELECT *
-      FROM ${table}
-      WHERE pengajuan_id = ?
-      LIMIT 1
-      `,
-      [pengajuan.id]
-    );
+    const [detailRows] =
+      await db.query(
+        `
+        SELECT *
+        FROM ${table}
+        WHERE pengajuan_id = ?
+        LIMIT 1
+        `,
+        [pengajuan.id]
+      );
 
     const row =
-      (detailRows as any[])[0] ?? null;
+      (detailRows as any[])[0] ??
+      null;
 
     if (row) {
-      detail = Object.keys(row)
-        .filter(
-          (key) =>
-            ![
-              "id",
-              "pengajuan_id",
-              "created_at",
-              "updated_at",
-              ...FILE_COLUMNS,
-            ].includes(key)
-        )
-        .map((key) => ({
-          key,
-          label: formatLabel(key),
-          value: normalizeValue(row[key]),
-        }));
+      detail =
+        Object.keys(row)
+          .filter(
+            (key) =>
+              ![
+                "id",
+                "pengajuan_id",
+                "created_at",
+                "updated_at",
+                ...FILE_COLUMNS,
+              ].includes(key)
+          )
+          .map((key) => ({
+            key,
+            label: formatLabel(key),
+            value: normalizeValue(
+              row[key]
+            ),
+          }));
 
-      dokumen = FILE_COLUMNS
-        .filter(
-          (column) =>
-            row[column] &&
-            String(row[column]).trim() !== ""
-        )
-        .map((column) => ({
-          key: column,
-          label: formatLabel(column),
-          file: row[column],
-          url: `/uploads/${getFolder(column)}/${row[column]}`,
-        }));
+      dokumen =
+        FILE_COLUMNS
+          .filter(
+            (column) =>
+              row[column] &&
+              String(
+                row[column]
+              ).trim() !== ""
+          )
+          .map((column) => ({
+            key: column,
+            label: formatLabel(
+              column
+            ),
+            file: row[column],
+            url: `/uploads/${getFolder(
+              column
+            )}/${row[column]}`,
+          }));
     }
   }
 
@@ -134,36 +147,89 @@ export async function getPengajuanDetail(
   };
 }
 
+// =========================================
+// NORMALIZE VALUE
+// =========================================
+
 function normalizeValue(value: any) {
-  if (value === null || value === undefined) {
-    return "-";
+  // Nilai kosong
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "";
   }
+
+  // =========================================
+  // DATE DARI DATABASE
+  //
+  // Jangan ubah menjadi:
+  // 13 Agustus 2026
+  //
+  // Karena halaman edit membutuhkan:
+  // 2026-08-13
+  //
+  // Format Indonesia nanti dilakukan
+  // ketika data ditampilkan pada surat.
+  // =========================================
 
   if (value instanceof Date) {
-    return value.toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
+    const year =
+      value.getFullYear();
+
+    const month =
+      String(
+        value.getMonth() + 1
+      ).padStart(2, "0");
+
+    const day =
+      String(
+        value.getDate()
+      ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
   }
 
-  if (typeof value === "bigint") {
+  // =========================================
+  // BIGINT
+  // =========================================
+
+  if (
+    typeof value === "bigint"
+  ) {
     return value.toString();
   }
 
-  return value;
+  // =========================================
+  // NILAI LAIN
+  // =========================================
+
+  return String(value);
 }
 
-function formatLabel(column: string) {
+// =========================================
+// FORMAT LABEL
+// =========================================
+
+function formatLabel(
+  column: string
+) {
   return column
     .replace("file_", "")
     .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) =>
-      c.toUpperCase()
+    .replace(
+      /\b\w/g,
+      (c) => c.toUpperCase()
     );
 }
 
-function getFolder(column: string) {
+// =========================================
+// FOLDER FILE
+// =========================================
+
+function getFolder(
+  column: string
+) {
   switch (column) {
     case "file_ktp":
       return "ktp";

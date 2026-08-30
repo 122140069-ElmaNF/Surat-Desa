@@ -15,6 +15,106 @@ type Props = {
   onSubmit?: (formData: FormData) => Promise<void>;
 };
 
+// ======================================================
+// NORMALISASI TANGGAL UNTUK INPUT TYPE="DATE"
+// ======================================================
+
+function normalizeDateForInput(
+  value: unknown
+): string {
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "";
+  }
+
+  // ------------------------------------------
+  // Jika sudah YYYY-MM-DD
+  // ------------------------------------------
+
+  const stringValue =
+    String(value).trim();
+
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      stringValue
+    )
+  ) {
+    return stringValue;
+  }
+
+  // ------------------------------------------
+  // Jika ISO Date
+  // Contoh:
+  // 2026-08-17T00:00:00.000Z
+  // ------------------------------------------
+
+  const isoMatch =
+    stringValue.match(
+      /^(\d{4})-(\d{2})-(\d{2})/
+    );
+
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  }
+
+  // ------------------------------------------
+  // Jika format Indonesia
+  // Contoh:
+  // 17 Agustus 2026
+  // ------------------------------------------
+
+  const bulan: Record<
+    string,
+    string
+  > = {
+    januari: "01",
+    februari: "02",
+    maret: "03",
+    april: "04",
+    mei: "05",
+    juni: "06",
+    juli: "07",
+    agustus: "08",
+    september: "09",
+    oktober: "10",
+    november: "11",
+    desember: "12",
+  };
+
+  const indoMatch =
+    stringValue.match(
+      /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/
+    );
+
+  if (indoMatch) {
+
+    const day =
+      indoMatch[1].padStart(2, "0");
+
+    const month =
+      bulan[
+        indoMatch[2].toLowerCase()
+      ];
+
+    const year =
+      indoMatch[3];
+
+    if (month) {
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  // ------------------------------------------
+  // Jika gagal dikenali
+  // ------------------------------------------
+
+  return "";
+}
+
 export default function KematianForm({
   mode,
   initialData,
@@ -51,6 +151,10 @@ export default function KematianForm({
   const [errors, setErrors] =
     useState<Record<string, string>>({});
 
+  // ======================================================
+  // LOAD DATA EDIT
+  // ======================================================
+
   useEffect(() => {
 
     if (
@@ -86,8 +190,16 @@ export default function KematianForm({
       hari:
         initialData.hari ?? "",
 
+      // ==========================================
+      // PENTING:
+      // Pastikan tanggal untuk input date
+      // selalu YYYY-MM-DD
+      // ==========================================
+
       tanggal:
-        initialData.tanggal ?? "",
+        normalizeDateForInput(
+          initialData.tanggal
+        ),
 
       jam:
         initialData.jam ?? "",
@@ -108,6 +220,10 @@ export default function KematianForm({
 
   }, [mode, initialData]);
 
+  // ======================================================
+  // HANDLE CHANGE
+  // ======================================================
+
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement |
@@ -124,21 +240,29 @@ export default function KematianForm({
 
   }
 
+  // ======================================================
+  // VALIDASI
+  // ======================================================
+
   function validateForm() {
 
     const newErrors:
       Record<string, string> = {};
 
-    Object.entries(form).forEach(([key, value]) => {
+    Object.entries(form).forEach(
+      ([key, value]) => {
 
-      if (!String(value).trim()) {
+        if (
+          !String(value).trim()
+        ) {
 
-        newErrors[key] =
-          "Field ini wajib diisi.";
+          newErrors[key] =
+            "Field ini wajib diisi.";
+
+        }
 
       }
-
-    });
+    );
 
     if (
       !/^\d{16}$/.test(form.nik)
@@ -146,6 +270,7 @@ export default function KematianForm({
 
       newErrors.nik =
         "NIK harus terdiri dari 16 digit.";
+
     }
 
     if (
@@ -155,6 +280,7 @@ export default function KematianForm({
 
       newErrors.file_ktp =
         "Silakan upload KTP Almarhum/Almarhumah.";
+
     }
 
     setErrors(newErrors);
@@ -164,9 +290,10 @@ export default function KematianForm({
     );
 
   }
-    // ==========================
+
+  // ======================================================
   // HANDLE SUBMIT
-  // ==========================
+  // ======================================================
 
   async function handleSubmit(
     e: React.FormEvent
@@ -181,9 +308,9 @@ export default function KematianForm({
     const formData =
       new FormData();
 
-    // ==========================
-    // Data Jenazah
-    // ==========================
+    // ==================================================
+    // DATA JENAZAH
+    // ==================================================
 
     formData.append(
       "nama",
@@ -220,14 +347,17 @@ export default function KematianForm({
       form.alamat
     );
 
-    // ==========================
-    // Data Kematian
-    // ==========================
+    // ==================================================
+    // DATA KEMATIAN
+    // ==================================================
 
     formData.append(
       "hari",
       form.hari
     );
+
+    // Tetap kirim ke backend sebagai "tanggal"
+    // karena nama kolom database masih "tanggal"
 
     formData.append(
       "tanggal",
@@ -249,9 +379,9 @@ export default function KematianForm({
       form.penyebab
     );
 
-    // ==========================
-    // Data Pelapor
-    // ==========================
+    // ==================================================
+    // DATA PELAPOR
+    // ==================================================
 
     formData.append(
       "pelapor",
@@ -263,6 +393,10 @@ export default function KematianForm({
       form.hubungan_pelapor
     );
 
+    // ==================================================
+    // FILE KTP
+    // ==================================================
+
     if (fileKtp) {
 
       formData.append(
@@ -272,9 +406,9 @@ export default function KematianForm({
 
     }
 
-    // ==========================
+    // ==================================================
     // ADMIN
-    // ==========================
+    // ==================================================
 
     if (
       role === "admin" &&
@@ -285,6 +419,10 @@ export default function KematianForm({
       return;
 
     }
+
+    // ==================================================
+    // URL & METHOD
+    // ==================================================
 
     try {
 
@@ -321,6 +459,10 @@ export default function KematianForm({
       setErrors({});
       setFileKtp(null);
 
+      // ==================================================
+      // SELESAI EDIT
+      // ==================================================
+
       if (mode === "edit") {
 
         toast.success(
@@ -330,7 +472,13 @@ export default function KematianForm({
         window.location.href =
           `/tracking/${initialData.kode_tracking}`;
 
-      } else {
+      }
+
+      // ==================================================
+      // SELESAI CREATE
+      // ==================================================
+
+      else {
 
         window.location.href =
           `/success/${json.kode_tracking}`;
@@ -341,17 +489,17 @@ export default function KematianForm({
 
       console.error(err);
 
-        toast.error(
-          "Terjadi kesalahan server."
+      toast.error(
+        "Terjadi kesalahan server."
       );
 
     }
 
   }
 
-  // ==========================
+  // ======================================================
   // RENDER
-  // ==========================
+  // ======================================================
 
   return (
 
@@ -388,71 +536,79 @@ export default function KematianForm({
           {mode === "edit" && (
 
             <div
-  className="reject-alert"
-  style={{
-    background: "#fff7ed",
-    border: "1px solid #fdba74",
-    borderLeft: "6px solid #f97316",
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 24,
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 12,
-    }}
-  >
-    <div
-      style={{
-        fontSize: 26,
-      }}
-    >
-      ⚠️
-    </div>
+              className="reject-alert"
+              style={{
+                background: "#fff7ed",
+                border: "1px solid #fdba74",
+                borderLeft: "6px solid #f97316",
+                borderRadius: 12,
+                padding: 18,
+                marginBottom: 24,
+              }}
+            >
 
-    <div>
-      <h3
-        style={{
-          margin: 0,
-          color: "#9a3412",
-          fontWeight: 700,
-          fontSize: 18,
-        }}
-      >
-        Pengajuan Ditolak
-      </h3>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                }}
+              >
 
-      <p
-        style={{
-          margin: "10px 0 4px",
-          fontWeight: 600,
-          color: "#7c2d12",
-        }}
-      >
-        Alasan Penolakan :
-      </p>
+                <div
+                  style={{
+                    fontSize: 26,
+                  }}
+                >
+                  ⚠️
+                </div>
 
-      <p
-        style={{
-          margin: 0,
-          color: "#444",
-          lineHeight: 1.7,
-        }}
-      >
-        {initialData.alasan_penolakan}
-      </p>
-    </div>
-  </div>
-</div>
+                <div>
+
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: "#9a3412",
+                      fontWeight: 700,
+                      fontSize: 18,
+                    }}
+                  >
+                    Pengajuan Ditolak
+                  </h3>
+
+                  <p
+                    style={{
+                      margin: "10px 0 4px",
+                      fontWeight: 600,
+                      color: "#7c2d12",
+                    }}
+                  >
+                    Alasan Penolakan :
+                  </p>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#444",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {initialData.alasan_penolakan}
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
           )}
 
           <form onSubmit={handleSubmit}>
-                        {/* ==========================
+
+            {/* ==================================================
                 DATA JENAZAH
-            ========================== */}
+            ================================================== */}
 
             <h3 className="form-section-title">
               Data Jenazah
@@ -566,9 +722,10 @@ export default function KematianForm({
                 {errors.alamat}
               </p>
             )}
-                        {/* ==========================
+
+            {/* ==================================================
                 DATA KEMATIAN
-            ========================== */}
+            ================================================== */}
 
             <h3 className="form-section-title">
               Data Kematian
@@ -643,9 +800,10 @@ export default function KematianForm({
                 {errors.penyebab}
               </p>
             )}
-                        {/* ==========================
+
+            {/* ==================================================
                 DATA PELAPOR
-            ========================== */}
+            ================================================== */}
 
             <h3 className="form-section-title">
               Data Pelapor
@@ -697,7 +855,9 @@ export default function KematianForm({
                   fontSize: 14,
                 }}
               >
+
                 File KTP saat ini :
+
                 <a
                   href={`/uploads/ktp/${initialData.file_ktp}`}
                   target="_blank"
@@ -708,6 +868,7 @@ export default function KematianForm({
                 >
                   Lihat KTP
                 </a>
+
               </div>
 
             )}

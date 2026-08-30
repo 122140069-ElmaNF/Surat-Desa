@@ -13,16 +13,18 @@ export default function LayoutTandaTangan({
 }: Props) {
   const items = Children.toArray(children);
 
-  // =========================
-  // 1 KOLOM
-  // =========================
-  if (columns === 1) {
+// =========================
+// 1 KOLOM
+// =========================
+if (columns === 1) {
   return (
     <table
       style={{
         width: "100%",
-        marginTop: "70px",
+        marginTop: "10px",
         borderCollapse: "collapse",
+        pageBreakInside: "avoid",
+        breakInside: "avoid",
       }}
     >
       <tbody>
@@ -50,7 +52,7 @@ export default function LayoutTandaTangan({
       <table
         style={{
           width: "100%",
-          marginTop: "70px",
+          marginTop: "10px",
           borderCollapse: "collapse",
         }}
       >
@@ -102,7 +104,7 @@ export default function LayoutTandaTangan({
     <table
       style={{
         width: "100%",
-        marginTop: "70px",
+        marginTop: "10px",
         borderCollapse: "collapse",
       }}
     >

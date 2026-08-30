@@ -48,44 +48,76 @@ function formatValue(key: string, value: unknown): string {
     return "";
   }
 
+  const keyLower = key.toLowerCase();
+
   // ==========================================
-  // Kalau bukan Date, kembalikan sebagai string
+  // BUKAN DATE
   // ==========================================
 
   if (!(value instanceof Date)) {
     const stringValue = String(value);
 
-    // Format YYYY-MM-DD
-    if (
-      /^(tanggal|tgl|tanggal_)/i.test(key) &&
-      /^\d{4}-\d{2}-\d{2}$/.test(stringValue)
-    ) {
-      const [year, month, day] = stringValue.split("-");
+    // ==========================================
+    // FORMAT TTL
+    // ==========================================
 
-      return `${day} ${BULAN[Number(month) - 1]} ${year}`;
-    }
-
-    // Format TTL:
-    // contoh: lampung, 2026-08-04
     if (
-      key === "ttl" ||
-      key.includes("tempat_tgl_lahir") ||
-      key.includes("tempat_tanggal_lahir")
+      keyLower === "ttl" ||
+      keyLower.startsWith("ttl_") ||
+      keyLower.includes("tempat_tgl_lahir") ||
+      keyLower.includes("tempat_tanggal_lahir")
     ) {
       const parts = stringValue
         .split(",")
         .map((item) => item.trim());
 
       if (parts.length === 2) {
+        const tempat = parts[0];
         const tanggal = parts[1];
 
         if (/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
-          const [year, month, day] = tanggal.split("-");
+          const [year, month, day] =
+            tanggal.split("-");
 
-          return `${parts[0]}, ${day} ${
-            BULAN[Number(month) - 1]
-          } ${year}`;
+          const monthIndex =
+            Number(month) - 1;
+
+          if (
+            monthIndex >= 0 &&
+            monthIndex < BULAN.length
+          ) {
+            return `${tempat}, ${day} ${
+              BULAN[monthIndex]
+            } ${year}`;
+          }
         }
+      }
+    }
+
+    // ==========================================
+    // FORMAT TANGGAL YYYY-MM-DD
+    // ==========================================
+
+    if (
+      (
+        keyLower.includes("tanggal") ||
+        keyLower.includes("tgl")
+      ) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(stringValue)
+    ) {
+      const [year, month, day] =
+        stringValue.split("-");
+
+      const monthIndex =
+        Number(month) - 1;
+
+      if (
+        monthIndex >= 0 &&
+        monthIndex < BULAN.length
+      ) {
+        return `${day} ${
+          BULAN[monthIndex]
+        } ${year}`;
       }
     }
 
@@ -93,33 +125,38 @@ function formatValue(key: string, value: unknown): string {
   }
 
   // ==========================================
-  // DATE / DATETIME
+  // JAM / WAKTU
   // ==========================================
 
-  // Kolom jam / waktu
-  // Jangan tampilkan 30 November 1899
   if (
-    key.includes("jam") ||
-    key.includes("waktu") ||
-    key.includes("pukul")
+    keyLower.includes("jam") ||
+    keyLower.includes("waktu") ||
+    keyLower.includes("pukul")
   ) {
     return formatJam(value);
   }
 
-  // Kolom tanggal
+  // ==========================================
+  // TANGGAL
+  // ==========================================
+
   if (
-    key.includes("tanggal") ||
-    key.includes("tgl") ||
-    key.endsWith("_date")
+    keyLower.includes("tanggal") ||
+    keyLower.includes("tgl") ||
+    keyLower.endsWith("_date")
   ) {
     return formatTanggalIndonesia(value);
   }
 
-  // Untuk field TTL yang ternyata disimpan sebagai Date
+  // ==========================================
+  // TTL JIKA DATABASE MENGEMBALIKAN DATE
+  // ==========================================
+
   if (
-    key === "ttl" ||
-    key.includes("tempat_tgl_lahir") ||
-    key.includes("tempat_tanggal_lahir")
+    keyLower === "ttl" ||
+    keyLower.startsWith("ttl_") ||
+    keyLower.includes("tempat_tgl_lahir") ||
+    keyLower.includes("tempat_tanggal_lahir")
   ) {
     return formatTanggalIndonesia(value);
   }
@@ -130,6 +167,10 @@ function formatValue(key: string, value: unknown): string {
 export default async function buildFields(
   pengajuanId: number
 ) {
+  // ==========================================
+  // AMBIL JENIS SURAT
+  // ==========================================
+
   const [rows] = await db.query(
     `
     SELECT
@@ -144,11 +185,18 @@ export default async function buildFields(
     [pengajuanId]
   );
 
-  const pengajuan = (rows as any[])[0];
+  const pengajuan =
+    (rows as any[])[0];
 
   if (!pengajuan) {
-    throw new Error("Pengajuan tidak ditemukan.");
+    throw new Error(
+      "Pengajuan tidak ditemukan."
+    );
   }
+
+  // ==========================================
+  // TENTUKAN TABLE DETAIL
+  // ==========================================
 
   const table =
     TABLE_MAP[pengajuan.kode_surat];
@@ -159,18 +207,27 @@ export default async function buildFields(
     return fields;
   }
 
-  const [detailRows] = await db.query(
-    `
-    SELECT *
-    FROM ${table}
-    WHERE pengajuan_id = ?
-    LIMIT 1
-    `,
-    [pengajuanId]
-  );
+  // ==========================================
+  // AMBIL DATA DETAIL SURAT
+  // ==========================================
+
+  const [detailRows] =
+    await db.query(
+      `
+      SELECT *
+      FROM ${table}
+      WHERE pengajuan_id = ?
+      LIMIT 1
+      `,
+      [pengajuanId]
+    );
 
   const row =
     (detailRows as any[])[0] ?? {};
+
+  // ==========================================
+  // MASUKKAN SEMUA FIELD
+  // ==========================================
 
   Object.keys(row).forEach((key) => {
     if (
@@ -193,6 +250,18 @@ export default async function buildFields(
       row[key]
     );
   });
+
+  // KHUSUS SURAT KEMATIAN
+
+  if (pengajuan.kode_surat === "SKM") {
+    if (row.tanggal) {
+      fields.tanggal_kematian =
+        formatValue(
+          "tanggal_kematian",
+          row.tanggal
+        );
+    }
+  }
 
   return fields;
 }

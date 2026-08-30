@@ -10,11 +10,10 @@ body {
 }
 
 @media print {
-
   html,
   body {
     width: 210mm;
-    height: 297mm;
+    min-height: 297mm;
 
     margin: 0;
     padding: 0;
@@ -23,10 +22,6 @@ body {
 
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-
-  body {
-    overflow: hidden;
   }
 
   .surat-wrapper {

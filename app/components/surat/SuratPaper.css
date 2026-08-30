@@ -35,17 +35,11 @@
 .surat-paper {
   width: 210mm;
   min-height: 297mm;
-
   background: white;
-
   box-sizing: border-box;
-
   padding: 2.54cm;
-
   position: relative;
-
-  overflow: hidden;
-
+  overflow: visible;
   flex-shrink: 0;
 }
 
@@ -63,4 +57,5 @@
 
 .surat-paper.print {
   box-shadow: none;
+  padding: 2cm 2.54cm 2.54cm 2.54cm;
 }
