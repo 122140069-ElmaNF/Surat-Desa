@@ -47,7 +47,10 @@ function formatValue(
   key: string,
   value: unknown
 ): string {
-  if (value === null || value === undefined) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
     return "";
   }
 
@@ -78,10 +81,19 @@ function formatValue(
         const tempat = parts[0];
         const tanggal = parts[1];
 
-        if (/^\d{4}-\d{2}-\d{2}$/.test(tanggal)) {
-          const [year, month, day] = tanggal.split("-");
+        if (
+          /^\d{4}-\d{2}-\d{2}$/.test(
+            tanggal
+          )
+        ) {
+          const [
+            year,
+            month,
+            day,
+          ] = tanggal.split("-");
 
-          const monthIndex = Number(month) - 1;
+          const monthIndex =
+            Number(month) - 1;
 
           if (
             monthIndex >= 0 &&
@@ -104,12 +116,18 @@ function formatValue(
         keyLower.includes("tanggal") ||
         keyLower.includes("tgl")
       ) &&
-      /^\d{4}-\d{2}-\d{2}$/.test(stringValue)
+      /^\d{4}-\d{2}-\d{2}$/.test(
+        stringValue
+      )
     ) {
-      const [year, month, day] =
-        stringValue.split("-");
+      const [
+        year,
+        month,
+        day,
+      ] = stringValue.split("-");
 
-      const monthIndex = Number(month) - 1;
+      const monthIndex =
+        Number(month) - 1;
 
       if (
         monthIndex >= 0 &&
@@ -219,13 +237,15 @@ function addPendudukFields(
     ttl: "ttl",
     agama: "agama",
     jenis_kelamin: "jenis_kelamin",
-    status_perkawinan: "status_perkawinan",
+    status_perkawinan:
+      "status_perkawinan",
     pekerjaan: "pekerjaan",
     alamat: "alamat",
     dusun: "dusun",
     rt: "rt",
     rw: "rw",
-    kewarganegaraan: "kewarganegaraan",
+    kewarganegaraan:
+      "kewarganegaraan",
   };
 
   Object.entries(fieldMap).forEach(
@@ -234,13 +254,18 @@ function addPendudukFields(
         ? `${targetKey}_${prefix}`
         : targetKey;
 
-      fields[fieldName] = formatValue(
-        fieldName,
-        penduduk[sourceKey]
-      );
+      fields[fieldName] =
+        formatValue(
+          fieldName,
+          penduduk[sourceKey]
+        );
     }
   );
 }
+
+// =====================================================
+// BUILD FIELDS
+// =====================================================
 
 export default async function buildFields(
   pengajuanId: number
@@ -278,9 +303,14 @@ export default async function buildFields(
   // ==========================================
 
   const table =
-    TABLE_MAP[pengajuan.kode_surat];
+    TABLE_MAP[
+      pengajuan.kode_surat
+    ];
 
-  const fields: Record<string, string> = {};
+  const fields: Record<
+    string,
+    string
+  > = {};
 
   // ==========================================
   // JIKA TIDAK ADA TABLE DETAIL
@@ -325,8 +355,10 @@ export default async function buildFields(
   // ==========================================
 
   if (
-    pengajuan.kode_surat !== "SKPHS" &&
-    pengajuan.kode_surat !== "SKTBAPT"
+    pengajuan.kode_surat !==
+      "SKPHS" &&
+    pengajuan.kode_surat !==
+      "SKTBAPT"
   ) {
     if (pengajuan.nik) {
       const penduduk =
@@ -346,7 +378,8 @@ export default async function buildFields(
   // ==========================================
 
   if (
-    pengajuan.kode_surat === "SKPHS"
+    pengajuan.kode_surat ===
+    "SKPHS"
   ) {
     const kepalaKeluarga =
       await getPendudukByNik(
@@ -374,81 +407,87 @@ export default async function buildFields(
   // ==========================================
   // KHUSUS SKTBAPT
   // ==========================================
+if (
+  pengajuan.kode_surat === "SKTBAPT" &&
+  row
+) {
+  const pendudukPertama =
+    await getPendudukByNik(
+      row.nik_pertama
+    );
 
-  if (
-    pengajuan.kode_surat ===
-    "SKTBAPT"
-  ) {
-    const pendudukPertama =
-      await getPendudukByNik(
-        row.nik_pertama
-      );
+  const pendudukKedua =
+    await getPendudukByNik(
+      row.nik_kedua
+    );
 
-    const pendudukKedua =
-      await getPendudukByNik(
-        row.nik_kedua
-      );
+  // =========================
+  // ORANG TUA / WALI
+  // =========================
 
-    // ------------------------------------------
-    // ORANG PERTAMA
-    // ------------------------------------------
-
+  if (pendudukPertama) {
     addPendudukFields(
       fields,
       pendudukPertama,
-      "pertama"
+      ""
     );
-
-    // ------------------------------------------
-    // ORANG KEDUA
-    // ------------------------------------------
-
-    if (pendudukKedua) {
-      fields.nama_kedua =
-        formatValue(
-          "nama_kedua",
-          pendudukKedua.nama
-        );
-
-      fields.ttl_kedua =
-        formatValue(
-          "ttl_kedua",
-          pendudukKedua.ttl
-        );
-
-      fields.nik_kedua =
-        formatValue(
-          "nik_kedua",
-          pendudukKedua.nik
-        );
-
-      fields.alamat_kedua =
-        formatValue(
-          "alamat_kedua",
-          pendudukKedua.alamat
-        );
-    }
   }
 
+  // NIK pertama tetap berasal
+  // dari tabel tidak_berlangganan_air
+  fields.nik_pertama =
+    formatValue(
+      "nik_pertama",
+      row.nik_pertama
+    );
+
+  // =========================
+  // CALON MAHASISWA
+  // =========================
+
+  if (pendudukKedua) {
+    fields.nama_calon =
+      formatValue(
+        "nama_calon",
+        pendudukKedua.nama
+      );
+
+    fields.ttl_calon =
+      formatValue(
+        "ttl_calon",
+        pendudukKedua.ttl
+      );
+
+    fields.alamat_calon =
+      formatValue(
+        "alamat_calon",
+        pendudukKedua.alamat
+      );
+  }
+
+  // NIK kedua tetap berasal
+  // dari tabel tidak_berlangganan_air
+  fields.nik_kedua =
+    formatValue(
+      "nik_kedua",
+      row.nik_kedua
+    );
+
+  // Program studi tetap dari
+  // tabel tidak_berlangganan_air
+  fields.prodi_kedua =
+    formatValue(
+      "prodi_kedua",
+      row.prodi_kedua
+    );
+}
   // ==========================================
   // KHUSUS SKKD / KEBENARAN DATA
   // ==========================================
-  //
-  // No KK sekarang disimpan di:
-  //
-  // persyaratan
-  //      ↓
-  // nik
-  // no_kk
-  //
-  // Template menggunakan:
-  //
-  // {{no_kk}}
-  //
-  // ==========================================
 
   if (
-    pengajuan.kode_surat === "SKKD" &&
+    pengajuan.kode_surat ===
+      "SKKD" &&
     pengajuan.nik
   ) {
     const [persyaratanRows]: any =
@@ -496,6 +535,15 @@ export default async function buildFields(
       ) {
         return;
       }
+
+      // ==========================================
+      // SKTBAPT
+      //
+      // nik_pertama, nik_kedua,
+      // dan prodi_kedua memang diperlukan.
+      // Field identitas lainnya sudah diambil
+      // dari kependudukan.
+      // ==========================================
 
       fields[key] =
         formatValue(

@@ -32,9 +32,9 @@ const FILE_COLUMNS = [
 export async function getPengajuanDetail(
   id: number | string
 ) {
-  // ===========================
+  // =====================================================
   // DATA PENGAJUAN
-  // ===========================
+  // =====================================================
 
   const [rows] = await db.query(
     `
@@ -60,9 +60,9 @@ export async function getPengajuanDetail(
     return null;
   }
 
-  // ===========================
+  // =====================================================
   // TABEL DETAIL
-  // ===========================
+  // =====================================================
 
   const table =
     TABLE_MAP[pengajuan.kode_surat];
@@ -80,11 +80,12 @@ export async function getPengajuanDetail(
     url: string;
   }[] = [];
 
-  // ===========================
-  // DATA KEPENDUDUKAN
-  // ===========================
+  // =====================================================
+  // DATA KEPENDUDUKAN PEMOHON
+  // =====================================================
 
-  let dataKependudukan: any = null;
+  let dataKependudukan: any =
+    null;
 
   if (pengajuan.nik) {
     const [pendudukRows] =
@@ -116,11 +117,12 @@ export async function getPengajuanDetail(
       null;
   }
 
-  // ===========================
+  // =====================================================
   // DATA PERSYARATAN
-  // ===========================
+  // =====================================================
 
-  let dataPersyaratan: any = null;
+  let dataPersyaratan: any =
+    null;
 
   if (pengajuan.nik) {
     const [persyaratanRows] =
@@ -142,9 +144,9 @@ export async function getPengajuanDetail(
       null;
   }
 
-  // ===========================
+  // =====================================================
   // DATA DETAIL SURAT
-  // ===========================
+  // =====================================================
 
   let detailRow: any = null;
 
@@ -165,51 +167,65 @@ export async function getPengajuanDetail(
       null;
   }
 
-  // ===========================
-  // GABUNGKAN DATA PEMOHON
-  // DENGAN DATA KHUSUS SURAT
-  // ===========================
+  // =====================================================
+  // DATA KEPENDUDUKAN PEMOHON
+  //
+  // KHUSUS SKPHS:
+  // Data kepala keluarga akan dimasukkan
+  // melalui blok khusus SKPHS.
+  //
+  // Jadi untuk SKPHS jangan masukkan
+  // identity umum di sini agar tidak dobel.
+  // =====================================================
 
   if (dataKependudukan) {
-    const identityFields = [
-      "nik",
-      "nama",
-      "ttl",
-      "agama",
-      "jenis_kelamin",
-      "status_perkawinan",
-      "pekerjaan",
-      "alamat",
-      "dusun",
-      "rt",
-      "rw",
-      "kewarganegaraan",
-    ];
+    if (
+      pengajuan.kode_surat !==
+      "SKPHS"
+    ) {
+      const identityFields = [
+        "nik",
+        "nama",
+        "ttl",
+        "agama",
+        "jenis_kelamin",
+        "status_perkawinan",
+        "pekerjaan",
+        "alamat",
+        "dusun",
+        "rt",
+        "rw",
+        "kewarganegaraan",
+      ];
 
-    identityFields.forEach(
-      (key) => {
-        if (
-          dataKependudukan[key] !==
-            null &&
-          dataKependudukan[key] !==
-            undefined
-        ) {
-          detail.push({
-            key,
-            label: formatLabel(key),
-            value:
-              normalizeValue(
-                dataKependudukan[key]
-              ),
-          });
+      identityFields.forEach(
+        (key) => {
+          if (
+            dataKependudukan[key] !==
+              null &&
+            dataKependudukan[key] !==
+              undefined
+          ) {
+            detail.push({
+              key,
+              label:
+                formatLabel(key),
+              value:
+                normalizeValue(
+                  dataKependudukan[
+                    key
+                  ]
+                ),
+            });
+          }
         }
-      }
-    );
+      );
+    }
 
-    // ===========================
+    // ===================================================
     // DOKUMEN KTP
-    // DIAMBIL DARI KEPENDUDUKAN
-    // ===========================
+    // SELALU DIAMBIL DARI KEPENDUDUKAN
+    // ===================================================
 
     if (
       dataKependudukan.file_ktp &&
@@ -227,27 +243,425 @@ export async function getPengajuanDetail(
     }
   }
 
-  // ===========================
-  // NOMOR KK
-  // DIAMBIL DARI PERSYARATAN
-  // ===========================
+  // =====================================================
+  // KHUSUS SKTBAPT
+  // DATA ORANG KEDUA
+  // =====================================================
 
-  if (dataPersyaratan?.no_kk) {
+  if (
+    pengajuan.kode_surat ===
+      "SKTBAPT" &&
+    detailRow?.nik_kedua
+  ) {
+    const nikKedua =
+      detailRow.nik_kedua;
+
+    const [
+      pendudukKeduaRows,
+    ] = await db.query(
+      `
+      SELECT
+        nik,
+        nama,
+        ttl,
+        alamat
+      FROM kependudukan
+      WHERE nik = ?
+      LIMIT 1
+      `,
+      [nikKedua]
+    );
+
+    const pendudukKedua =
+      (pendudukKeduaRows as any[])[0] ??
+      null;
+
+    // ===================================================
+    // NIK KEDUA
+    // ===================================================
+
+    detail.push({
+      key: "nik_kedua",
+      label: "Nik Kedua",
+      value:
+        normalizeValue(
+          nikKedua
+        ),
+    });
+
+    // ===================================================
+    // DATA ORANG KEDUA
+    //
+    // Digunakan oleh template:
+    //
+    // {{nama_calon}}
+    // {{ttl_calon}}
+    // {{alamat_calon}}
+    // ===================================================
+
+    if (pendudukKedua) {
+      detail.push({
+        key: "nama_calon",
+        label: "Nama Calon",
+        value:
+          normalizeValue(
+            pendudukKedua.nama
+          ),
+      });
+
+      detail.push({
+        key: "ttl_calon",
+        label: "Ttl Calon",
+        value:
+          normalizeValue(
+            pendudukKedua.ttl
+          ),
+      });
+
+      detail.push({
+        key: "alamat_calon",
+        label: "Alamat Calon",
+        value:
+          normalizeValue(
+            pendudukKedua.alamat
+          ),
+      });
+    }
+
+    // ===================================================
+    // PROGRAM STUDI
+    // ===================================================
+
+    if (
+      detailRow.prodi_kedua !==
+        null &&
+      detailRow.prodi_kedua !==
+        undefined
+    ) {
+      detail.push({
+        key: "prodi_kedua",
+        label: "Prodi Kedua",
+        value:
+          normalizeValue(
+            detailRow.prodi_kedua
+          ),
+      });
+    }
+  }
+
+  // =====================================================
+  // KHUSUS SKPHS
+  //
+  // DATA KEPALA KELUARGA
+  // +
+  // DATA ANAK
+  // =====================================================
+
+  if (
+    pengajuan.kode_surat ===
+      "SKPHS" &&
+    detailRow
+  ) {
+    const nikKepalaKeluarga =
+      detailRow.nik_kepala_keluarga ??
+      "";
+
+    const nikAnak =
+      detailRow.nik_anak ??
+      "";
+
+    // ===================================================
+    // DATA KEPALA KELUARGA
+    // ===================================================
+
+    let kepalaKeluarga: any =
+      null;
+
+    if (nikKepalaKeluarga) {
+      const [
+        kepalaKeluargaRows,
+      ] = await db.query(
+        `
+        SELECT
+          nik,
+          nama,
+          ttl,
+          jenis_kelamin,
+          kewarganegaraan,
+          agama,
+          pekerjaan,
+          alamat
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nikKepalaKeluarga]
+      );
+
+      kepalaKeluarga =
+        (kepalaKeluargaRows as any[])[0] ??
+        null;
+    }
+
+    // ===================================================
+    // DATA ANAK
+    // ===================================================
+
+    let anak: any = null;
+
+    if (nikAnak) {
+      const [anakRows] =
+        await db.query(
+          `
+          SELECT
+            nik,
+            nama,
+            ttl,
+            jenis_kelamin,
+            kewarganegaraan,
+            agama,
+            pekerjaan,
+            alamat
+          FROM kependudukan
+          WHERE nik = ?
+          LIMIT 1
+          `,
+          [nikAnak]
+        );
+
+      anak =
+        (anakRows as any[])[0] ??
+        null;
+    }
+
+    // ===================================================
+    // KEPALA KELUARGA
+    // ===================================================
+
+    detail.push({
+      key: "nik_kepala_keluarga",
+      label:
+        "Nik Kepala Keluarga",
+      value:
+        normalizeValue(
+          nikKepalaKeluarga
+        ),
+    });
+
+    if (kepalaKeluarga) {
+      detail.push({
+        key:
+          "nama_kepala_keluarga",
+        label:
+          "Nama Kepala Keluarga",
+        value:
+          normalizeValue(
+            kepalaKeluarga.nama
+          ),
+      });
+
+      detail.push({
+        key:
+          "ttl_kepala_keluarga",
+        label:
+          "Ttl Kepala Keluarga",
+        value:
+          normalizeValue(
+            kepalaKeluarga.ttl
+          ),
+      });
+
+      detail.push({
+        key:
+          "jenis_kelamin_kepala_keluarga",
+        label:
+          "Jenis Kelamin Kepala Keluarga",
+        value:
+          normalizeValue(
+            kepalaKeluarga.jenis_kelamin
+          ),
+      });
+
+      detail.push({
+        key:
+          "kewarganegaraan_kepala_keluarga",
+        label:
+          "Kewarganegaraan Kepala Keluarga",
+        value:
+          normalizeValue(
+            kepalaKeluarga.kewarganegaraan
+          ),
+      });
+
+      detail.push({
+        key:
+          "agama_kepala_keluarga",
+        label:
+          "Agama Kepala Keluarga",
+        value:
+          normalizeValue(
+            kepalaKeluarga.agama
+          ),
+      });
+
+      detail.push({
+        key:
+          "pekerjaan_kepala_keluarga",
+        label:
+          "Pekerjaan Kepala Keluarga",
+        value:
+          normalizeValue(
+            kepalaKeluarga.pekerjaan
+          ),
+      });
+
+      detail.push({
+        key:
+          "alamat_kepala_keluarga",
+        label:
+          "Alamat Kepala Keluarga",
+        value:
+          normalizeValue(
+            kepalaKeluarga.alamat
+          ),
+      });
+    }
+
+    // ===================================================
+    // DATA ANAK
+    // ===================================================
+
+    detail.push({
+      key: "nik_anak",
+      label: "Nik Anak",
+      value:
+        normalizeValue(
+          nikAnak
+        ),
+    });
+
+    if (anak) {
+      detail.push({
+        key: "nama_anak",
+        label: "Nama Anak",
+        value:
+          normalizeValue(
+            anak.nama
+          ),
+      });
+
+      detail.push({
+        key: "ttl_anak",
+        label: "Ttl Anak",
+        value:
+          normalizeValue(
+            anak.ttl
+          ),
+      });
+
+      detail.push({
+        key:
+          "jenis_kelamin_anak",
+        label:
+          "Jenis Kelamin Anak",
+        value:
+          normalizeValue(
+            anak.jenis_kelamin
+          ),
+      });
+
+      detail.push({
+        key:
+          "kewarganegaraan_anak",
+        label:
+          "Kewarganegaraan Anak",
+        value:
+          normalizeValue(
+            anak.kewarganegaraan
+          ),
+      });
+
+      detail.push({
+        key: "agama_anak",
+        label: "Agama Anak",
+        value:
+          normalizeValue(
+            anak.agama
+          ),
+      });
+
+      detail.push({
+        key:
+          "pekerjaan_anak",
+        label:
+          "Pekerjaan Anak",
+        value:
+          normalizeValue(
+            anak.pekerjaan
+          ),
+      });
+
+      detail.push({
+        key:
+          "alamat_anak",
+        label:
+          "Alamat Anak",
+        value:
+          normalizeValue(
+            anak.alamat
+          ),
+      });
+    }
+
+    // ===================================================
+    // PENGHASILAN
+    // ===================================================
+
+    if (
+      detailRow.penghasilan !==
+        null &&
+      detailRow.penghasilan !==
+        undefined
+    ) {
+      detail.push({
+        key: "penghasilan",
+        label: "Penghasilan",
+        value:
+          normalizeValue(
+            detailRow.penghasilan
+          ),
+      });
+    }
+  }
+
+  // =====================================================
+  // NOMOR KK
+  // KHUSUS SKKD
+  // =====================================================
+
+  if (
+    pengajuan.kode_surat ===
+      "SKKD" &&
+    dataPersyaratan?.no_kk
+  ) {
     detail.push({
       key: "no_kk",
       label: "No KK",
-      value: normalizeValue(
-        dataPersyaratan.no_kk
-      ),
+      value:
+        normalizeValue(
+          dataPersyaratan.no_kk
+        ),
     });
   }
 
-  // ===========================
+  // =====================================================
   // DOKUMEN KK
-  // DIAMBIL DARI PERSYARATAN
-  // ===========================
+  // KHUSUS SKKD
+  // =====================================================
 
   if (
+    pengajuan.kode_surat ===
+      "SKKD" &&
     dataPersyaratan?.file_kk &&
     String(
       dataPersyaratan.file_kk
@@ -262,9 +676,9 @@ export async function getPengajuanDetail(
     });
   }
 
-  // ===========================
+  // =====================================================
   // DATA KHUSUS SURAT
-  // ===========================
+  // =====================================================
 
   if (detailRow) {
     Object.keys(detailRow)
@@ -277,8 +691,10 @@ export async function getPengajuanDetail(
             "updated_at",
             ...FILE_COLUMNS,
 
-            // Data identitas sudah
-            // diambil dari kependudukan
+            // =========================================
+            // DATA IDENTITAS PEMOHON
+            // =========================================
+
             "nama",
             "nik",
             "ttl",
@@ -291,6 +707,33 @@ export async function getPengajuanDetail(
             "rt",
             "rw",
             "kewarganegaraan",
+
+            // =========================================
+            // FIELD SKTBAPT
+            // SUDAH DIBUAT DI BLOK KHUSUS
+            // =========================================
+
+            ...(pengajuan.kode_surat ===
+            "SKTBAPT"
+              ? [
+                  "nik_kedua",
+                  "prodi_kedua",
+                ]
+              : []),
+
+            // =========================================
+            // FIELD SKPHS
+            // SUDAH DIBUAT DI BLOK KHUSUS
+            // =========================================
+
+            ...(pengajuan.kode_surat ===
+            "SKPHS"
+              ? [
+                  "nik_kepala_keluarga",
+                  "nik_anak",
+                  "penghasilan",
+                ]
+              : []),
           ].includes(key)
       )
       .forEach((key) => {
@@ -304,14 +747,9 @@ export async function getPengajuanDetail(
         });
       });
 
-    // ===========================
+    // ===================================================
     // DOKUMEN LAIN
-    // ===========================
-    // file_ktp dan file_kk sudah
-    // diambil dari tabel masing-masing.
-    //
-    // Dokumen lain tetap diambil
-    // dari tabel detail surat.
+    // ===================================================
 
     const dokumenDetail =
       FILE_COLUMNS
@@ -338,12 +776,16 @@ export async function getPengajuanDetail(
     );
   }
 
-  // ===========================
+  // =====================================================
   // NOMOR KK UNTUK INITIAL DATA
-  // ===========================
+  // =====================================================
 
   pengajuan.no_kk =
     dataPersyaratan?.no_kk ?? "";
+
+  // =====================================================
+  // RETURN
+  // =====================================================
 
   return {
     pengajuan,
@@ -353,11 +795,13 @@ export async function getPengajuanDetail(
   };
 }
 
-// =========================================
+// =======================================================
 // NORMALIZE VALUE
-// =========================================
+// =======================================================
 
-function normalizeValue(value: any) {
+function normalizeValue(
+  value: any
+) {
   // Nilai kosong
   if (
     value === null ||
@@ -366,9 +810,9 @@ function normalizeValue(value: any) {
     return "";
   }
 
-  // =========================================
+  // =====================================================
   // DATE DARI DATABASE
-  // =========================================
+  // =====================================================
 
   if (value instanceof Date) {
     const year =
@@ -387,9 +831,9 @@ function normalizeValue(value: any) {
     return `${year}-${month}-${day}`;
   }
 
-  // =========================================
+  // =====================================================
   // BIGINT
-  // =========================================
+  // =====================================================
 
   if (
     typeof value === "bigint"
@@ -397,16 +841,16 @@ function normalizeValue(value: any) {
     return value.toString();
   }
 
-  // =========================================
+  // =====================================================
   // NILAI LAIN
-  // =========================================
+  // =====================================================
 
   return String(value);
 }
 
-// =========================================
+// =======================================================
 // FORMAT LABEL
-// =========================================
+// =======================================================
 
 function formatLabel(
   column: string
@@ -420,9 +864,9 @@ function formatLabel(
     );
 }
 
-// =========================================
+// =======================================================
 // FOLDER FILE
-// =========================================
+// =======================================================
 
 function getFolder(
   column: string

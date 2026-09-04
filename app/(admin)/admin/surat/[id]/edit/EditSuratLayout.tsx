@@ -44,10 +44,7 @@ function normalizeDateForInput(
   const stringValue =
     String(value).trim();
 
-  // ==========================================
   // YYYY-MM-DD
-  // ==========================================
-
   if (
     /^\d{4}-\d{2}-\d{2}$/.test(
       stringValue
@@ -56,12 +53,7 @@ function normalizeDateForInput(
     return stringValue;
   }
 
-  // ==========================================
   // ISO Date
-  // Contoh:
-  // 2026-08-13T00:00:00.000Z
-  // ==========================================
-
   const isoMatch =
     stringValue.match(
       /^(\d{4})-(\d{2})-(\d{2})/
@@ -71,12 +63,7 @@ function normalizeDateForInput(
     return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
   }
 
-  // ==========================================
   // FORMAT INDONESIA
-  // Contoh:
-  // 13 Agustus 2026
-  // ==========================================
-
   const bulan: Record<
     string,
     string
@@ -122,7 +109,6 @@ function normalizeDateForInput(
 
 // ======================================================
 // FORMAT TANGGAL INDONESIA
-// Untuk preview surat
 // ======================================================
 
 function formatTanggalIndonesia(
@@ -201,11 +187,11 @@ export default function EditSuratLayout({
       detail.forEach((item) => {
         // ==========================================
         // KHUSUS TANGGAL KEMATIAN
-        // Database tetap menggunakan "tanggal"
         // ==========================================
 
         if (
-          pengajuan.kode_surat === "SKM" &&
+          pengajuan.kode_surat ===
+            "SKM" &&
           item.key === "tanggal"
         ) {
           obj[item.key] =
@@ -246,6 +232,123 @@ export default function EditSuratLayout({
     try {
       setLoading(true);
 
+      // ==================================================
+      // COPY DATA FORM
+      // ==================================================
+
+      const fieldsToSave: Record<
+        string,
+        string
+      > = {
+        ...formData,
+      };
+
+      // ==================================================
+      // KHUSUS SKTBAPT
+      //
+      // Pastikan semua field yang berasal dari:
+      //
+      // - kependudukan orang pertama
+      // - kependudukan orang kedua
+      // - tabel tidak_berlangganan_air
+      //
+      // ikut dikirim.
+      // ==================================================
+
+      if (
+        pengajuan.kode_surat ===
+        "SKTBAPT"
+      ) {
+        fieldsToSave.nik_pertama =
+          formData.nik_pertama ??
+          "";
+
+        fieldsToSave.nik_kedua =
+          formData.nik_kedua ??
+          "";
+
+        fieldsToSave.nama_calon =
+          formData.nama_calon ??
+          "";
+
+        fieldsToSave.ttl_calon =
+          formData.ttl_calon ??
+          "";
+
+        fieldsToSave.alamat_calon =
+          formData.alamat_calon ??
+          "";
+
+        fieldsToSave.prodi_kedua =
+          formData.prodi_kedua ??
+          "";
+      }
+
+      // ==================================================
+      // DEBUG
+      // ==================================================
+
+      console.log(
+        "================================"
+      );
+
+      console.log(
+        "DATA EDIT SURAT"
+      );
+
+      console.log(
+        "Kode surat:",
+        pengajuan.kode_surat
+      );
+
+      console.log(
+        "Form data:",
+        fieldsToSave
+      );
+
+      if (
+        pengajuan.kode_surat ===
+        "SKTBAPT"
+      ) {
+        console.log(
+          "NIK pertama:",
+          fieldsToSave.nik_pertama
+        );
+
+        console.log(
+          "NIK kedua:",
+          fieldsToSave.nik_kedua
+        );
+
+        console.log(
+          "Nama calon:",
+          fieldsToSave.nama_calon
+        );
+
+        console.log(
+          "TTL calon:",
+          fieldsToSave.ttl_calon
+        );
+
+        console.log(
+          "Alamat calon:",
+          fieldsToSave.alamat_calon
+        );
+
+        console.log(
+          "Prodi kedua:",
+          fieldsToSave.prodi_kedua
+        );
+      }
+
+      console.log(
+        "================================"
+      );
+
+      // ==================================================
+      // REQUEST PATCH
+      // ==================================================
+
       const res = await fetch(
         `/api/admin/surat/${pengajuan.id}/data`,
         {
@@ -258,7 +361,7 @@ export default function EditSuratLayout({
 
           body: JSON.stringify({
             table,
-            fields: formData,
+            fields: fieldsToSave,
           }),
         }
       );
@@ -276,14 +379,15 @@ export default function EditSuratLayout({
             "Gagal memperbarui data."
         );
       }
-
     } catch (error) {
-      console.error(error);
+      console.error(
+        "ERROR SAVE EDIT SURAT:",
+        error
+      );
 
       toast.error(
         "Terjadi kesalahan server."
       );
-
     } finally {
       setLoading(false);
     }
@@ -303,9 +407,9 @@ export default function EditSuratLayout({
       return content;
     }
 
-    // ==========================================
+    // ==================================================
     // COPY FORM DATA
-    // ==========================================
+    // ==================================================
 
     const previewFields: Record<
       string,
@@ -314,21 +418,73 @@ export default function EditSuratLayout({
       ...formData,
     };
 
-    // ==========================================
-    // KHUSUS SURAT KEMATIAN
-    //
-    // Database:
-    // tanggal
+    // ==================================================
+    // KHUSUS SKTBAPT
     //
     // Template:
-    // {{tanggal_kematian}}
     //
-    // Jadi kita buat alias untuk preview
-    // tanpa mengubah nama kolom database.
-    // ==========================================
+    // Orang pertama:
+    // {{nama}}
+    // {{ttl}}
+    // {{nik_pertama}}
+    // {{status_perkawinan}}
+    // {{pekerjaan}}
+    // {{alamat}}
+    //
+    // Orang kedua:
+    // {{nama_calon}}
+    // {{ttl_calon}}
+    // {{nik_kedua}}
+    // {{prodi_kedua}}
+    // {{alamat_calon}}
+    // ==================================================
 
     if (
-      pengajuan.kode_surat === "SKM"
+      pengajuan.kode_surat ===
+      "SKTBAPT"
+    ) {
+      previewFields.nama =
+        formData.nama ?? "";
+
+      previewFields.ttl =
+        formData.ttl ?? "";
+
+      previewFields.nik_pertama =
+        formData.nik_pertama ?? "";
+
+      previewFields.status_perkawinan =
+        formData.status_perkawinan ??
+        "";
+
+      previewFields.pekerjaan =
+        formData.pekerjaan ?? "";
+
+      previewFields.alamat =
+        formData.alamat ?? "";
+
+      previewFields.nama_calon =
+        formData.nama_calon ?? "";
+
+      previewFields.ttl_calon =
+        formData.ttl_calon ?? "";
+
+      previewFields.nik_kedua =
+        formData.nik_kedua ?? "";
+
+      previewFields.prodi_kedua =
+        formData.prodi_kedua ?? "";
+
+      previewFields.alamat_calon =
+        formData.alamat_calon ?? "";
+    }
+
+    // ==================================================
+    // KHUSUS SURAT KEMATIAN
+    // ==================================================
+
+    if (
+      pengajuan.kode_surat ===
+      "SKM"
     ) {
       previewFields.tanggal_kematian =
         formatTanggalIndonesia(
@@ -336,9 +492,9 @@ export default function EditSuratLayout({
         );
     }
 
-    // ==========================================
+    // ==================================================
     // SYSTEM FIELDS
-    // ==========================================
+    // ==================================================
 
     previewFields.nomor_surat =
       pengajuan.nomor_surat ?? "";
@@ -370,7 +526,6 @@ export default function EditSuratLayout({
         preserveSystemFields: true,
       }
     );
-
   }, [
     formData,
     template,
@@ -405,16 +560,11 @@ export default function EditSuratLayout({
           </h2>
 
           {detail.map((item) => {
-
             const isLongText = [
               "alamat",
               "keperluan",
               "keterangan",
             ].includes(item.key);
-
-            // ==========================================
-            // KHUSUS TANGGAL KEMATIAN
-            // ==========================================
 
             const isTanggalKematian =
               pengajuan.kode_surat ===
@@ -428,7 +578,6 @@ export default function EditSuratLayout({
                   marginBottom: 18,
                 }}
               >
-
                 <label
                   style={{
                     display: "block",
@@ -439,12 +588,11 @@ export default function EditSuratLayout({
                   {item.label}
                 </label>
 
-                {/* ======================================
+                {/* ==========================
                     TEXTAREA
-                ====================================== */}
+                ========================== */}
 
                 {isLongText ? (
-
                   <textarea
                     rows={3}
                     value={
@@ -463,12 +611,10 @@ export default function EditSuratLayout({
                       resize: "vertical",
                     }}
                   />
-
                 ) : isTanggalKematian ? (
-
-                  /* ====================================
-                     DATE INPUT KHUSUS KEMATIAN
-                  ==================================== */
+                  /* ==========================
+                     DATE INPUT KEMATIAN
+                  ========================== */
 
                   <input
                     type="date"
@@ -486,12 +632,10 @@ export default function EditSuratLayout({
                       width: "100%",
                     }}
                   />
-
                 ) : (
-
-                  /* ====================================
+                  /* ==========================
                      INPUT BIASA
-                  ==================================== */
+                  ========================== */
 
                   <input
                     type="text"
@@ -510,12 +654,14 @@ export default function EditSuratLayout({
                       width: "100%",
                     }}
                   />
-
                 )}
-
               </div>
             );
           })}
+
+          {/* ==========================
+              SAVE BUTTON
+          ========================== */}
 
           <button
             className="primary-btn"
@@ -532,7 +678,6 @@ export default function EditSuratLayout({
           </button>
 
         </div>
-
       </div>
 
       {/* ================= RIGHT ================= */}
@@ -558,7 +703,6 @@ export default function EditSuratLayout({
         />
 
       </div>
-
     </div>
   );
 }

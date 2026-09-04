@@ -140,11 +140,23 @@ export default function KebenaranDataForm({
       bin_binti:
         initialData.bin_binti ?? "",
 
+      // ==========================
+      // NOMOR KK
+      // ==========================
+
       no_kk:
-        initialData.no_kk ?? "",
+        initialData.no_kk ??
+        initialData.persyaratan?.no_kk ??
+        "",
     });
 
     setLookupMessage("");
+
+    // Tidak mengisi file baru.
+    // File lama tetap ditampilkan melalui
+    // dokumen.file_ktp dan dokumen.file_kk.
+    setFileKtp(null);
+    setFileKk(null);
   }, [mode, initialData]);
 
   // ==========================
@@ -454,7 +466,7 @@ export default function KebenaranDataForm({
     }
 
     // ==========================
-    // FILE
+    // FILE KTP
     // ==========================
 
     if (
@@ -465,6 +477,10 @@ export default function KebenaranDataForm({
       newErrors.file_ktp =
         "Silakan upload KTP.";
     }
+
+    // ==========================
+    // FILE KK
+    // ==========================
 
     if (
       mode === "create" &&
@@ -595,6 +611,10 @@ export default function KebenaranDataForm({
     // FILE
     // ==========================
 
+    // Hanya file baru yang dikirim.
+    // Kalau user tidak memilih file baru,
+    // backend harus mempertahankan file lama.
+
     if (fileKtp) {
       formData.append(
         "file_ktp",
@@ -673,6 +693,28 @@ export default function KebenaranDataForm({
       );
     }
   }
+
+  // ==========================
+  // DOKUMEN LAMA
+  // ==========================
+
+  // getPengajuanEdit mengembalikan dokumen
+  // dalam bentuk object:
+  //
+  // dokumen: {
+  //   file_ktp: "...",
+  //   file_kk: "..."
+  // }
+  //
+  // Jadi tidak menggunakan .find()
+
+  const dokumenKtp =
+    initialData?.dokumen?.file_ktp ??
+    "";
+
+  const dokumenKk =
+    initialData?.dokumen?.file_kk ??
+    "";
 
   // ==========================
   // RENDER
@@ -1018,7 +1060,6 @@ export default function KebenaranDataForm({
               </p>
             )}
 
-
             <InputField
               label="Kewarganegaraan"
               name="kewarganegaraan"
@@ -1122,9 +1163,7 @@ export default function KebenaranDataForm({
             />
 
             {mode === "edit" &&
-              initialData
-                ?.dokumen
-                ?.file_ktp && (
+              dokumenKtp && (
                 <div
                   style={{
                     marginTop: 8,
@@ -1132,9 +1171,12 @@ export default function KebenaranDataForm({
                     fontSize: 14,
                   }}
                 >
-                  File KTP saat ini :
+                  <span>
+                    File KTP saat ini:
+                  </span>
+
                   <a
-                    href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
+                    href={`/uploads/ktp/${dokumenKtp}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{
@@ -1171,9 +1213,7 @@ export default function KebenaranDataForm({
             />
 
             {mode === "edit" &&
-              initialData
-                ?.dokumen
-                ?.file_kk && (
+              dokumenKk && (
                 <div
                   style={{
                     marginTop: 8,
@@ -1181,9 +1221,12 @@ export default function KebenaranDataForm({
                     fontSize: 14,
                   }}
                 >
-                  File KK saat ini :
+                  <span>
+                    File KK saat ini:
+                  </span>
+
                   <a
-                    href={`/uploads/kk/${initialData.dokumen.file_kk}`}
+                    href={`/uploads/kk/${dokumenKk}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{
