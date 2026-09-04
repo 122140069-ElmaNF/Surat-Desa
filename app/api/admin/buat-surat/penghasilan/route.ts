@@ -1,5 +1,5 @@
 import db from "@/lib/db";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir, unlink } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
@@ -8,194 +8,497 @@ import { logActivity } from "@/lib/activity";
 export async function POST(request: Request) {
   const conn = await db.getConnection();
 
+  let uploadedFilePath: string | null = null;
+
   try {
     await conn.beginTransaction();
 
     const formData = await request.formData();
 
-    // ==========================
-    // Kepala Keluarga
-    // ==========================
+    // =====================================================
+    // DATA KEPALA KELUARGA
+    // =====================================================
 
-    const nama_kepala_keluarga =
-      formData.get("nama_kepala_keluarga") as string;
+    const nikKepalaKeluarga =
+      String(
+        formData.get("nik_kepala_keluarga") ?? ""
+      ).trim();
 
-    const ttl_kepala_keluarga =
-      formData.get("ttl_kepala_keluarga") as string;
+    const namaKepalaKeluarga =
+      String(
+        formData.get("nama_kepala_keluarga") ?? ""
+      ).trim();
 
-    const nik_kepala_keluarga =
-      formData.get("nik_kepala_keluarga") as string;
+    const ttlKepalaKeluarga =
+      String(
+        formData.get("ttl_kepala_keluarga") ?? ""
+      ).trim();
 
-    const jenis_kelamin_kepala_keluarga =
-      formData.get("jenis_kelamin_kepala_keluarga") as string;
+    const agamaKepalaKeluarga =
+      String(
+        formData.get("agama_kepala_keluarga") ?? ""
+      ).trim();
 
-    const kewarganegaraan_kepala_keluarga =
-      formData.get("kewarganegaraan_kepala_keluarga") as string;
+    const jenisKelaminKepalaKeluarga =
+      String(
+        formData.get(
+          "jenis_kelamin_kepala_keluarga"
+        ) ?? ""
+      ).trim();
 
-    const agama_kepala_keluarga =
-      formData.get("agama_kepala_keluarga") as string;
+    const statusPerkawinanKepalaKeluarga =
+      String(
+        formData.get(
+          "status_perkawinan_kepala_keluarga"
+        ) ?? ""
+      ).trim();
 
-    const pekerjaan_kepala_keluarga =
-      formData.get("pekerjaan_kepala_keluarga") as string;
+    const pekerjaanKepalaKeluarga =
+      String(
+        formData.get(
+          "pekerjaan_kepala_keluarga"
+        ) ?? ""
+      ).trim();
 
-    const alamat_kepala_keluarga =
-      formData.get("alamat_kepala_keluarga") as string;
+    const alamatKepalaKeluarga =
+      String(
+        formData.get(
+          "alamat_kepala_keluarga"
+        ) ?? ""
+      ).trim();
 
-    // ==========================
-    // Anak
-    // ==========================
+    const dusunKepalaKeluarga =
+      String(
+        formData.get(
+          "dusun_kepala_keluarga"
+        ) ?? ""
+      ).trim();
 
-    const nama_anak =
-      formData.get("nama_anak") as string;
+    const rtKepalaKeluarga =
+      String(
+        formData.get(
+          "rt_kepala_keluarga"
+        ) ?? ""
+      ).trim();
 
-    const ttl_anak =
-      formData.get("ttl_anak") as string;
+    const rwKepalaKeluarga =
+      String(
+        formData.get(
+          "rw_kepala_keluarga"
+        ) ?? ""
+      ).trim();
 
-    const nik_anak =
-      formData.get("nik_anak") as string;
+    const kewarganegaraanKepalaKeluarga =
+      String(
+        formData.get(
+          "kewarganegaraan_kepala_keluarga"
+        ) ?? ""
+      ).trim();
 
-    const jenis_kelamin_anak =
-      formData.get("jenis_kelamin_anak") as string;
+    // =====================================================
+    // DATA ANAK
+    // =====================================================
 
-    const kewarganegaraan_anak =
-      formData.get("kewarganegaraan_anak") as string;
+    const nikAnak =
+      String(
+        formData.get("nik_anak") ?? ""
+      ).trim();
 
-    const agama_anak =
-      formData.get("agama_anak") as string;
+    const namaAnak =
+      String(
+        formData.get("nama_anak") ?? ""
+      ).trim();
 
-    const pekerjaan_anak =
-      formData.get("pekerjaan_anak") as string;
+    const ttlAnak =
+      String(
+        formData.get("ttl_anak") ?? ""
+      ).trim();
 
-    const alamat_anak =
-      formData.get("alamat_anak") as string;
+    const agamaAnak =
+      String(
+        formData.get("agama_anak") ?? ""
+      ).trim();
 
-    // ==========================
-    // Penghasilan
-    // ==========================
+    const jenisKelaminAnak =
+      String(
+        formData.get(
+          "jenis_kelamin_anak"
+        ) ?? ""
+      ).trim();
 
-    const penghasilan =
-      formData.get("penghasilan") as string;
+    const statusPerkawinanAnak =
+      String(
+        formData.get(
+          "status_perkawinan_anak"
+        ) ?? ""
+      ).trim();
 
-    // ==========================
-    // File KTP
-    // ==========================
+    const pekerjaanAnak =
+      String(
+        formData.get(
+          "pekerjaan_anak"
+        ) ?? ""
+      ).trim();
+
+    const alamatAnak =
+      String(
+        formData.get(
+          "alamat_anak"
+        ) ?? ""
+      ).trim();
+
+    const dusunAnak =
+      String(
+        formData.get(
+          "dusun_anak"
+        ) ?? ""
+      ).trim();
+
+    const rtAnak =
+      String(
+        formData.get(
+          "rt_anak"
+        ) ?? ""
+      ).trim();
+
+    const rwAnak =
+      String(
+        formData.get(
+          "rw_anak"
+        ) ?? ""
+      ).trim();
+
+    const kewarganegaraanAnak =
+      String(
+        formData.get(
+          "kewarganegaraan_anak"
+        ) ?? ""
+      ).trim();
+
+    // =====================================================
+    // DATA PENGHASILAN
+    // =====================================================
+
+    const nilaiPenghasilan =
+      String(
+        formData.get("penghasilan") ?? ""
+      ).trim();
+
+    // =====================================================
+    // VALIDASI NIK
+    // =====================================================
+
+    if (!/^\d{16}$/.test(nikKepalaKeluarga)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "NIK kepala keluarga harus terdiri dari 16 digit.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!/^\d{16}$/.test(nikAnak)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "NIK anak harus terdiri dari 16 digit.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =====================================================
+    // VALIDASI DATA KEPALA KELUARGA
+    // =====================================================
+
+    if (
+      !namaKepalaKeluarga ||
+      !ttlKepalaKeluarga ||
+      !agamaKepalaKeluarga ||
+      !jenisKelaminKepalaKeluarga ||
+      !statusPerkawinanKepalaKeluarga ||
+      !pekerjaanKepalaKeluarga ||
+      !alamatKepalaKeluarga ||
+      !dusunKepalaKeluarga ||
+      !rtKepalaKeluarga ||
+      !rwKepalaKeluarga ||
+      !kewarganegaraanKepalaKeluarga
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Data kepala keluarga belum lengkap.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =====================================================
+    // VALIDASI DATA ANAK
+    // =====================================================
+
+    if (
+      !namaAnak ||
+      !ttlAnak ||
+      !agamaAnak ||
+      !jenisKelaminAnak ||
+      !statusPerkawinanAnak ||
+      !pekerjaanAnak ||
+      !alamatAnak ||
+      !dusunAnak ||
+      !rtAnak ||
+      !rwAnak ||
+      !kewarganegaraanAnak
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Data anak belum lengkap.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =====================================================
+    // VALIDASI PENGHASILAN
+    // =====================================================
+
+    if (!nilaiPenghasilan) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Penghasilan wajib diisi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =====================================================
+    // FILE KTP - OPSIONAL UNTUK ADMIN
+    // =====================================================
 
     const fileKtp =
       formData.get("file_ktp") as File | null;
 
-    if (!fileKtp) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "File KTP wajib diupload.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    // ==========================
-    // Validasi File
-    // ==========================
+    let fileName: string | null = null;
 
     const allowedTypes = [
       "image/jpeg",
       "image/png",
     ];
 
-    if (!allowedTypes.includes(fileKtp.type)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "File harus berupa JPG atau PNG.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
+    const maxSize =
+      5 * 1024 * 1024;
 
-    const maxSize = 5 * 1024 * 1024;
+    if (fileKtp && fileKtp.size > 0) {
+      // Validasi tipe file
+      if (!allowedTypes.includes(fileKtp.type)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "File harus berupa JPG atau PNG.",
+          },
+          { status: 400 }
+        );
+      }
 
-    if (fileKtp.size > maxSize) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Ukuran file maksimal 5 MB.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
+      // Validasi ukuran file
+      if (fileKtp.size > maxSize) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Ukuran file maksimal 5 MB.",
+          },
+          { status: 400 }
+        );
+      }
 
-    // ==========================
-    // Upload File
-    // ==========================
+      // =====================================================
+      // UPLOAD KTP
+      // =====================================================
 
-    const bytes =
-      await fileKtp.arrayBuffer();
+      const uploadDir =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp"
+        );
 
-    const buffer =
-      Buffer.from(bytes);
-
-    const ext =
-      fileKtp.name
-        .split(".")
-        .pop()
-        ?.toLowerCase();
-
-    const fileName =
-      `${randomUUID()}.${ext}`;
-
-    const uploadDir =
-      path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "ktp"
-      );
-
-    const uploadPath =
-      path.join(
+      await mkdir(
         uploadDir,
-        fileName
+        {
+          recursive: true,
+        }
       );
 
-    await writeFile(
-      uploadPath,
-      buffer
-    );
+      const ext =
+        fileKtp.name
+          .split(".")
+          .pop()
+          ?.toLowerCase() || "jpg";
 
-    // ==========================
-    // Ambil Jenis Surat
-    // ==========================
+      fileName =
+        `${randomUUID()}.${ext}`;
+
+      const uploadPath =
+        path.join(
+          uploadDir,
+          fileName
+        );
+
+      await writeFile(
+        uploadPath,
+        Buffer.from(
+          await fileKtp.arrayBuffer()
+        )
+      );
+
+      uploadedFilePath =
+        uploadPath;
+    }
+
+    // =====================================================
+    // AMBIL JENIS SURAT
+    // =====================================================
 
     const [jenisRows]: any =
       await conn.query(
         `
-        SELECT id, kode_surat
+        SELECT
+          id,
+          kode_surat
         FROM jenis_surat
         WHERE kode_surat = 'SKPHS'
+        LIMIT 1
         `
       );
 
-    if (jenisRows.length === 0) {
+    if (!jenisRows.length) {
       throw new Error(
-        "Jenis surat tidak ditemukan."
+        "Jenis surat SKPHS tidak ditemukan."
       );
     }
-
-    const kodeSurat =
-      jenisRows[0].kode_surat;
 
     const jenisSuratId =
       jenisRows[0].id;
 
-    // ==========================
-    // Generate Tracking
-    // ==========================
+    const kodeSurat =
+      jenisRows[0].kode_surat;
+
+    // =====================================================
+    // UPSERT DATA KEPALA KELUARGA
+    // =====================================================
+
+    await conn.query(
+      `
+      INSERT INTO kependudukan
+      (
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        nama = VALUES(nama),
+        ttl = VALUES(ttl),
+        agama = VALUES(agama),
+        jenis_kelamin = VALUES(jenis_kelamin),
+        status_perkawinan = VALUES(status_perkawinan),
+        pekerjaan = VALUES(pekerjaan),
+        alamat = VALUES(alamat),
+        dusun = VALUES(dusun),
+        rt = VALUES(rt),
+        rw = VALUES(rw),
+        kewarganegaraan = VALUES(kewarganegaraan)
+      `,
+      [
+        nikKepalaKeluarga,
+        namaKepalaKeluarga,
+        ttlKepalaKeluarga,
+        agamaKepalaKeluarga,
+        jenisKelaminKepalaKeluarga,
+        statusPerkawinanKepalaKeluarga,
+        pekerjaanKepalaKeluarga,
+        alamatKepalaKeluarga,
+        dusunKepalaKeluarga,
+        rtKepalaKeluarga,
+        rwKepalaKeluarga,
+        kewarganegaraanKepalaKeluarga,
+      ]
+    );
+
+    // =====================================================
+    // UPSERT DATA ANAK
+    // =====================================================
+
+    await conn.query(
+      `
+      INSERT INTO kependudukan
+      (
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        nama = VALUES(nama),
+        ttl = VALUES(ttl),
+        agama = VALUES(agama),
+        jenis_kelamin = VALUES(jenis_kelamin),
+        status_perkawinan = VALUES(status_perkawinan),
+        pekerjaan = VALUES(pekerjaan),
+        alamat = VALUES(alamat),
+        dusun = VALUES(dusun),
+        rt = VALUES(rt),
+        rw = VALUES(rw),
+        kewarganegaraan = VALUES(kewarganegaraan)
+      `,
+      [
+        nikAnak,
+        namaAnak,
+        ttlAnak,
+        agamaAnak,
+        jenisKelaminAnak,
+        statusPerkawinanAnak,
+        pekerjaanAnak,
+        alamatAnak,
+        dusunAnak,
+        rtAnak,
+        rwAnak,
+        kewarganegaraanAnak,
+      ]
+    );
+
+    // =====================================================
+    // GENERATE TRACKING
+    // =====================================================
 
     const sekarang =
       new Date();
@@ -203,16 +506,18 @@ export async function POST(request: Request) {
     const tanggal =
       `${String(
         sekarang.getDate()
-      ).padStart(2, "0")}${String(
+      ).padStart(2, "0")}` +
+      `${String(
         sekarang.getMonth() + 1
-      ).padStart(2, "0")}${String(
+      ).padStart(2, "0")}` +
+      `${String(
         sekarang.getFullYear()
       ).slice(-2)}`;
 
     const [countRows]: any =
       await conn.query(
         `
-        SELECT COUNT(*) total
+        SELECT COUNT(*) AS total
         FROM pengajuan_surat
         WHERE jenis_surat_id = ?
         `,
@@ -221,15 +526,17 @@ export async function POST(request: Request) {
 
     const urut =
       String(
-        countRows[0].total + 1
+        Number(
+          countRows[0].total
+        ) + 1
       ).padStart(4, "0");
 
-    const kode_tracking =
+    const kodeTracking =
       `${kodeSurat}-${tanggal}-${urut}`;
 
-    // ==========================
-    // Insert Pengajuan
-    // ==========================
+    // =====================================================
+    // INSERT PENGAJUAN SURAT
+    // =====================================================
 
     const [result]: any =
       await conn.query(
@@ -237,111 +544,100 @@ export async function POST(request: Request) {
         INSERT INTO pengajuan_surat
         (
           jenis_surat_id,
+          nik,
           status,
           kode_tracking
         )
-        VALUES
-        (?, ?, ?)
+        VALUES (?, ?, ?, ?)
         `,
         [
           jenisSuratId,
+          nikKepalaKeluarga,
           "draft",
-          kode_tracking,
+          kodeTracking,
         ]
       );
 
-    const pengajuan_id =
+    const pengajuanId =
       result.insertId;
 
-    // ==========================
-    // Insert Penghasilan
-    // ==========================
+    // =====================================================
+    // INSERT DETAIL PENGHASILAN
+    // =====================================================
 
     await conn.query(
       `
       INSERT INTO penghasilan
       (
         pengajuan_id,
-
-        nama_kepala_keluarga,
-        ttl_kepala_keluarga,
         nik_kepala_keluarga,
-        jenis_kelamin_kepala_keluarga,
-        kewarganegaraan_kepala_keluarga,
-        agama_kepala_keluarga,
-        pekerjaan_kepala_keluarga,
-        alamat_kepala_keluarga,
-
-        nama_anak,
-        ttl_anak,
         nik_anak,
-        jenis_kelamin_anak,
-        kewarganegaraan_anak,
-        agama_anak,
-        pekerjaan_anak,
-        alamat_anak,
-
         penghasilan,
         file_ktp
       )
-      VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?)
       `,
       [
-        pengajuan_id,
-
-        nama_kepala_keluarga,
-        ttl_kepala_keluarga,
-        nik_kepala_keluarga,
-        jenis_kelamin_kepala_keluarga,
-        kewarganegaraan_kepala_keluarga,
-        agama_kepala_keluarga,
-        pekerjaan_kepala_keluarga,
-        alamat_kepala_keluarga,
-
-        nama_anak,
-        ttl_anak,
-        nik_anak,
-        jenis_kelamin_anak,
-        kewarganegaraan_anak,
-        agama_anak,
-        pekerjaan_anak,
-        alamat_anak,
-
-        penghasilan,
+        pengajuanId,
+        nikKepalaKeluarga,
+        nikAnak,
+        nilaiPenghasilan,
         fileName,
       ]
     );
 
-    // ==========================
-    // Activity Log
-    // ==========================
+    // =====================================================
+    // ACTIVITY LOG
+    // =====================================================
 
     await logActivity({
-      pengajuanId: pengajuan_id,
+      pengajuanId,
       status: "draft",
-      aktivitas: "Surat dibuat oleh Admin.",
+      aktivitas:
+        "Surat dibuat oleh Admin.",
       conn,
     });
+
+    // =====================================================
+    // COMMIT
+    // =====================================================
 
     await conn.commit();
 
     return NextResponse.json({
       success: true,
-      message: "Surat berhasil dibuat.",
-      pengajuan_id,
-      kode_tracking,
+      message:
+        "Surat berhasil dibuat.",
+      pengajuan_id:
+        pengajuanId,
+      kode_tracking:
+        kodeTracking,
     });
 
   } catch (error) {
     await conn.rollback();
 
-    console.error(error);
+    // Hapus file jika transaksi gagal
+    if (uploadedFilePath) {
+      try {
+        await unlink(
+          uploadedFilePath
+        );
+      } catch {
+        // Abaikan jika file tidak ditemukan
+      }
+    }
+
+    console.error(
+      "POST admin penghasilan error:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan server.",
+        message:
+          "Terjadi kesalahan server.",
       },
       {
         status: 500,

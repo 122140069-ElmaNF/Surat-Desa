@@ -16,23 +16,6 @@ const TABLE_MAP: Record<string, string> = {
   SKM: "kematian",
 };
 
-const NAMA_FIELD_MAP: Record<string, string> = {
-  domisili: "nama",
-  izin_keramaian: "nama",
-  tafsiran_harga_tanah: "nama",
-  listrik: "nama",
-  tidak_mampu: "nama",
-  usaha: "nama",
-  jalan: "nama",
-  kehilangan: "nama",
-  kebenaran_data: "nama",
-  kematian: "nama",
-
-  beda_nama_identitas: "nama_lama",
-  tidak_berlangganan_air: "nama_pertama",
-  penghasilan: "nama_kepala_keluarga",
-};
-
 export async function getNamaPemohon(
   kodeSurat: string,
   pengajuanId: number
@@ -41,17 +24,26 @@ export async function getNamaPemohon(
 
   if (!table) return "-";
 
-  const field = NAMA_FIELD_MAP[table];
+  try {
+    const [rows]: any = await db.query(
+      `
+      SELECT k.nama
+      FROM pengajuan_surat p
+      JOIN kependudukan k
+        ON p.nik = k.nik
+      WHERE p.id = ?
+      LIMIT 1
+      `,
+      [pengajuanId]
+    );
 
-  const [rows]: any = await db.query(
-    `
-    SELECT ${field} AS nama
-    FROM ${table}
-    WHERE pengajuan_id = ?
-    LIMIT 1
-    `,
-    [pengajuanId]
-  );
+    return rows.length ? rows[0].nama : "-";
+  } catch (error) {
+    console.error(
+      "ERROR GET NAMA PEMOHON:",
+      error
+    );
 
-  return rows.length ? rows[0].nama : "-";
+    return "-";
+  }
 }

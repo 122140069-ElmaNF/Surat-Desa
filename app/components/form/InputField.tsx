@@ -10,6 +10,8 @@ type Props = {
   placeholder?: string;
   type?: string;
   textarea?: boolean;
+  readOnly?: boolean;
+  error?: string;
 };
 
 export default function InputField({
@@ -20,6 +22,8 @@ export default function InputField({
   placeholder,
   type = "text",
   textarea = false,
+  readOnly = false,
+  error,
 }: Props) {
   return (
     <div className="form-group">
@@ -35,6 +39,12 @@ export default function InputField({
           onChange={onChange}
           placeholder={placeholder}
           rows={4}
+          readOnly={readOnly}
+          style={{
+            color: readOnly
+              ? "#6b7280"
+              : undefined,
+          }}
         />
       ) : (
         <input
@@ -44,7 +54,19 @@ export default function InputField({
           value={value}
           onChange={onChange}
           placeholder={placeholder}
+          readOnly={readOnly}
+          style={{
+            color: readOnly
+              ? "#6b7280"
+              : undefined,
+          }}
         />
+      )}
+
+      {error && (
+        <p className="form-error">
+          {error}
+        </p>
       )}
     </div>
   );

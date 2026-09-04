@@ -21,129 +21,261 @@ export async function PUT(
   request: Request,
   context: RouteContext
 ) {
+  const conn = await db.getConnection();
 
-  const conn =
-    await db.getConnection();
+  let newUploadedFile: string | null = null;
 
   try {
-
     await conn.beginTransaction();
 
-    const { id } =
-      await context.params;
+    const { id } = await context.params;
 
     const formData =
       await request.formData();
 
     // ===========================
-    // Data Pemilik
+    // DATA PEMILIK
     // ===========================
 
+    const nik =
+      String(
+        formData.get("nik") ?? ""
+      ).trim();
+
     const nama =
-      String(formData.get("nama"));
+      String(
+        formData.get("nama") ?? ""
+      ).trim();
 
     const ttl =
-      String(formData.get("ttl"));
-
-    const nik =
-      String(formData.get("nik"));
+      String(
+        formData.get("ttl") ?? ""
+      ).trim();
 
     const agama =
-      String(formData.get("agama"));
+      String(
+        formData.get("agama") ?? ""
+      ).trim();
 
     const jenis_kelamin =
       String(
-        formData.get(
-          "jenis_kelamin"
-        )
-      );
+        formData.get("jenis_kelamin") ?? ""
+      ).trim();
 
     const status_perkawinan =
       String(
         formData.get(
           "status_perkawinan"
-        )
-      );
+        ) ?? ""
+      ).trim();
 
     const pekerjaan =
       String(
-        formData.get(
-          "pekerjaan"
-        )
-      );
+        formData.get("pekerjaan") ?? ""
+      ).trim();
 
     const alamat =
       String(
+        formData.get("alamat") ?? ""
+      ).trim();
+
+    const dusun =
+      String(
+        formData.get("dusun") ?? ""
+      ).trim();
+
+    const rt =
+      String(
+        formData.get("rt") ?? ""
+      ).trim();
+
+    const rw =
+      String(
+        formData.get("rw") ?? ""
+      ).trim();
+
+    const kewarganegaraan =
+      String(
         formData.get(
-          "alamat"
-        )
-      );
+          "kewarganegaraan"
+        ) ?? ""
+      ).trim();
 
     // ===========================
-    // Data Tanah
+    // DATA TANAH
     // ===========================
 
     const nomor_sertifikat =
       String(
         formData.get(
           "nomor_sertifikat"
-        )
-      );
+        ) ?? ""
+      ).trim();
 
     const luas_tanah =
       String(
         formData.get(
           "luas_tanah"
-        )
-      );
+        ) ?? ""
+      ).trim();
 
     const tahun_perolehan =
       String(
         formData.get(
           "tahun_perolehan"
-        )
-      );
+        ) ?? ""
+      ).trim();
 
     const asal_perolehan =
       String(
         formData.get(
           "asal_perolehan"
-        )
-      );
+        ) ?? ""
+      ).trim();
 
     const letak_tanah =
       String(
         formData.get(
           "letak_tanah"
-        )
-      );
+        ) ?? ""
+      ).trim();
 
     const harga_taksiran =
       String(
         formData.get(
           "harga_taksiran"
-        )
+        ) ?? ""
+      ).trim();
+
+    // ===========================
+    // VALIDASI NIK
+    // ===========================
+
+    if (!nik) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "NIK wajib diisi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!/^\d{16}$/.test(nik)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "NIK harus terdiri dari 16 digit.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ===========================
+    // VALIDASI DATA PEMILIK
+    // ===========================
+
+    if (
+      !nama ||
+      !ttl ||
+      !agama ||
+      !jenis_kelamin ||
+      !status_perkawinan ||
+      !pekerjaan ||
+      !alamat ||
+      !dusun ||
+      !rt ||
+      !rw ||
+      !kewarganegaraan
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Data pemilik wajib dilengkapi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ===========================
+    // VALIDASI DATA TANAH
+    // ===========================
+
+    if (
+      !nomor_sertifikat ||
+      !luas_tanah ||
+      !tahun_perolehan ||
+      !asal_perolehan ||
+      !letak_tanah ||
+      !harga_taksiran
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Data tanah wajib dilengkapi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // ===========================
+    // CEK PENGAJUAN
+    // ===========================
+
+    const [pengajuanRows]: any =
+      await conn.query(
+        `
+        SELECT
+          id,
+          nik,
+          status
+        FROM pengajuan_surat
+        WHERE id = ?
+        LIMIT 1
+        `,
+        [id]
       );
 
-    // ===========================
-    // File KTP
-    // ===========================
+    if (!pengajuanRows.length) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Data pengajuan tidak ditemukan.",
+        },
+        { status: 404 }
+      );
+    }
 
-    const fileKtp =
-      formData.get(
-        "file_ktp"
-      ) as File | null;
+    // ===========================
+    // AMBIL FILE LAMA
+    // ===========================
 
     const [rows]: any =
       await conn.query(
         `
         SELECT file_ktp
         FROM tafsiran_harga_tanah
-        WHERE pengajuan_id=?
+        WHERE pengajuan_id = ?
         LIMIT 1
         `,
         [id]
       );
+
+    if (!rows.length) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Detail surat tafsiran harga tanah tidak ditemukan.",
+        },
+        { status: 404 }
+      );
+    }
 
     const oldFile =
       rows[0]?.file_ktp ?? null;
@@ -151,14 +283,66 @@ export async function PUT(
     let newFileName =
       oldFile;
 
-      // ===========================
-    // Upload File Baru
     // ===========================
+    // FILE KTP BARU
+    // ===========================
+
+    const fileKtp =
+      formData.get(
+        "file_ktp"
+      ) as File | null;
 
     if (
       fileKtp &&
       fileKtp.size > 0
     ) {
+      // ===========================
+      // VALIDASI TIPE
+      // ===========================
+
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+      ];
+
+      if (
+        !allowedTypes.includes(
+          fileKtp.type
+        )
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "File harus berupa JPG atau PNG.",
+          },
+          { status: 400 }
+        );
+      }
+
+      // ===========================
+      // VALIDASI UKURAN
+      // ===========================
+
+      const maxSize =
+        5 * 1024 * 1024;
+
+      if (
+        fileKtp.size > maxSize
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Ukuran file maksimal 5 MB.",
+          },
+          { status: 400 }
+        );
+      }
+
+      // ===========================
+      // UPLOAD
+      // ===========================
 
       const bytes =
         await fileKtp.arrayBuffer();
@@ -169,7 +353,8 @@ export async function PUT(
       const ext =
         fileKtp.name
           .split(".")
-          .pop();
+          .pop()
+          ?.toLowerCase() || "jpg";
 
       newFileName =
         `${randomUUID()}.${ext}`;
@@ -188,69 +373,107 @@ export async function PUT(
         buffer
       );
 
-      // ===========================
-      // Hapus file lama
-      // ===========================
-
-      if (oldFile) {
-
-        const oldPath =
-          path.join(
-            process.cwd(),
-            "public",
-            "uploads",
-            "ktp",
-            oldFile
-          );
-
-        if (
-          fs.existsSync(oldPath)
-        ) {
-
-          await unlink(
-            oldPath
-          );
-
-        }
-
-      }
-
+      newUploadedFile =
+        uploadPath;
     }
 
     // ===========================
-    // Update tabel tafsiran_harga_tanah
+    // UPDATE KEPENDUDUKAN
+    // ===========================
+
+    await conn.query(
+      `
+      INSERT INTO kependudukan
+      (
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan
+      )
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        nama =
+          VALUES(nama),
+        ttl =
+          VALUES(ttl),
+        agama =
+          VALUES(agama),
+        jenis_kelamin =
+          VALUES(jenis_kelamin),
+        status_perkawinan =
+          VALUES(status_perkawinan),
+        pekerjaan =
+          VALUES(pekerjaan),
+        alamat =
+          VALUES(alamat),
+        dusun =
+          VALUES(dusun),
+        rt =
+          VALUES(rt),
+        rw =
+          VALUES(rw),
+        kewarganegaraan =
+          VALUES(kewarganegaraan)
+      `,
+      [
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan,
+      ]
+    );
+
+    // ===========================
+    // UPDATE PENGAJUAN
+    // ===========================
+
+    await conn.query(
+      `
+      UPDATE pengajuan_surat
+      SET
+        nik = ?,
+        status = 'pending',
+        alasan_penolakan = NULL
+      WHERE id = ?
+      `,
+      [nik, id]
+    );
+
+    // ===========================
+    // UPDATE DETAIL TANAH
     // ===========================
 
     await conn.query(
       `
       UPDATE tafsiran_harga_tanah
       SET
-        nama=?,
-        ttl=?,
-        nik=?,
-        agama=?,
-        jenis_kelamin=?,
-        status_perkawinan=?,
-        pekerjaan=?,
-        alamat=?,
-        nomor_sertifikat=?,
-        luas_tanah=?,
-        tahun_perolehan=?,
-        asal_perolehan=?,
-        letak_tanah=?,
-        harga_taksiran=?,
-        file_ktp=?
-      WHERE pengajuan_id=?
+        nomor_sertifikat = ?,
+        luas_tanah = ?,
+        tahun_perolehan = ?,
+        asal_perolehan = ?,
+        letak_tanah = ?,
+        harga_taksiran = ?,
+        file_ktp = ?
+      WHERE pengajuan_id = ?
       `,
       [
-        nama,
-        ttl,
-        nik,
-        agama,
-        jenis_kelamin,
-        status_perkawinan,
-        pekerjaan,
-        alamat,
         nomor_sertifikat,
         luas_tanah,
         tahun_perolehan,
@@ -262,34 +485,49 @@ export async function PUT(
       ]
     );
 
-      // ===========================
-    // Reset status pengajuan
+    // ===========================
+    // HAPUS FILE KTP LAMA
     // ===========================
 
-    await conn.query(
-      `
-      UPDATE pengajuan_surat
-      SET
-        status='pending',
-        alasan_penolakan=NULL
-      WHERE id=?
-      `,
-      [id]
-    );
+    if (
+      newUploadedFile &&
+      oldFile &&
+      oldFile !== newFileName
+    ) {
+      const oldPath =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp",
+          oldFile
+        );
+
+      if (
+        fs.existsSync(oldPath)
+      ) {
+        await unlink(
+          oldPath
+        );
+      }
+    }
 
     // ===========================
-    // Simpan Activity Log
+    // ACTIVITY LOG
     // ===========================
 
     await logActivity({
-      pengajuanId: Number(id),
-      status: "pending",
-      aktivitas: "Pemohon mengirim perbaikan pengajuan.",
+      pengajuanId:
+        Number(id),
+      status:
+        "pending",
+      aktivitas:
+        "Pemohon mengirim perbaikan pengajuan.",
       conn,
     });
 
     // ===========================
-    // Commit Transaction
+    // COMMIT
     // ===========================
 
     await conn.commit();
@@ -300,11 +538,30 @@ export async function PUT(
         "Pengajuan berhasil diperbarui.",
     });
 
-    } catch (err: any) {
-
+  } catch (err: any) {
     await conn.rollback();
 
-    console.error(err);
+    // Hapus file baru jika transaksi gagal
+    if (newUploadedFile) {
+      try {
+        if (
+          fs.existsSync(
+            newUploadedFile
+          )
+        ) {
+          await unlink(
+            newUploadedFile
+          );
+        }
+      } catch {
+        // Abaikan error cleanup
+      }
+    }
+
+    console.error(
+      "UPDATE STHT ERROR:",
+      err
+    );
 
     return NextResponse.json(
       {
@@ -317,11 +574,7 @@ export async function PUT(
         status: 500,
       }
     );
-
   } finally {
-
     conn.release();
-
   }
-
 }

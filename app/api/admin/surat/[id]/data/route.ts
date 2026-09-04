@@ -2,10 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { generateSurat } from "@/lib/surat/generateSurat";
 
+const IDENTITY_FIELDS = [
+  "nik",
+  "nama",
+  "ttl",
+  "agama",
+  "jenis_kelamin",
+  "status_perkawinan",
+  "pekerjaan",
+  "alamat",
+  "dusun",
+  "rt",
+  "rw",
+  "kewarganegaraan",
+];
+
+const SYSTEM_FIELDS = [
+  "id",
+  "pengajuan_id",
+  "created_at",
+  "updated_at",
+];
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const conn = await db.getConnection();
+
   try {
     const { id } = await params;
 
@@ -24,7 +48,8 @@ export async function PATCH(
       return NextResponse.json(
         {
           success: false,
-          message: "Nama tabel tidak ditemukan.",
+          message:
+            "Nama tabel tidak ditemukan.",
         },
         {
           status: 400,
@@ -57,7 +82,8 @@ export async function PATCH(
       return NextResponse.json(
         {
           success: false,
-          message: "Tidak ada data yang diubah.",
+          message:
+            "Tidak ada data yang diubah.",
         },
         {
           status: 400,
@@ -65,35 +91,14 @@ export async function PATCH(
       );
     }
 
-    // ===========================
-    // UPDATE DATA SURAT
-    // ===========================
-
-    const setClause = keys
-      .map((key) => `${key} = ?`)
-      .join(", ");
-
-    const values = keys.map(
-      (key) => fields[key]
-    );
-
-    values.push(id);
-
-    await db.query(
-      `
-      UPDATE ${table}
-      SET ${setClause}
-      WHERE pengajuan_id = ?
-      `,
-      values
-    );
+    await conn.beginTransaction();
 
     // ===========================
-    // AMBIL DATA TERBARU
+    // AMBIL DATA PENGAJUAN
     // ===========================
 
     const [pengajuanRows]: any =
-      await db.query(
+      await conn.query(
         `
         SELECT
           ps.*,
@@ -111,10 +116,13 @@ export async function PATCH(
       pengajuanRows[0];
 
     if (!pengajuan) {
+      await conn.rollback();
+
       return NextResponse.json(
         {
           success: false,
-          message: "Data surat tidak ditemukan.",
+          message:
+            "Data surat tidak ditemukan.",
         },
         {
           status: 404,
@@ -122,12 +130,278 @@ export async function PATCH(
       );
     }
 
+    // =====================================================
+    // 1. DATA KEPENDUDUKAN
+    // =====================================================
+
+    const identityData: Record<
+      string,
+      any
+    > = {};
+
+    IDENTITY_FIELDS.forEach(
+      (field) => {
+        if (
+          Object.prototype.hasOwnProperty.call(
+            fields,
+            field
+          )
+        ) {
+          identityData[field] =
+            fields[field] ?? "";
+        }
+      }
+    );
+
+    const nik =
+      identityData.nik ??
+      pengajuan.nik;
+
     // ===========================
-    // AMBIL DETAIL TERBARU
+    // VALIDASI NIK
     // ===========================
 
+    if (
+      !nik ||
+      !/^\d{16}$/.test(String(nik))
+    ) {
+      await conn.rollback();
+
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "NIK harus terdiri dari 16 digit.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===========================
+    // CEK KEPENDUDUKAN
+    // ===========================
+
+    const [pendudukRows]: any =
+      await conn.query(
+        `
+        SELECT nik
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    if (pendudukRows.length > 0) {
+      // =========================
+      // UPDATE PENDUDUK
+      // =========================
+
+      const updateFields =
+        IDENTITY_FIELDS.filter(
+          (field) =>
+            field !== "nik" &&
+            Object.prototype.hasOwnProperty.call(
+              identityData,
+              field
+            )
+        );
+
+      if (
+        updateFields.length > 0
+      ) {
+        const setClause =
+          updateFields
+            .map(
+              (field) =>
+                `${field} = ?`
+            )
+            .join(", ");
+
+        const values =
+          updateFields.map(
+            (field) =>
+              identityData[field]
+          );
+
+        values.push(nik);
+
+        await conn.query(
+          `
+          UPDATE kependudukan
+          SET ${setClause}
+          WHERE nik = ?
+          `,
+          values
+        );
+      }
+    } else {
+      // =========================
+      // INSERT PENDUDUK BARU
+      // =========================
+
+      await conn.query(
+        `
+        INSERT INTO kependudukan
+        (
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan
+        )
+        VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          nik,
+          identityData.nama ?? "",
+          identityData.ttl ?? "",
+          identityData.agama ?? "",
+          identityData.jenis_kelamin ??
+            "",
+          identityData.status_perkawinan ??
+            "",
+          identityData.pekerjaan ?? "",
+          identityData.alamat ?? "",
+          identityData.dusun ?? "",
+          identityData.rt ?? "",
+          identityData.rw ?? "",
+          identityData.kewarganegaraan ??
+            "",
+        ]
+      );
+    }
+
+    // =====================================================
+    // 2. UPDATE NIK PADA PENGAJUAN
+    // =====================================================
+
+    await conn.query(
+      `
+      UPDATE pengajuan_surat
+      SET nik = ?
+      WHERE id = ?
+      `,
+      [
+        nik,
+        id,
+      ]
+    );
+
+    // =====================================================
+    // 3. UPDATE DATA KHUSUS SURAT
+    // =====================================================
+
+    const detailFields =
+      keys.filter(
+        (key) =>
+          !IDENTITY_FIELDS.includes(
+            key
+          ) &&
+          !SYSTEM_FIELDS.includes(
+            key
+          )
+      );
+
+    if (
+      detailFields.length > 0
+    ) {
+      const setClause =
+        detailFields
+          .map(
+            (key) =>
+              `${key} = ?`
+          )
+          .join(", ");
+
+      const values =
+        detailFields.map(
+          (key) =>
+            fields[key]
+        );
+
+      values.push(id);
+
+      await conn.query(
+        `
+        UPDATE ${table}
+        SET ${setClause}
+        WHERE pengajuan_id = ?
+        `,
+        values
+      );
+    }
+
+    // =====================================================
+    // 4. AMBIL DATA TERBARU
+    // =====================================================
+
+    const [
+      updatedPengajuanRows,
+    ]: any = await conn.query(
+      `
+      SELECT
+        ps.*,
+        js.template_surat
+      FROM pengajuan_surat ps
+      JOIN jenis_surat js
+        ON js.id = ps.jenis_surat_id
+      WHERE ps.id = ?
+      LIMIT 1
+      `,
+      [id]
+    );
+
+    const updatedPengajuan =
+      updatedPengajuanRows[0];
+
+    // =====================================================
+    // 5. AMBIL DATA KEPENDUDUKAN TERBARU
+    // =====================================================
+
+    const [
+      updatedPendudukRows,
+    ]: any = await conn.query(
+      `
+      SELECT
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan
+      FROM kependudukan
+      WHERE nik = ?
+      LIMIT 1
+      `,
+      [updatedPengajuan.nik]
+    );
+
+    const penduduk =
+      updatedPendudukRows[0];
+
+    // =====================================================
+    // 6. AMBIL DETAIL TERBARU
+    // =====================================================
+
     const [detailRows]: any =
-      await db.query(
+      await conn.query(
         `
         SELECT *
         FROM ${table}
@@ -141,6 +415,8 @@ export async function PATCH(
       detailRows[0];
 
     if (!detail) {
+      await conn.rollback();
+
       return NextResponse.json(
         {
           success: false,
@@ -153,24 +429,40 @@ export async function PATCH(
       );
     }
 
-    // ===========================
-    // BANGUN FIELD TEMPLATE
-    // ===========================
+    // =====================================================
+    // 7. BANGUN FIELD TEMPLATE
+    // =====================================================
 
     const templateFields: Record<
       string,
       string
     > = {};
 
+    // ---------------------------
+    // Data kependudukan
+    // ---------------------------
+
+    if (penduduk) {
+      Object.entries(
+        penduduk
+      ).forEach(
+        ([key, value]) => {
+          templateFields[key] =
+            String(value ?? "");
+        }
+      );
+    }
+
+    // ---------------------------
+    // Data khusus surat
+    // ---------------------------
+
     Object.entries(detail).forEach(
       ([key, value]) => {
         if (
-          [
-            "id",
-            "pengajuan_id",
-            "created_at",
-            "updated_at",
-          ].includes(key)
+          SYSTEM_FIELDS.includes(
+            key
+          )
         ) {
           return;
         }
@@ -180,17 +472,18 @@ export async function PATCH(
       }
     );
 
-    // ===========================
-    // FIELD SISTEM
-    // ===========================
+    // =====================================================
+    // 8. FIELD SISTEM
+    // =====================================================
 
     templateFields.nomor_surat =
-      pengajuan.nomor_surat ?? "";
+      updatedPengajuan.nomor_surat ??
+      "";
 
     templateFields.tanggal =
-      pengajuan.tanggal_surat
+      updatedPengajuan.tanggal_surat
         ? new Date(
-            pengajuan.tanggal_surat
+            updatedPengajuan.tanggal_surat
           ).toLocaleDateString(
             "id-ID",
             {
@@ -201,37 +494,25 @@ export async function PATCH(
           )
         : "";
 
-    // ===========================
-    // DATA KEPALA DESA
-    // ===========================
+    // =====================================================
+    // 9. DATA KEPALA DESA
+    // =====================================================
 
     if (
-      pengajuan.status ===
+      updatedPengajuan.status ===
       "selesai"
     ) {
-      // --------------------------------
-      // SURAT SUDAH SELESAI
-      // Gunakan snapshot Kepala Desa
-      // ketika surat di-ACC
-      // --------------------------------
-
       templateFields.nama_penandatangan =
-        pengajuan.nama_penandatangan ??
+        updatedPengajuan.nama_penandatangan ??
         "";
 
       templateFields.jabatan =
-        pengajuan.jabatan_penandatangan ??
+        updatedPengajuan.jabatan_penandatangan ??
         "";
     } else {
-      // --------------------------------
-      // SURAT BELUM SELESAI
-      // Ambil Kepala Desa aktif
-      // dari tabel users
-      // --------------------------------
-
       const [
         kepalaDesaRows,
-      ]: any = await db.query(
+      ]: any = await conn.query(
         `
         SELECT
           nama
@@ -251,23 +532,24 @@ export async function PATCH(
         "Kepala Desa Sumberejo";
     }
 
-    // ===========================
-    // GENERATE ULANG SURAT
-    // ===========================
+    // =====================================================
+    // 10. GENERATE ULANG SURAT
+    // =====================================================
 
     const html = generateSurat(
-      pengajuan.template_surat ?? "",
+      updatedPengajuan.template_surat ??
+        "",
       templateFields,
       {
         preserveSystemFields: true,
       }
     );
 
-    // ===========================
-    // SIMPAN ISI SURAT TERBARU
-    // ===========================
+    // =====================================================
+    // 11. SIMPAN ISI SURAT
+    // =====================================================
 
-    await db.query(
+    await conn.query(
       `
       UPDATE pengajuan_surat
       SET isi_surat = ?
@@ -279,12 +561,20 @@ export async function PATCH(
       ]
     );
 
+    // =====================================================
+    // COMMIT
+    // =====================================================
+
+    await conn.commit();
+
     return NextResponse.json({
       success: true,
       message:
         "Data berhasil diperbarui.",
     });
   } catch (err) {
+    await conn.rollback();
+
     console.error(
       "ERROR UPDATE DATA SURAT:",
       err
@@ -300,5 +590,7 @@ export async function PATCH(
         status: 500,
       }
     );
+  } finally {
+    conn.release();
   }
 }

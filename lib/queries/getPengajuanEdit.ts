@@ -32,7 +32,6 @@ const FILE_COLUMNS = [
 export default async function getPengajuanEdit(
   id: number | string
 ) {
-
   // ===========================
   // Ambil data pengajuan
   // ===========================
@@ -50,7 +49,7 @@ export default async function getPengajuanEdit(
     JOIN jenis_surat js
       ON js.id = ps.jenis_surat_id
 
-    WHERE ps.id=?
+    WHERE ps.id = ?
 
     LIMIT 1
     `,
@@ -71,45 +70,112 @@ export default async function getPengajuanEdit(
   const table =
     TABLE_MAP[pengajuan.kode_surat];
 
-type DetailRow = Record<string, any>;
+  type DetailRow =
+    Record<string, any>;
 
-let detail: DetailRow | null = null;
+  let detail: DetailRow | null =
+    null;
 
   const dokumen: Record<
     string,
     string
   > = {};
 
-  if (table) {
+  // ===========================
+  // Ambil data kependudukan
+  // ===========================
 
+  let dataKependudukan:
+    DetailRow | null = null;
+
+  if (pengajuan.nik) {
+    const [pendudukRows] =
+      await db.query(
+        `
+        SELECT
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [pengajuan.nik]
+      );
+
+    dataKependudukan =
+      (pendudukRows as any[])[0] ??
+      null;
+  }
+
+  // ===========================
+  // Ambil data detail surat
+  // ===========================
+
+  if (table) {
     const [detailRows] =
       await db.query(
         `
         SELECT *
         FROM ${table}
-        WHERE pengajuan_id=?
+        WHERE pengajuan_id = ?
         LIMIT 1
         `,
         [pengajuan.id]
       );
 
     detail =
-    ((detailRows as any[])[0] as DetailRow) ??
-    null;
+      ((detailRows as any[])[0] as
+        | DetailRow
+        | undefined) ?? null;
+
+    // ===========================
+    // Ambil dokumen
+    // ===========================
+
     if (detail) {
-        FILE_COLUMNS.forEach((column) => {
-        const value = detail?.[column];
-        if (
+      FILE_COLUMNS.forEach(
+        (column) => {
+          const value =
+            detail?.[column];
+
+          if (
             value &&
             String(value).trim() !== ""
-        ) {
-            dokumen[column] = value;
+          ) {
+            dokumen[column] =
+              value;
+          }
         }
-        });
+      );
     }
   }
 
+  // ===========================
+  // Gabungkan data kependudukan
+  // dengan data detail surat
+  // ===========================
+
+  if (dataKependudukan) {
+    detail = {
+      ...(detail ?? {}),
+      ...dataKependudukan,
+    };
+  }
+
+  // ===========================
   // Return
+  // ===========================
+
   return {
     pengajuan,
     detail,

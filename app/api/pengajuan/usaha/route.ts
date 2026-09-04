@@ -1,35 +1,97 @@
 import db from "@/lib/db";
-import { writeFile } from "fs/promises";
+import { writeFile, unlink } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { logActivity } from "@/lib/activity";
 
+import { generateSurat } from "@/lib/surat/generateSurat";
+import getJenisSurat from "@/lib/surat/getJenisSurat";
+
+// =====================================================
+// POST
+// Pengajuan Surat Keterangan Usaha
+// =====================================================
+
 export async function POST(request: Request) {
   const conn = await db.getConnection();
+
+  let uploadedFilePath: string | null = null;
 
   try {
     await conn.beginTransaction();
 
     const formData = await request.formData();
 
-    const nama = formData.get("nama") as string;
-    const ttl = formData.get("ttl") as string;
-    const nik = formData.get("nik") as string;
-    const agama = formData.get("agama") as string;
-    const jenis_kelamin = formData.get("jenis_kelamin") as string;
-    const status_perkawinan = formData.get("status_perkawinan") as string;
-    const pekerjaan = formData.get("pekerjaan") as string;
-    const alamat = formData.get("alamat") as string;
-    const nama_usaha = formData.get("nama_usaha") as string;
+    // =================================================
+    // AMBIL DATA FORM
+    // =================================================
 
-    const fileKtp = formData.get("file_ktp") as File | null;
+    const nik =
+      formData.get("nik") as string;
 
-    if (!fileKtp) {
+    const nama =
+      formData.get("nama") as string;
+
+    const ttl =
+      formData.get("ttl") as string;
+
+    const agama =
+      formData.get("agama") as string;
+
+    const jenis_kelamin =
+      formData.get("jenis_kelamin") as string;
+
+    const status_perkawinan =
+      formData.get(
+        "status_perkawinan"
+      ) as string;
+
+    const pekerjaan =
+      formData.get("pekerjaan") as string;
+
+    const alamat =
+      formData.get("alamat") as string;
+
+    const dusun =
+      formData.get("dusun") as string;
+
+    const rt =
+      formData.get("rt") as string;
+
+    const rw =
+      formData.get("rw") as string;
+
+    const kewarganegaraan =
+      formData.get(
+        "kewarganegaraan"
+      ) as string;
+
+    const nama_usaha =
+      formData.get(
+        "nama_usaha"
+      ) as string;
+
+    const fileKtp =
+      formData.get(
+        "file_ktp"
+      ) as File | null;
+
+    // =================================================
+    // VALIDASI NIK
+    // =================================================
+
+    if (
+      !nik ||
+      !/^\d{16}$/.test(nik)
+    ) {
+      await conn.rollback();
+
       return NextResponse.json(
         {
           success: false,
-          message: "File KTP wajib diupload.",
+          message:
+            "NIK harus terdiri dari 16 digit.",
         },
         {
           status: 400,
@@ -37,20 +99,46 @@ export async function POST(request: Request) {
       );
     }
 
-    // ===============================
-    // Validasi File
-    // ===============================
+    // =================================================
+    // VALIDASI FILE KTP
+    // =================================================
+
+    if (
+      !fileKtp ||
+      fileKtp.size === 0
+    ) {
+      await conn.rollback();
+
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "File KTP wajib diupload.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     const allowedTypes = [
       "image/jpeg",
+      "image/jpg",
       "image/png",
     ];
 
-    if (!allowedTypes.includes(fileKtp.type)) {
+    if (
+      !allowedTypes.includes(
+        fileKtp.type
+      )
+    ) {
+      await conn.rollback();
+
       return NextResponse.json(
         {
           success: false,
-          message: "File harus berupa JPG atau PNG.",
+          message:
+            "File KTP harus berupa JPG, JPEG, atau PNG.",
         },
         {
           status: 400,
@@ -58,13 +146,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const maxSize = 5 * 1024 * 1024;
+    if (
+      fileKtp.size >
+      5 * 1024 * 1024
+    ) {
+      await conn.rollback();
 
-    if (fileKtp.size > maxSize) {
       return NextResponse.json(
         {
           success: false,
-          message: "Ukuran file maksimal 5 MB.",
+          message:
+            "Ukuran file KTP maksimal 5 MB.",
         },
         {
           status: 400,
@@ -72,162 +164,382 @@ export async function POST(request: Request) {
       );
     }
 
-    // ===============================
-    // Upload File
-    // ===============================
+    // =================================================
+    // UPLOAD FILE KTP
+    // =================================================
 
-    const bytes = await fileKtp.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const bytes =
+      await fileKtp.arrayBuffer();
 
-    const ext = fileKtp.name
-      .split(".")
-      .pop()
-      ?.toLowerCase();
+    const buffer =
+      Buffer.from(bytes);
 
-    const fileName = `${randomUUID()}.${ext}`;
+    const ext =
+      fileKtp.name
+        .split(".")
+        .pop()
+        ?.toLowerCase() || "jpg";
 
-    const uploadPath = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "ktp",
-      fileName
+    const fileName =
+      `${randomUUID()}.${ext}`;
+
+    const uploadPath =
+      path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "ktp",
+        fileName
+      );
+
+    await writeFile(
+      uploadPath,
+      buffer
     );
 
-    await writeFile(uploadPath, buffer);
+    uploadedFilePath =
+      uploadPath;
 
-    // ===============================
-    // Ambil Jenis Surat
-    // ===============================
+    // =================================================
+    // AMBIL JENIS SURAT
+    // =================================================
 
-    const [jenisRows]: any = await conn.query(
-      `
-      SELECT id, kode_surat
-      FROM jenis_surat
-      WHERE kode_surat = 'SKU'
-      `
-    );
+    const jenis =
+      await getJenisSurat(
+        "SKU"
+      );
 
-    const kodeSurat = jenisRows[0].kode_surat;
-    const jenisSuratId = jenisRows[0].id;
+    const jenisSuratId =
+      jenis.id;
 
-    // ===============================
-    // Generate Tracking
-    // ===============================
+    const kodeSurat =
+      jenis.kode_surat;
 
-    const sekarang = new Date();
+    const templateSurat =
+      jenis.template_surat ?? "";
 
-    const tanggal = `${String(
-      sekarang.getDate()
-    ).padStart(2, "0")}${String(
-      sekarang.getMonth() + 1
-    ).padStart(2, "0")}${String(
-      sekarang.getFullYear()
-    ).slice(-2)}`;
+    // =================================================
+    // CEK DATA KEPENDUDUKAN
+    // =================================================
 
-    const [countRows]: any = await conn.query(
-      `
-      SELECT COUNT(*) total
-      FROM pengajuan_surat
-      WHERE jenis_surat_id = ?
-      `,
-      [jenisSuratId]
-    );
+    const [pendudukRows]: any =
+      await conn.query(
+        `
+        SELECT
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
 
-    const urut = String(
-      countRows[0].total + 1
-    ).padStart(4, "0");
+    // =================================================
+    // SIMPAN / UPDATE DATA KEPENDUDUKAN
+    // =================================================
+
+    if (
+      pendudukRows.length === 0
+    ) {
+
+      // =================================================
+      // NIK BELUM ADA → INSERT
+      // =================================================
+
+      await conn.query(
+        `
+        INSERT INTO kependudukan
+        (
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan
+        )
+        VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan,
+        ]
+      );
+
+    } else {
+
+      // =================================================
+      // NIK SUDAH ADA → UPDATE
+      // =================================================
+
+      await conn.query(
+        `
+        UPDATE kependudukan
+        SET
+          nama = ?,
+          ttl = ?,
+          agama = ?,
+          jenis_kelamin = ?,
+          status_perkawinan = ?,
+          pekerjaan = ?,
+          alamat = ?,
+          dusun = ?,
+          rt = ?,
+          rw = ?,
+          kewarganegaraan = ?
+        WHERE nik = ?
+        `,
+        [
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan,
+          nik,
+        ]
+      );
+
+    }
+
+    // =================================================
+    // GENERATE KODE TRACKING
+    // =================================================
+
+    const sekarang =
+      new Date();
+
+    const tanggal =
+      `${String(
+        sekarang.getDate()
+      ).padStart(2, "0")}` +
+      `${String(
+        sekarang.getMonth() + 1
+      ).padStart(2, "0")}` +
+      `${String(
+        sekarang.getFullYear()
+      ).slice(-2)}`;
+
+    const [countRows]: any =
+      await conn.query(
+        `
+        SELECT COUNT(*) total
+        FROM pengajuan_surat
+        WHERE jenis_surat_id = ?
+        `,
+        [jenisSuratId]
+      );
+
+    const urut =
+      String(
+        Number(
+          countRows[0].total
+        ) + 1
+      ).padStart(4, "0");
 
     const kode_tracking =
       `${kodeSurat}-${tanggal}-${urut}`;
 
-    // ===============================
-    // Insert Pengajuan
-    // ===============================
+    // =================================================
+    // INSERT PENGAJUAN SURAT
+    // =================================================
 
-    const [result]: any = await conn.query(
-      `
-      INSERT INTO pengajuan_surat
-      (
-        jenis_surat_id,
-        status,
-        kode_tracking
-      )
-      VALUES
-      (?, ?, ?)
-      `,
-      [
-        jenisSuratId,
-        "pending",
-        kode_tracking,
-      ]
-    );
+    const [result]: any =
+      await conn.query(
+        `
+        INSERT INTO pengajuan_surat
+        (
+          jenis_surat_id,
+          nik,
+          status,
+          kode_tracking
+        )
+        VALUES
+        (?, ?, ?, ?)
+        `,
+        [
+          jenisSuratId,
+          nik,
+          "pending",
+          kode_tracking,
+        ]
+      );
 
-    const pengajuan_id = result.insertId;
+    const pengajuan_id =
+      result.insertId;
 
-    // ===============================
-    // Insert Usaha
-    // ===============================
+    // =================================================
+    // INSERT DETAIL SKU
+    // =================================================
 
     await conn.query(
       `
       INSERT INTO usaha
       (
         pengajuan_id,
-        nama,
-        ttl,
-        nik,
-        agama,
-        jenis_kelamin,
-        status_perkawinan,
-        pekerjaan,
-        alamat,
         nama_usaha,
         file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?)
       `,
       [
         pengajuan_id,
-        nama,
-        ttl,
-        nik,
-        agama,
-        jenis_kelamin,
-        status_perkawinan,
-        pekerjaan,
-        alamat,
         nama_usaha,
         fileName,
       ]
     );
 
-    await conn.commit();
+    // =================================================
+    // GENERATE ISI SURAT
+    // =================================================
 
-        await logActivity({
-      pengajuanId: pengajuan_id,
+    const replaceFields: Record<
+      string,
+      string
+    > = {
+      nomor_surat: "",
+
+      tanggal:
+        new Date().toLocaleDateString(
+          "id-ID",
+          {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          }
+        ),
+
+      nik,
+      nama,
+      ttl,
+      agama,
+      jenis_kelamin,
+      status_perkawinan,
+      pekerjaan,
+      alamat,
+      dusun,
+      rt,
+      rw,
+      kewarganegaraan,
+
+      nama_usaha,
+    };
+
+    const isiSurat =
+      generateSurat(
+        templateSurat,
+        replaceFields,
+        {
+          preserveSystemFields: true,
+        }
+      );
+
+    // =================================================
+    // SIMPAN ISI SURAT
+    // =================================================
+
+    await conn.query(
+      `
+      UPDATE pengajuan_surat
+      SET isi_surat = ?
+      WHERE id = ?
+      `,
+      [
+        isiSurat,
+        pengajuan_id,
+      ]
+    );
+
+    // =================================================
+    // ACTIVITY LOG
+    // =================================================
+
+    await logActivity({
+      pengajuanId:
+        pengajuan_id,
       status: "pending",
-      aktivitas: "Pengajuan surat berhasil dikirim.",
+      aktivitas:
+        "Pengajuan surat berhasil dikirim.",
       conn,
     });
 
+    // =================================================
+    // COMMIT
+    // =================================================
+
+    await conn.commit();
+
+    uploadedFilePath = null;
+
     return NextResponse.json({
       success: true,
+      pengajuan_id,
       kode_tracking,
-      message: "Pengajuan berhasil.",
+      message:
+        "Pengajuan berhasil dikirim.",
     });
 
   } catch (error) {
 
     await conn.rollback();
 
-    console.error(error);
+    // =================================================
+    // HAPUS FILE JIKA DATABASE GAGAL
+    // =================================================
+
+    if (uploadedFilePath) {
+      try {
+        await unlink(
+          uploadedFilePath
+        );
+      } catch {
+        // Abaikan jika file tidak ditemukan
+      }
+    }
+
+    console.error(
+      "ERROR PENGAJUAN SKU:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Terjadi kesalahan server.",
+        message:
+          "Terjadi kesalahan server.",
       },
       {
         status: 500,
@@ -237,6 +549,124 @@ export async function POST(request: Request) {
   } finally {
 
     conn.release();
+
+  }
+}
+
+// =====================================================
+// GET
+// LOOKUP DATA PENDUDUK BERDASARKAN NIK
+// =====================================================
+
+export async function GET(
+  request: Request
+) {
+  try {
+
+    const { searchParams } =
+      new URL(request.url);
+
+    const nik =
+      searchParams.get("nik");
+
+    // =================================================
+    // NIK BELUM DIISI
+    // =================================================
+
+    if (!nik) {
+      return NextResponse.json({
+        success: true,
+        found: false,
+        message:
+          "NIK belum diisi.",
+      });
+    }
+
+    // =================================================
+    // VALIDASI NIK
+    // =================================================
+
+    if (
+      !/^\d{16}$/.test(nik)
+    ) {
+      return NextResponse.json({
+        success: true,
+        found: false,
+        message:
+          "NIK harus terdiri dari 16 digit.",
+      });
+    }
+
+    // =================================================
+    // CARI DATA PENDUDUK
+    // =================================================
+
+    const [rows]: any =
+      await db.query(
+        `
+        SELECT
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    // =================================================
+    // DATA TIDAK DITEMUKAN
+    // =================================================
+
+    if (
+      rows.length === 0
+    ) {
+      return NextResponse.json({
+        success: true,
+        found: false,
+        message:
+          "Data penduduk belum terdaftar.",
+      });
+    }
+
+    // =================================================
+    // DATA DITEMUKAN
+    // =================================================
+
+    return NextResponse.json({
+      success: true,
+      found: true,
+      data: rows[0],
+    });
+
+  } catch (error) {
+
+    console.error(
+      "ERROR LOOKUP PENDUDUK SKU:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        found: false,
+        message:
+          "Gagal mengambil data penduduk.",
+      },
+      {
+        status: 500,
+      }
+    );
 
   }
 }

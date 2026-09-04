@@ -4,7 +4,7 @@ import db from "@/lib/db";
 const TABLE_MAP: Record<string, string> = {
   SD: "domisili",
   SKIK: "izin_keramaian",
-  STHT: "kuasa_penuh",
+  STHT: "tafsiran_harga_tanah",
   SKL: "listrik",
   SKTM: "tidak_mampu",
   SKU: "usaha",

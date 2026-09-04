@@ -22,7 +22,6 @@ export default function DomisiliForm({
   role = "user",
   onSubmit,
 }: Props) {
-
   const [form, setForm] = useState({
     nama: "",
     tempat_lahir: "",
@@ -39,10 +38,27 @@ export default function DomisiliForm({
 
   const [fileKtp, setFileKtp] =
     useState<File | null>(null);
+
   const [errors, setErrors] =
     useState<Record<string, string>>({});
 
+  // =====================================================
+  // STATUS PENCARIAN NIK
+  // =====================================================
+
+  const [mencariNik, setMencariNik] =
+    useState(false);
+
+  const [pendudukDitemukan, setPendudukDitemukan] =
+    useState(false);
+
+  const [pesanNik, setPesanNik] =
+    useState("");
+
+  // =====================================================
   // LOAD DATA SAAT MODE EDIT
+  // =====================================================
+
   useEffect(() => {
     if (
       mode !== "edit" ||
@@ -57,30 +73,215 @@ export default function DomisiliForm({
     setForm({
       nama:
         initialData.nama ?? "",
+
       tempat_lahir:
         ttl[0]?.trim() ?? "",
+
       tanggal_lahir:
         ttl[1]?.trim() ?? "",
+
       nik:
         initialData.nik ?? "",
+
       agama:
         initialData.agama ?? "",
+
       jenis_kelamin:
         initialData.jenis_kelamin ?? "",
+
       pekerjaan:
         initialData.pekerjaan ?? "",
+
       alamat:
         initialData.alamat ?? "",
+
       dusun:
         initialData.dusun ?? "",
+
       rt:
         initialData.rt ?? "",
+
       rw:
         initialData.rw ?? "",
     });
   }, [mode, initialData]);
 
+  // =====================================================
+  // CARI DATA PENDUDUK BERDASARKAN NIK
+  // =====================================================
+
+  useEffect(() => {
+    if (mode === "edit") {
+      return;
+    }
+
+    // NIK belum 16 digit
+    if (!/^\d{16}$/.test(form.nik)) {
+      setPendudukDitemukan(false);
+      setPesanNik("");
+      setMencariNik(false);
+
+      return;
+    }
+
+    let aktif = true;
+
+    async function cariPenduduk() {
+      try {
+        setMencariNik(true);
+        setPesanNik("");
+
+        const res = await fetch(
+          `/api/pengajuan/domisili?nik=${form.nik}`
+        );
+
+        const json =
+          await res.json();
+
+        if (!aktif) {
+          return;
+        }
+
+        // =================================================
+        // RESPONSE ERROR
+        // =================================================
+
+        if (!json.success) {
+          setPendudukDitemukan(false);
+
+          setPesanNik(
+            json.message ??
+              "Gagal mencari data penduduk."
+          );
+
+          return;
+        }
+
+        // =================================================
+        // NIK DITEMUKAN
+        // =================================================
+
+        if (
+          json.found &&
+          json.data
+        ) {
+          const data =
+            json.data;
+
+          const ttl =
+            data.ttl?.split(",") ?? [];
+
+          setForm((prev) => ({
+            ...prev,
+
+            nik:
+              data.nik ??
+              prev.nik,
+
+            nama:
+              data.nama ?? "",
+
+            tempat_lahir:
+              ttl[0]?.trim() ?? "",
+
+            tanggal_lahir:
+              ttl[1]?.trim() ?? "",
+
+            agama:
+              data.agama ?? "",
+
+            jenis_kelamin:
+              data.jenis_kelamin ??
+              "",
+
+            pekerjaan:
+              data.pekerjaan ?? "",
+
+            alamat:
+              data.alamat ?? "",
+
+            dusun:
+              data.dusun ?? "",
+
+            rt:
+              data.rt ?? "",
+
+            rw:
+              data.rw ?? "",
+          }));
+
+          setPendudukDitemukan(true);
+
+          setPesanNik(
+            "Data penduduk ditemukan dan telah diisi otomatis."
+          );
+
+          return;
+        }
+
+        // =================================================
+        // NIK BELUM DITEMUKAN
+        // =================================================
+
+        setPendudukDitemukan(
+          false
+        );
+
+        setPesanNik(
+          "Silakan lengkapi data penduduk."
+        );
+
+        // Bersihkan data penduduk sebelumnya
+        setForm((prev) => ({
+          ...prev,
+
+          nama: "",
+          tempat_lahir: "",
+          tanggal_lahir: "",
+          agama: "",
+          jenis_kelamin: "",
+          pekerjaan: "",
+          alamat: "",
+          dusun: "",
+          rt: "",
+          rw: "",
+        }));
+
+      } catch (error) {
+        console.error(
+          "Gagal mencari data NIK:",
+          error
+        );
+
+        if (aktif) {
+          setPendudukDitemukan(
+            false
+          );
+
+          setPesanNik(
+            "Terjadi kesalahan saat mencari data penduduk."
+          );
+        }
+
+      } finally {
+        if (aktif) {
+          setMencariNik(false);
+        }
+      }
+    }
+
+    cariPenduduk();
+
+    return () => {
+      aktif = false;
+    };
+
+  }, [form.nik, mode]);
+
+  // =====================================================
   // HANDLE INPUT
+  // =====================================================
+
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement |
@@ -88,33 +289,73 @@ export default function DomisiliForm({
       HTMLSelectElement
     >
   ) {
+    const {
+      name,
+      value,
+    } = e.target;
+
+    // ===================================================
+    // JIKA NIK DIUBAH
+    // ===================================================
+
+    if (name === "nik") {
+      setPendudukDitemukan(
+        false
+      );
+
+      setPesanNik("");
+
+      // Set NIK baru sekaligus
+      // kosongkan data penduduk sebelumnya
+      setForm((prev) => ({
+        ...prev,
+
+        nik: value,
+
+        nama: "",
+        tempat_lahir: "",
+        tanggal_lahir: "",
+        agama: "",
+        jenis_kelamin: "",
+        pekerjaan: "",
+        alamat: "",
+        dusun: "",
+        rt: "",
+        rw: "",
+      }));
+
+      setErrors((prev) => ({
+        ...prev,
+        nik: "",
+      }));
+
+      return;
+    }
+
+    // ===================================================
+    // INPUT SELAIN NIK
+    // ===================================================
+
     setForm((prev) => ({
       ...prev,
-      [e.target.name]:
-        e.target.value,
+      [name]: value,
+    }));
+
+    // Hapus error field ketika
+    // user mulai memperbaikinya
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
     }));
   }
 
+  // =====================================================
   // VALIDASI FORM
-  function validateForm() {
+  // =====================================================
 
+  function validateForm() {
     const newErrors:
       Record<string, string> = {};
-
-    if (!form.nama.trim()) {
-      newErrors.nama =
-        "Nama wajib diisi."
-    }
-    if (!form.tempat_lahir.trim()) {
-
-      newErrors.tempat_lahir =
-        "Tempat lahir wajib diisi.";
-    }
-
-    if (!form.tanggal_lahir) {
-      newErrors.tanggal_lahir =
-        "Tanggal lahir wajib diisi.";
-    }
 
     if (!form.nik.trim()) {
       newErrors.nik =
@@ -124,6 +365,23 @@ export default function DomisiliForm({
     ) {
       newErrors.nik =
         "NIK harus terdiri dari 16 digit.";
+    }
+
+    if (!form.nama.trim()) {
+      newErrors.nama =
+        "Nama wajib diisi.";
+    }
+
+    if (
+      !form.tempat_lahir.trim()
+    ) {
+      newErrors.tempat_lahir =
+        "Tempat lahir wajib diisi.";
+    }
+
+    if (!form.tanggal_lahir) {
+      newErrors.tanggal_lahir =
+        "Tanggal lahir wajib diisi.";
     }
 
     if (!form.agama) {
@@ -161,25 +419,37 @@ export default function DomisiliForm({
         "RW wajib diisi.";
     }
 
-    // Upload KTP hanya wajib saat create
-    if (mode === "create" && !fileKtp) {
-      newErrors.file_ktp = "Silakan upload KTP.";
+    // Upload KTP hanya wajib
+    // saat create
+    if (
+      mode === "create" &&
+      role !== "admin" &&
+      !fileKtp
+    ) {
+      newErrors.file_ktp =
+        "Silakan upload KTP.";
     }
 
     setErrors(newErrors);
+
     return (
       Object.keys(newErrors)
         .length === 0
     );
   }
 
+  // =====================================================
   // HANDLE SUBMIT
+  // =====================================================
+
   async function handleSubmit(
     e: React.FormEvent
   ) {
     e.preventDefault();
-    if (!validateForm())
+
+    if (!validateForm()) {
       return;
+    }
 
     const formData =
       new FormData();
@@ -241,201 +511,328 @@ export default function DomisiliForm({
       );
     }
 
-    if (role === "admin" && onSubmit) {
+    // ===================================================
+    // MODE ADMIN
+    // ===================================================
+
+    if (
+      role === "admin" &&
+      onSubmit
+    ) {
       await onSubmit(formData);
       return;
     }
 
-try {
-  const url =
-    mode === "edit"
-      ? `/api/pengajuan/domisili/${initialData.id}`
-      : "/api/pengajuan/domisili";
+    // ===================================================
+    // CREATE / EDIT
+    // ===================================================
 
-  const method =
-    mode === "edit"
-      ? "PUT"
-      : "POST";
+    try {
+      const url =
+        mode === "edit"
+          ? `/api/pengajuan/domisili/${initialData.id}`
+          : "/api/pengajuan/domisili";
 
-  const res = await fetch(url, {
-    method,
-    body: formData,
-  });
+      const method =
+        mode === "edit"
+          ? "PUT"
+          : "POST";
 
-  const json = await res.json();
+      const res = await fetch(
+        url,
+        {
+          method,
+          body: formData,
+        }
+      );
 
-if (!json.success) {
-  toast.error(json.message ?? "Gagal menyimpan.");
-  return;
-}
+      const json =
+        await res.json();
 
-  setErrors({});
-  setFileKtp(null);
+      if (!json.success) {
+        toast.error(
+          json.message ??
+            "Gagal menyimpan."
+        );
 
-  if (mode === "edit") {
-    toast.success("Perbaikan berhasil dikirim.");
+        return;
+      }
 
-    setTimeout(() => {
-      window.location.href =
-        `/tracking/${initialData.kode_tracking}`;
-    }, 1000);
-  } else {
-    window.location.href =
-      `/success/${json.kode_tracking}`;
+      setErrors({});
+      setFileKtp(null);
+
+      // =================================================
+      // EDIT / PERBAIKAN
+      // =================================================
+
+      if (mode === "edit") {
+        toast.success(
+          "Perbaikan berhasil dikirim."
+        );
+
+        setTimeout(() => {
+          window.location.href =
+            `/tracking/${initialData.kode_tracking}`;
+        }, 1000);
+      }
+
+      // =================================================
+      // CREATE
+      // =================================================
+
+      else {
+        window.location.href =
+          `/success/${json.kode_tracking}`;
+      }
+
+    } catch (err) {
+      console.error(err);
+
+      toast.error(
+        "Terjadi kesalahan server."
+      );
+    }
   }
 
-  } catch (err) {
-    console.error(err);
-    toast.error("Terjadi kesalahan server.");
-  }}
-
+  // =====================================================
   // RENDER
+  // =====================================================
+
   return (
     <div className="pengajuan-page">
+
+      {/* =================================================
+          HERO
+      ================================================= */}
+
       <section className="pengajuan-hero">
+
         <div className="pengajuan-hero-content">
+
           <h1>
             {mode === "create"
               ? "Surat Keterangan Domisili"
               : "Perbaiki Pengajuan Surat Domisili"}
           </h1>
+
           <p>
             {mode === "create"
               ? "Lengkapi data di bawah ini dengan benar sebelum mengajukan surat."
               : "Perbaiki data sesuai catatan Admin kemudian kirim kembali."}
           </p>
+
         </div>
+
       </section>
 
       <section className="pengajuan-content">
+
         <div className="pengajuan-card">
 
-          {/* ALASAN PENOLAKAN */}
+          {/* =================================================
+              ALASAN PENOLAKAN
+          ================================================= */}
 
           {mode === "edit" && (
             <div
-  className="reject-alert"
-  style={{
-    background: "#fff7ed",
-    border: "1px solid #fdba74",
-    borderLeft: "6px solid #f97316",
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 24,
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 12,
-    }}
-  >
-    <div
-      style={{
-        fontSize: 26,
-      }}
-    >
-      ⚠️
-    </div>
+              className="reject-alert"
+              style={{
+                background:
+                  "#fff7ed",
+                border:
+                  "1px solid #fdba74",
+                borderLeft:
+                  "6px solid #f97316",
+                borderRadius: 12,
+                padding: 18,
+                marginBottom: 24,
+              }}
+            >
 
-    <div>
-      <h3
-        style={{
-          margin: 0,
-          color: "#9a3412",
-          fontWeight: 700,
-          fontSize: 18,
-        }}
-      >
-        Pengajuan Ditolak
-      </h3>
+              <div
+                style={{
+                  display:
+                    "flex",
+                  alignItems:
+                    "flex-start",
+                  gap: 12,
+                }}
+              >
 
-      <p
-        style={{
-          margin: "10px 0 4px",
-          fontWeight: 600,
-          color: "#7c2d12",
-        }}
-      >
-        Alasan Penolakan :
-      </p>
+                <div
+                  style={{
+                    fontSize: 26,
+                  }}
+                >
+                  ⚠️
+                </div>
 
-      <p
-        style={{
-          margin: 0,
-          color: "#444",
-          lineHeight: 1.7,
-        }}
-      >
-        {initialData.alasan_penolakan}
-      </p>
-    </div>
-  </div>
-</div>
+                <div>
+
+                  <h3
+                    style={{
+                      margin: 0,
+                      color:
+                        "#9a3412",
+                      fontWeight: 700,
+                      fontSize: 18,
+                    }}
+                  >
+                    Pengajuan Ditolak
+                  </h3>
+
+                  <p
+                    style={{
+                      margin:
+                        "10px 0 4px",
+                      fontWeight: 600,
+                      color:
+                        "#7c2d12",
+                    }}
+                  >
+                    Alasan Penolakan :
+                  </p>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#444",
+                      lineHeight:
+                        1.7,
+                    }}
+                  >
+                    {
+                      initialData.alasan_penolakan
+                    }
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
           )}
-          
-          <form onSubmit={handleSubmit}>
+
+          <form
+            onSubmit={
+              handleSubmit
+            }
+          >
+
+            {/* =================================================
+                NIK
+            ================================================= */}
+
+            <InputField
+              label="NIK"
+              name="nik"
+              value={form.nik}
+              onChange={
+                handleChange
+              }
+              placeholder="Masukkan NIK 16 digit"
+              error={errors.nik}
+            />
+
+            {mencariNik && (
+              <p
+                style={{
+                  marginTop:
+                    "-12px",
+                  marginBottom:
+                    "16px",
+                  fontSize: 14,
+                  color:
+                    "#6b7280",
+                }}
+              >
+                Mencari data penduduk...
+              </p>
+            )}
+
+            {!mencariNik &&
+              pesanNik && (
+                <p
+                  style={{
+                    marginTop:
+                      "-12px",
+                    marginBottom:
+                      "16px",
+                    fontSize: 14,
+                    color:
+                      pendudukDitemukan
+                        ? "#16a34a"
+                        : "#6b7280",
+                  }}
+                >
+                  {pesanNik}
+                </p>
+              )}
+
+            {/* =================================================
+                NAMA
+            ================================================= */}
 
             <InputField
               label="Nama Lengkap"
               name="nama"
               value={form.nama}
-              onChange={handleChange}
+              onChange={
+                handleChange
+              }
               placeholder="Masukkan nama lengkap"
+              error={errors.nama}
             />
 
-            {errors.nama && (
-              <p className="form-error">
-                {errors.nama}
-              </p>
-            )}
+            {/* =================================================
+                TEMPAT & TANGGAL LAHIR
+            ================================================= */}
 
             <div className="grid grid-cols-2 gap-4">
 
               <InputField
                 label="Tempat Lahir"
                 name="tempat_lahir"
-                value={form.tempat_lahir}
-                onChange={handleChange}
+                value={
+                  form.tempat_lahir
+                }
+                onChange={
+                  handleChange
+                }
                 placeholder="Masukkan tempat lahir"
+                error={
+                  errors.tempat_lahir
+                }
               />
 
               <InputField
                 label="Tanggal Lahir"
                 name="tanggal_lahir"
                 type="date"
-                value={form.tanggal_lahir}
-                onChange={handleChange}
+                value={
+                  form.tanggal_lahir
+                }
+                onChange={
+                  handleChange
+                }
+                error={
+                  errors.tanggal_lahir
+                }
               />
 
             </div>
 
-            {errors.tanggal_lahir && (
-              <p className="form-error">
-                {errors.tanggal_lahir}
-              </p>
-            )}
-
-            <InputField
-              label="NIK"
-              name="nik"
-              value={form.nik}
-              onChange={handleChange}
-              placeholder="Masukkan NIK"
-            />
-
-            {errors.nik && (
-              <p className="form-error">
-                {errors.nik}
-              </p>
-            )}
+            {/* =================================================
+                AGAMA
+            ================================================= */}
 
             <SelectField
               label="Agama"
               name="agama"
               value={form.agama}
-              onChange={handleChange}
+              onChange={
+                handleChange
+              }
               options={[
                 "Islam",
                 "Kristen",
@@ -444,111 +841,86 @@ if (!json.success) {
                 "Buddha",
                 "Konghucu",
               ]}
+              error={errors.agama}
             />
 
-            {errors.agama && (
-              <p className="form-error">
-                {errors.agama}
-              </p>
-            )}
+            {/* =================================================
+                JENIS KELAMIN
+            ================================================= */}
 
             <SelectField
               label="Jenis Kelamin"
               name="jenis_kelamin"
-              value={form.jenis_kelamin}
-              onChange={handleChange}
+              value={
+                form.jenis_kelamin
+              }
+              onChange={
+                handleChange
+              }
               options={[
                 "Laki-laki",
                 "Perempuan",
               ]}
+              error={
+                errors.jenis_kelamin
+              }
             />
 
-            {errors.jenis_kelamin && (
-              <p className="form-error">
-                {errors.jenis_kelamin}
-              </p>
-            )}
+            {/* =================================================
+                PEKERJAAN
+            ================================================= */}
 
             <InputField
               label="Pekerjaan"
               name="pekerjaan"
-              value={form.pekerjaan}
-              onChange={handleChange}
+              value={
+                form.pekerjaan
+              }
+              onChange={
+                handleChange
+              }
               placeholder="Masukkan pekerjaan"
+              error={
+                errors.pekerjaan
+              }
             />
 
-            {errors.pekerjaan && (
-              <p className="form-error">
-                {errors.pekerjaan}
-              </p>
-            )}
+            {/* =================================================
+                ALAMAT
+            ================================================= */}
 
             <InputField
               label="Alamat"
               name="alamat"
               value={form.alamat}
-              onChange={handleChange}
+              onChange={
+                handleChange
+              }
               placeholder="Masukkan alamat lengkap"
               textarea
+              error={
+                errors.alamat
+              }
             />
 
-            {errors.alamat && (
-              <p className="form-error">
-                {errors.alamat}
-              </p>
-            )}
+            {/* =================================================
+                DUSUN
+            ================================================= */}
 
             <InputField
               label="Dusun"
               name="dusun"
               value={form.dusun}
-              onChange={handleChange}
+              onChange={
+                handleChange
+              }
               placeholder="Contoh: Dusun I"
+              error={errors.dusun}
             />
 
-            {errors.dusun && (
-              <p className="form-error">
-                {errors.dusun}
-              </p>
-            )}
-
-              <FileUploadField
-                label="Upload KTP"
-                accept="image/jpeg,image/png"
-                onChange={(file: File | null) =>
-                  setFileKtp(file)
-                }
-              />
-
-            {mode === "edit" &&
-              initialData?.dokumen?.file_ktp && (
-
-              <div
-                style={{
-                  marginTop: 8,
-                  marginBottom: 16,
-                  fontSize: 14,
-                }}
-              >
-                File saat ini :
-                <a
-                  href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    marginLeft: 8,
-                  }}
-                >
-                  Lihat KTP
-                </a>
-              </div>
-            )}
-
-            {errors.file_ktp && (
-              <p className="form-error">
-                {errors.file_ktp}
-              </p>
-            )}
+            {/* =================================================
+                RT & RW
+            ================================================= */}
 
             <div className="grid grid-cols-2 gap-4">
 
@@ -556,41 +928,94 @@ if (!json.success) {
                 label="RT"
                 name="rt"
                 value={form.rt}
-                onChange={handleChange}
+                onChange={
+                  handleChange
+                }
                 placeholder="001"
+                error={errors.rt}
               />
+
               <InputField
                 label="RW"
                 name="rw"
                 value={form.rw}
-                onChange={handleChange}
+                onChange={
+                  handleChange
+                }
                 placeholder="002"
+                error={errors.rw}
               />
+
             </div>
 
-            {errors.rt && (
+            {/* =================================================
+                UPLOAD KTP
+            ================================================= */}
+
+            <FileUploadField
+              label={role === "admin" ? "Upload KTP (Opsional)" : "Upload KTP"}
+              accept="image/jpeg,image/png"
+              onChange={(
+                file: File | null
+              ) =>
+                setFileKtp(file)
+              }
+            />
+
+            {mode === "edit" &&
+              initialData
+                ?.dokumen
+                ?.file_ktp && (
+                <div
+                  style={{
+                    marginTop: 8,
+                    marginBottom:
+                      16,
+                    fontSize: 14,
+                  }}
+                >
+                  File saat ini :
+
+                  <a
+                    href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      marginLeft: 8,
+                    }}
+                  >
+                    Lihat KTP
+                  </a>
+
+                </div>
+              )}
+
+            {errors.file_ktp && (
               <p className="form-error">
-                {errors.rt}
+                {errors.file_ktp}
               </p>
             )}
 
-            {errors.rw && (
-              <p className="form-error">
-                {errors.rw}
-              </p>
-            )}
+            {/* =================================================
+                SUBMIT
+            ================================================= */}
 
             <SubmitButton>
               {submitLabel ??
                 (role === "admin"
                   ? "Buat Surat"
-                  : mode === "edit"
+                  : mode ===
+                    "edit"
                   ? "Perbaiki Pengajuan"
                   : "Ajukan Surat")}
             </SubmitButton>
+
           </form>
+
         </div>
+
       </section>
+
     </div>
   );
 }

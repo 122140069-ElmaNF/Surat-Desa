@@ -1,6 +1,10 @@
 import db from "@/lib/db";
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
+import {
+  writeFile,
+  unlink,
+  mkdir,
+} from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
 
@@ -11,84 +15,390 @@ import { logActivity } from "@/lib/activity";
 export async function POST(request: Request) {
   const conn = await db.getConnection();
 
-  try {
-    await conn.beginTransaction();
+  let uploadedFilePath: string | null = null;
 
+  try {
     const formData =
       await request.formData();
 
     // ===============================
-    // DATA PEMILIK
+    // DATA KEPENDUDUKAN
     // ===============================
 
     const nama =
-      formData.get("nama") as string;
+      String(
+        formData.get("nama") ?? ""
+      ).trim();
 
     const ttl =
-      formData.get("ttl") as string;
+      String(
+        formData.get("ttl") ?? ""
+      ).trim();
 
     const nik =
-      formData.get("nik") as string;
+      String(
+        formData.get("nik") ?? ""
+      ).trim();
 
     const agama =
-      formData.get("agama") as string;
+      String(
+        formData.get("agama") ?? ""
+      ).trim();
 
     const jenis_kelamin =
-      formData.get(
-        "jenis_kelamin"
-      ) as string;
+      String(
+        formData.get("jenis_kelamin") ?? ""
+      ).trim();
 
     const status_perkawinan =
-      formData.get(
-        "status_perkawinan"
-      ) as string;
+      String(
+        formData.get(
+          "status_perkawinan"
+        ) ?? ""
+      ).trim();
 
     const pekerjaan =
-      formData.get(
-        "pekerjaan"
-      ) as string;
+      String(
+        formData.get("pekerjaan") ?? ""
+      ).trim();
 
     const alamat =
-      formData.get(
-        "alamat"
-      ) as string;
+      String(
+        formData.get("alamat") ?? ""
+      ).trim();
+
+    const dusun =
+      String(
+        formData.get("dusun") ?? ""
+      ).trim();
+
+    const rt =
+      String(
+        formData.get("rt") ?? ""
+      ).trim();
+
+    const rw =
+      String(
+        formData.get("rw") ?? ""
+      ).trim();
+
+    const kewarganegaraan =
+      String(
+        formData.get(
+          "kewarganegaraan"
+        ) ?? ""
+      ).trim();
 
     // ===============================
     // DATA TANAH
     // ===============================
 
     const nomor_sertifikat =
-      formData.get(
-        "nomor_sertifikat"
-      ) as string;
+      String(
+        formData.get(
+          "nomor_sertifikat"
+        ) ?? ""
+      ).trim();
 
     const luas_tanah =
-      formData.get(
-        "luas_tanah"
-      ) as string;
+      String(
+        formData.get(
+          "luas_tanah"
+        ) ?? ""
+      ).trim();
 
     const tahun_perolehan =
-      formData.get(
-        "tahun_perolehan"
-      ) as string;
+      String(
+        formData.get(
+          "tahun_perolehan"
+        ) ?? ""
+      ).trim();
 
     const asal_perolehan =
-      formData.get(
-        "asal_perolehan"
-      ) as string;
+      String(
+        formData.get(
+          "asal_perolehan"
+        ) ?? ""
+      ).trim();
 
     const letak_tanah =
-      formData.get(
-        "letak_tanah"
-      ) as string;
+      String(
+        formData.get(
+          "letak_tanah"
+        ) ?? ""
+      ).trim();
 
     const harga_taksiran =
-      formData.get(
-        "harga_taksiran"
-      ) as string;
+      String(
+        formData.get(
+          "harga_taksiran"
+        ) ?? ""
+      ).trim();
+
+    // ===============================
+    // VALIDASI NIK
+    // ===============================
+
+    if (!nik) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "NIK wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (
+      !/^\d{16}$/.test(nik)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "NIK harus terdiri dari 16 digit.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===============================
+    // VALIDASI DATA KEPENDUDUKAN
+    // ===============================
+
+    if (!nama) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Nama wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!ttl) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Tempat dan tanggal lahir wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!agama) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Agama wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!jenis_kelamin) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Jenis kelamin wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!status_perkawinan) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Status perkawinan wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!pekerjaan) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Pekerjaan wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!alamat) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Alamat wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!dusun) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Dusun wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!rt) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "RT wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!rw) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "RW wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!kewarganegaraan) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Kewarganegaraan wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===============================
+    // VALIDASI DATA TANAH
+    // ===============================
+
+    if (!nomor_sertifikat) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Nomor sertifikat wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!luas_tanah) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Luas tanah wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!tahun_perolehan) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Tahun perolehan wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!asal_perolehan) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Asal perolehan wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!letak_tanah) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Letak tanah wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (!harga_taksiran) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Harga taksiran wajib diisi.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
 
     // ===============================
     // FILE KTP
+    // OPSIONAL UNTUK ADMIN
     // ===============================
 
     const fileKtp =
@@ -96,105 +406,106 @@ export async function POST(request: Request) {
         "file_ktp"
       ) as File | null;
 
-    if (!fileKtp) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "File KTP wajib diupload.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
-
-    // ===============================
-    // VALIDASI TIPE FILE
-    // ===============================
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-    ];
+    let fileName:
+      string | null = null;
 
     if (
-      !allowedTypes.includes(
-        fileKtp.type
-      )
+      fileKtp &&
+      fileKtp.size > 0
     ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "File harus berupa JPG atau PNG.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+      ];
 
-    // ===============================
-    // VALIDASI UKURAN FILE
-    // ===============================
+      if (
+        !allowedTypes.includes(
+          fileKtp.type
+        )
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "File KTP harus berupa JPG atau PNG.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
 
-    const maxSize =
-      5 * 1024 * 1024;
+      const maxSize =
+        5 * 1024 * 1024;
 
-    if (
-      fileKtp.size >
-      maxSize
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Ukuran file maksimal 5 MB.",
-        },
-        {
-          status: 400,
-        }
-      );
-    }
+      if (
+        fileKtp.size >
+        maxSize
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Ukuran file KTP maksimal 5 MB.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
 
-    // ===============================
-    // UPLOAD FILE KTP
-    // ===============================
+      // ===============================
+      // UPLOAD FILE KTP
+      // ===============================
 
-    const bytes =
-      await fileKtp.arrayBuffer();
+      const uploadDir =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp"
+        );
 
-    const buffer =
-      Buffer.from(bytes);
-
-    const ext =
-      fileKtp.name
-        .split(".")
-        .pop()
-        ?.toLowerCase();
-
-    const fileName =
-      `${randomUUID()}.${ext}`;
-
-    const uploadDir =
-      path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "ktp"
-      );
-
-    const uploadPath =
-      path.join(
+      await mkdir(
         uploadDir,
-        fileName
+        {
+          recursive: true,
+        }
       );
 
-    await writeFile(
-      uploadPath,
-      buffer
-    );
+      const ext =
+        fileKtp.name
+          .split(".")
+          .pop()
+          ?.toLowerCase() ||
+        "jpg";
+
+      fileName =
+        `${randomUUID()}.${ext}`;
+
+      uploadedFilePath =
+        path.join(
+          uploadDir,
+          fileName
+        );
+
+      const bytes =
+        await fileKtp.arrayBuffer();
+
+      const buffer =
+        Buffer.from(bytes);
+
+      await writeFile(
+        uploadedFilePath,
+        buffer
+      );
+    }
+
+    // ===============================
+    // MULAI TRANSAKSI
+    // ===============================
+
+    await conn.beginTransaction();
 
     // ===============================
     // AMBIL JENIS SURAT
@@ -216,6 +527,70 @@ export async function POST(request: Request) {
       "";
 
     // ===============================
+    // UPSERT DATA KEPENDUDUKAN
+    // ===============================
+
+    await conn.query(
+      `
+      INSERT INTO kependudukan
+      (
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan
+      )
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+      ON DUPLICATE KEY UPDATE
+        nama =
+          VALUES(nama),
+        ttl =
+          VALUES(ttl),
+        agama =
+          VALUES(agama),
+        jenis_kelamin =
+          VALUES(jenis_kelamin),
+        status_perkawinan =
+          VALUES(status_perkawinan),
+        pekerjaan =
+          VALUES(pekerjaan),
+        alamat =
+          VALUES(alamat),
+        dusun =
+          VALUES(dusun),
+        rt =
+          VALUES(rt),
+        rw =
+          VALUES(rw),
+        kewarganegaraan =
+          VALUES(kewarganegaraan)
+      `,
+      [
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan,
+      ]
+    );
+
+    // ===============================
     // GENERATE TRACKING
     // ===============================
 
@@ -225,22 +600,19 @@ export async function POST(request: Request) {
     const tanggal =
       `${String(
         sekarang.getDate()
-      ).padStart(
-        2,
-        "0"
-      )}${String(
+      ).padStart(2, "0")}` +
+      `${String(
         sekarang.getMonth() + 1
-      ).padStart(
-        2,
-        "0"
-      )}${String(
+      ).padStart(2, "0")}` +
+      `${String(
         sekarang.getFullYear()
       ).slice(-2)}`;
 
     const [countRows]: any =
       await conn.query(
         `
-        SELECT COUNT(*) total
+        SELECT
+          COUNT(*) AS total
         FROM pengajuan_surat
         WHERE jenis_surat_id = ?
         `,
@@ -249,11 +621,10 @@ export async function POST(request: Request) {
 
     const urut =
       String(
-        countRows[0].total + 1
-      ).padStart(
-        4,
-        "0"
-      );
+        Number(
+          countRows[0].total
+        ) + 1
+      ).padStart(4, "0");
 
     const kode_tracking =
       `${kodeSurat}-${tanggal}-${urut}`;
@@ -268,14 +639,16 @@ export async function POST(request: Request) {
         INSERT INTO pengajuan_surat
         (
           jenis_surat_id,
+          nik,
           status,
           kode_tracking
         )
         VALUES
-        (?, ?, ?)
+        (?, ?, ?, ?)
         `,
         [
           jenisSuratId,
+          nik,
           "draft",
           kode_tracking,
         ]
@@ -285,7 +658,7 @@ export async function POST(request: Request) {
       result.insertId;
 
     // ===============================
-    // INSERT TAFSIRAN HARGA TANAH
+    // INSERT DATA TAFSIRAN HARGA TANAH
     // ===============================
 
     await conn.query(
@@ -293,14 +666,6 @@ export async function POST(request: Request) {
       INSERT INTO tafsiran_harga_tanah
       (
         pengajuan_id,
-        nama,
-        ttl,
-        nik,
-        agama,
-        jenis_kelamin,
-        status_perkawinan,
-        pekerjaan,
-        alamat,
         nomor_sertifikat,
         luas_tanah,
         tahun_perolehan,
@@ -310,27 +675,16 @@ export async function POST(request: Request) {
         file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         pengajuan_id,
-
-        nama,
-        ttl,
-        nik,
-        agama,
-        jenis_kelamin,
-        status_perkawinan,
-        pekerjaan,
-        alamat,
-
         nomor_sertifikat,
         luas_tanah,
         tahun_perolehan,
         asal_perolehan,
         letak_tanah,
         harga_taksiran,
-
         fileName,
       ]
     );
@@ -339,19 +693,21 @@ export async function POST(request: Request) {
     // GENERATE ISI SURAT
     // ===============================
 
+    const tanggalSurat =
+      sekarang.toLocaleDateString(
+        "id-ID",
+        {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }
+      );
+
     const replaceFields:
       Record<string, string> = {
       nomor_surat: "",
-
       tanggal:
-        new Date().toLocaleDateString(
-          "id-ID",
-          {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-          }
-        ),
+        tanggalSurat,
 
       nama,
       ttl,
@@ -361,6 +717,10 @@ export async function POST(request: Request) {
       status_perkawinan,
       pekerjaan,
       alamat,
+      dusun,
+      rt,
+      rw,
+      kewarganegaraan,
 
       nomor_sertifikat,
       luas_tanah,
@@ -403,13 +763,9 @@ export async function POST(request: Request) {
     await logActivity({
       pengajuanId:
         pengajuan_id,
-
-      status:
-        "draft",
-
+      status: "draft",
       aktivitas:
         "Surat dibuat oleh Admin.",
-
       conn,
     });
 
@@ -419,9 +775,8 @@ export async function POST(request: Request) {
 
     await conn.commit();
 
-    // ===============================
-    // RESPONSE
-    // ===============================
+    // File sudah berhasil disimpan
+    uploadedFilePath = null;
 
     return NextResponse.json({
       success: true,
@@ -431,15 +786,39 @@ export async function POST(request: Request) {
         "Surat berhasil dibuat.",
     });
 
-  } catch (err) {
-    await conn.rollback();
+  } catch (error: any) {
+    try {
+      await conn.rollback();
+    } catch {
+      // Abaikan jika transaksi belum dimulai
+    }
 
-    console.error(err);
+    // ===============================
+    // CLEANUP FILE
+    // ===============================
+
+    if (
+      uploadedFilePath
+    ) {
+      try {
+        await unlink(
+          uploadedFilePath
+        );
+      } catch {
+        // Abaikan jika file tidak ditemukan
+      }
+    }
+
+    console.error(
+      "ADMIN BUAT SURAT STHT ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
         message:
+          error?.message ||
           "Terjadi kesalahan server.",
       },
       {

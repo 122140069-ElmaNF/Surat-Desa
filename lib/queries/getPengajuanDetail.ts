@@ -80,6 +80,47 @@ export async function getPengajuanDetail(
     url: string;
   }[] = [];
 
+  // ===========================
+  // DATA KEPENDUDUKAN
+  // ===========================
+
+  let dataKependudukan: any = null;
+
+  if (pengajuan.nik) {
+    const [pendudukRows] =
+      await db.query(
+        `
+        SELECT
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [pengajuan.nik]
+      );
+
+    dataKependudukan =
+      (pendudukRows as any[])[0] ??
+      null;
+  }
+
+  // ===========================
+  // DATA DETAIL SURAT
+  // ===========================
+
+  let detailRow: any = null;
+
   if (table) {
     const [detailRows] =
       await db.query(
@@ -92,51 +133,118 @@ export async function getPengajuanDetail(
         [pengajuan.id]
       );
 
-    const row =
+    detailRow =
       (detailRows as any[])[0] ??
       null;
+  }
 
-    if (row) {
-      detail =
-        Object.keys(row)
-          .filter(
-            (key) =>
-              ![
-                "id",
-                "pengajuan_id",
-                "created_at",
-                "updated_at",
-                ...FILE_COLUMNS,
-              ].includes(key)
-          )
-          .map((key) => ({
+  // ===========================
+  // GABUNGKAN DATA PEMOHON
+  // DENGAN DATA KHUSUS SURAT
+  // ===========================
+
+  if (dataKependudukan) {
+    const identityFields = [
+      "nik",
+      "nama",
+      "ttl",
+      "agama",
+      "jenis_kelamin",
+      "status_perkawinan",
+      "pekerjaan",
+      "alamat",
+      "dusun",
+      "rt",
+      "rw",
+      "kewarganegaraan",
+    ];
+
+    identityFields.forEach(
+      (key) => {
+        if (
+          dataKependudukan[key] !==
+            null &&
+          dataKependudukan[key] !==
+            undefined
+        ) {
+          detail.push({
             key,
             label: formatLabel(key),
-            value: normalizeValue(
-              row[key]
-            ),
-          }));
+            value:
+              normalizeValue(
+                dataKependudukan[key]
+              ),
+          });
+        }
+      }
+    );
+  }
 
-      dokumen =
-        FILE_COLUMNS
-          .filter(
-            (column) =>
-              row[column] &&
-              String(
-                row[column]
-              ).trim() !== ""
-          )
-          .map((column) => ({
-            key: column,
-            label: formatLabel(
-              column
+  // ===========================
+  // DATA KHUSUS SURAT
+  // ===========================
+
+  if (detailRow) {
+    Object.keys(detailRow)
+      .filter(
+        (key) =>
+          ![
+            "id",
+            "pengajuan_id",
+            "created_at",
+            "updated_at",
+            ...FILE_COLUMNS,
+
+            // Data identitas sudah
+            // diambil dari kependudukan
+            "nama",
+            "nik",
+            "ttl",
+            "agama",
+            "jenis_kelamin",
+            "status_perkawinan",
+            "pekerjaan",
+            "alamat",
+            "dusun",
+            "rt",
+            "rw",
+            "kewarganegaraan",
+          ].includes(key)
+      )
+      .forEach((key) => {
+        detail.push({
+          key,
+          label: formatLabel(key),
+          value:
+            normalizeValue(
+              detailRow[key]
             ),
-            file: row[column],
-            url: `/uploads/${getFolder(
-              column
-            )}/${row[column]}`,
-          }));
-    }
+        });
+      });
+
+    // ===========================
+    // DOKUMEN
+    // ===========================
+
+    dokumen =
+      FILE_COLUMNS
+        .filter(
+          (column) =>
+            detailRow[column] &&
+            String(
+              detailRow[column]
+            ).trim() !== ""
+        )
+        .map((column) => ({
+          key: column,
+          label: formatLabel(
+            column
+          ),
+          file: detailRow[column],
+          url: `/uploads/${getFolder(
+            column
+          )}/${detailRow[column]}`,
+        }));
   }
 
   return {
@@ -162,15 +270,6 @@ function normalizeValue(value: any) {
 
   // =========================================
   // DATE DARI DATABASE
-  //
-  // Jangan ubah menjadi:
-  // 13 Agustus 2026
-  //
-  // Karena halaman edit membutuhkan:
-  // 2026-08-13
-  //
-  // Format Indonesia nanti dilakukan
-  // ketika data ditampilkan pada surat.
   // =========================================
 
   if (value instanceof Date) {

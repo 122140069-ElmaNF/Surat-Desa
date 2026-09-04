@@ -6,6 +6,8 @@ type Props = {
   onChange: (
     e: React.ChangeEvent<HTMLSelectElement>
   ) => void;
+  disabled?: boolean;
+  error?: string;
 };
 
 export default function SelectField({
@@ -14,6 +16,8 @@ export default function SelectField({
   value,
   options,
   onChange,
+  disabled = false,
+  error,
 }: Props) {
   return (
     <div className="form-group">
@@ -30,6 +34,12 @@ export default function SelectField({
         className="form-control"
         value={value}
         onChange={onChange}
+        disabled={disabled}
+        style={{
+          color: disabled
+            ? "#6b7280"
+            : undefined,
+        }}
       >
         <option value="" disabled>
           -- Pilih --
@@ -44,6 +54,12 @@ export default function SelectField({
           </option>
         ))}
       </select>
+
+      {error && (
+        <p className="form-error">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

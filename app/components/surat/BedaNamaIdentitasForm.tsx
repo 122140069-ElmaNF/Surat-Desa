@@ -22,40 +22,21 @@ export default function BedaNamaIdentitasForm({
   role = "user",
   onSubmit,
 }: Props) {
-
-
   const [form, setForm] = useState({
-
-    // ======================
-    // IDENTITAS LAMA
-    // ======================
-
-    nama_lama: "",
-    tempat_lahir_lama: "",
-    tanggal_lahir_lama: "",
-    nik_lama: "",
-    jenis_kelamin_lama: "",
-    pekerjaan_lama: "",
-    alamat_lama: "",
-
-    // ======================
-    // IDENTITAS BARU
-    // ======================
-
-    nama_baru: "",
-    tempat_lahir_baru: "",
-    tanggal_lahir_baru: "",
-    nik_baru: "",
-    jenis_kelamin_baru: "",
-    pekerjaan_baru: "",
-    alamat_baru: "",
-
-    // ======================
-    // KETERANGAN
-    // ======================
-
+    nik: "",
+    nama: "",
+    tempat_lahir: "",
+    tanggal_lahir: "",
+    agama: "",
+    jenis_kelamin: "",
+    status_perkawinan: "",
+    pekerjaan: "",
+    alamat: "",
+    dusun: "",
+    rt: "",
+    rw: "",
+    kewarganegaraan: "",
     isi_keterangan: "",
-
   });
 
   const [fileKtp, setFileKtp] =
@@ -64,10 +45,103 @@ export default function BedaNamaIdentitasForm({
   const [errors, setErrors] =
     useState<Record<string, string>>({});
 
-  // LOAD DATA SAAT MODE EDIT
+  const [lookupStatus, setLookupStatus] =
+    useState<
+      "idle" |
+      "loading" |
+      "found" |
+      "not-found"
+    >("idle");
+
+  // ===========================
+  // FORMAT TANGGAL
+  // ===========================
+
+  function formatDateForInput(
+    value: any
+  ) {
+    if (!value) {
+      return "";
+    }
+
+    const stringValue =
+      String(value).trim();
+
+    // Sudah format YYYY-MM-DD
+    if (
+      /^\d{4}-\d{2}-\d{2}$/.test(
+        stringValue
+      )
+    ) {
+      return stringValue;
+    }
+
+    // ISO Date
+    if (
+      stringValue.includes("T")
+    ) {
+      return stringValue
+        .split("T")[0];
+    }
+
+    // Format DD/MM/YYYY
+    const slashParts =
+      stringValue.split("/");
+
+    if (
+      slashParts.length === 3 &&
+      slashParts[2].length === 4
+    ) {
+      return `${slashParts[2]}-${slashParts[1].padStart(
+        2,
+        "0"
+      )}-${slashParts[0].padStart(
+        2,
+        "0"
+      )}`;
+    }
+
+    return stringValue;
+  }
+
+  // ===========================
+  // PARSE TTL
+  // ===========================
+
+  function parseTtl(ttl: string) {
+    if (!ttl) {
+      return {
+        tempat: "",
+        tanggal: "",
+      };
+    }
+
+    const parts =
+      ttl.split(",");
+
+    const tempat =
+      parts[0]?.trim() ?? "";
+
+    const tanggal =
+      parts
+        .slice(1)
+        .join(",")
+        .trim();
+
+    return {
+      tempat,
+      tanggal:
+        formatDateForInput(
+          tanggal
+        ),
+    };
+  }
+
+  // ===========================
+  // LOAD DATA EDIT
+  // ===========================
 
   useEffect(() => {
-
     if (
       mode !== "edit" ||
       !initialData
@@ -75,76 +149,169 @@ export default function BedaNamaIdentitasForm({
       return;
     }
 
-    const ttlLama =
-      initialData.ttl_lama?.split(",") ?? [];
-
-    const ttlBaru =
-      initialData.ttl_baru?.split(",") ?? [];
+    const ttl =
+      parseTtl(
+        initialData.ttl ?? ""
+      );
 
     setForm({
+      nik:
+        initialData.nik ?? "",
 
-      // ======================
-      // IDENTITAS LAMA
-      // ======================
+      nama:
+        initialData.nama ?? "",
 
-      nama_lama:
-        initialData.nama_lama ?? "",
+      tempat_lahir:
+        initialData.tempat_lahir ??
+        ttl.tempat,
 
-      tempat_lahir_lama:
-        ttlLama[0]?.trim() ?? "",
+      tanggal_lahir:
+        initialData.tanggal_lahir ??
+        ttl.tanggal,
 
-      tanggal_lahir_lama:
-        ttlLama[1]?.trim() ?? "",
+      agama:
+        initialData.agama ?? "",
 
-      nik_lama:
-        initialData.nik_lama ?? "",
+      jenis_kelamin:
+        initialData.jenis_kelamin ?? "",
 
-      jenis_kelamin_lama:
-        initialData.jenis_kelamin_lama ?? "",
+      status_perkawinan:
+        initialData.status_perkawinan ??
+        "",
 
-      pekerjaan_lama:
-        initialData.pekerjaan_lama ?? "",
+      pekerjaan:
+        initialData.pekerjaan ?? "",
 
-      alamat_lama:
-        initialData.alamat_lama ?? "",
+      alamat:
+        initialData.alamat ?? "",
 
-      // ======================
-      // IDENTITAS BARU
-      // ======================
+      dusun:
+        initialData.dusun ?? "",
 
-      nama_baru:
-        initialData.nama_baru ?? "",
+      rt:
+        initialData.rt ?? "",
 
-      tempat_lahir_baru:
-        ttlBaru[0]?.trim() ?? "",
+      rw:
+        initialData.rw ?? "",
 
-      tanggal_lahir_baru:
-        ttlBaru[1]?.trim() ?? "",
-
-      nik_baru:
-        initialData.nik_baru ?? "",
-
-      jenis_kelamin_baru:
-        initialData.jenis_kelamin_baru ?? "",
-
-      pekerjaan_baru:
-        initialData.pekerjaan_baru ?? "",
-
-      alamat_baru:
-        initialData.alamat_baru ?? "",
-
-      // ======================
-      // KETERANGAN
-      // ======================
+      kewarganegaraan:
+        initialData.kewarganegaraan ??
+        "",
 
       isi_keterangan:
-        initialData.isi_keterangan ?? "",
-
+        initialData.isi_keterangan ??
+        "",
     });
+  }, [
+    mode,
+    initialData,
+  ]);
 
-  }, [mode, initialData]);
+  // ===========================
+  // LOOKUP PENDUDUK
+  // ===========================
 
+  async function lookupPenduduk(
+    nik: string
+  ) {
+    if (
+      !/^\d{16}$/.test(nik)
+    ) {
+      setLookupStatus("idle");
+      return;
+    }
+
+    setLookupStatus("loading");
+
+    try {
+      const res =
+        await fetch(
+          `/api/pengajuan/beda-nama-identitas?nik=${nik}`
+        );
+
+      const json =
+        await res.json();
+
+      if (
+        !json.success ||
+        !json.found ||
+        !json.data
+      ) {
+        setLookupStatus(
+          "not-found"
+        );
+
+        return;
+      }
+
+      const data =
+        json.data;
+
+      const ttl =
+        parseTtl(
+          data.ttl ?? ""
+        );
+
+      setForm((prev) => ({
+        ...prev,
+
+        nama:
+          data.nama ?? "",
+
+        tempat_lahir:
+          ttl.tempat,
+
+        tanggal_lahir:
+          ttl.tanggal,
+
+        agama:
+          data.agama ?? "",
+
+        jenis_kelamin:
+          data.jenis_kelamin ?? "",
+
+        status_perkawinan:
+          data.status_perkawinan ??
+          "",
+
+        pekerjaan:
+          data.pekerjaan ?? "",
+
+        alamat:
+          data.alamat ?? "",
+
+        dusun:
+          data.dusun ?? "",
+
+        rt:
+          data.rt ?? "",
+
+        rw:
+          data.rw ?? "",
+
+        kewarganegaraan:
+          data.kewarganegaraan ??
+          "",
+      }));
+
+      setLookupStatus("found");
+
+    } catch (error) {
+
+      console.error(
+        "Lookup penduduk error:",
+        error
+      );
+
+      setLookupStatus(
+        "not-found"
+      );
+    }
+  }
+
+  // ===========================
   // HANDLE INPUT
+  // ===========================
 
   function handleChange(
     e: React.ChangeEvent<
@@ -153,254 +320,251 @@ export default function BedaNamaIdentitasForm({
       HTMLSelectElement
     >
   ) {
+    const {
+      name,
+      value,
+    } = e.target;
 
     setForm((prev) => ({
       ...prev,
-      [e.target.name]:
-        e.target.value,
+      [name]: value,
     }));
 
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+
+    // ===========================
+    // LOOKUP NIK
+    // ===========================
+
+    if (name === "nik") {
+      setLookupStatus("idle");
+
+      if (
+        mode === "create" &&
+        value.length !== 16
+      ) {
+        setForm((prev) => ({
+          ...prev,
+
+          nama: "",
+          tempat_lahir: "",
+          tanggal_lahir: "",
+          agama: "",
+          jenis_kelamin: "",
+          status_perkawinan: "",
+          pekerjaan: "",
+          alamat: "",
+          dusun: "",
+          rt: "",
+          rw: "",
+          kewarganegaraan: "",
+        }));
+      }
+
+      if (
+        mode === "create" &&
+        /^\d{16}$/.test(value)
+      ) {
+        lookupPenduduk(value);
+      }
+    }
   }
-    // VALIDASI FORM
+
+  // ===========================
+  // VALIDASI
+  // ===========================
 
   function validateForm() {
-
     const newErrors:
       Record<string, string> = {};
 
-    // ======================
-    // IDENTITAS LAMA
-    // ======================
-
-    if (!form.nama_lama.trim()) {
-      newErrors.nama_lama =
-        "Nama lama wajib diisi.";
-    }
-
-    if (!form.tempat_lahir_lama.trim()) {
-
-      newErrors.tempat_lahir_lama =
-        "Tempat lahir wajib diisi.";
-
-    }
-
-    if (!form.tanggal_lahir_lama) {
-
-      newErrors.tanggal_lahir_lama =
-        "Tanggal lahir wajib diisi.";
-
-    }
-
-    if (!form.nik_lama.trim()) {
-
-      newErrors.nik_lama =
-        "NIK wajib diisi.";
-
-    } else if (
+    if (
       !/^\d{16}$/.test(
-        form.nik_lama
+        form.nik
       )
     ) {
-
-      newErrors.nik_lama =
+      newErrors.nik =
         "NIK harus terdiri dari 16 digit.";
-
     }
 
-    if (!form.jenis_kelamin_lama) {
-
-      newErrors.jenis_kelamin_lama =
-        "Pilih jenis kelamin.";
-
+    if (!form.nama.trim()) {
+      newErrors.nama =
+        "Nama wajib diisi.";
     }
 
-    if (!form.pekerjaan_lama.trim()) {
-
-      newErrors.pekerjaan_lama =
-        "Pekerjaan wajib diisi.";
-
-    }
-
-    if (!form.alamat_lama.trim()) {
-
-      newErrors.alamat_lama =
-        "Alamat wajib diisi.";
-
-    }
-
-    // ======================
-    // IDENTITAS BARU
-    // ======================
-
-    if (!form.nama_baru.trim()) {
-
-      newErrors.nama_baru =
-        "Nama baru wajib diisi.";
-
-    }
-
-    if (!form.tempat_lahir_baru.trim()) {
-
-      newErrors.tempat_lahir_baru =
-        "Tempat lahir wajib diisi.";
-
-    }
-
-    if (!form.tanggal_lahir_baru) {
-
-      newErrors.tanggal_lahir_baru =
-        "Tanggal lahir wajib diisi.";
-
-    }
-
-    if (!form.nik_baru.trim()) {
-
-      newErrors.nik_baru =
-        "NIK wajib diisi.";
-
-    } else if (
-      !/^\d{16}$/.test(
-        form.nik_baru
-      )
+    if (
+      !form.tempat_lahir.trim()
     ) {
-
-      newErrors.nik_baru =
-        "NIK harus terdiri dari 16 digit.";
-
+      newErrors.tempat_lahir =
+        "Tempat lahir wajib diisi.";
     }
 
-    if (!form.jenis_kelamin_baru) {
+    if (!form.tanggal_lahir) {
+      newErrors.tanggal_lahir =
+        "Tanggal lahir wajib diisi.";
+    }
 
-      newErrors.jenis_kelamin_baru =
+    if (!form.agama) {
+      newErrors.agama =
+        "Agama wajib diisi.";
+    }
+
+    if (!form.jenis_kelamin) {
+      newErrors.jenis_kelamin =
         "Pilih jenis kelamin.";
-
     }
 
-    if (!form.pekerjaan_baru.trim()) {
+    if (
+      !form.status_perkawinan
+    ) {
+      newErrors.status_perkawinan =
+        "Pilih status perkawinan.";
+    }
 
-      newErrors.pekerjaan_baru =
+    if (
+      !form.pekerjaan.trim()
+    ) {
+      newErrors.pekerjaan =
         "Pekerjaan wajib diisi.";
-
     }
 
-    if (!form.alamat_baru.trim()) {
-
-      newErrors.alamat_baru =
+    if (!form.alamat.trim()) {
+      newErrors.alamat =
         "Alamat wajib diisi.";
-
     }
 
-    // ======================
-    // KETERANGAN
-    // ======================
+    if (!form.dusun.trim()) {
+      newErrors.dusun =
+        "Dusun wajib diisi.";
+    }
 
-    if (!form.isi_keterangan.trim()) {
+    if (!form.rt.trim()) {
+      newErrors.rt =
+        "RT wajib diisi.";
+    }
 
+    if (!form.rw.trim()) {
+      newErrors.rw =
+        "RW wajib diisi.";
+    }
+
+    if (
+      !form.kewarganegaraan.trim()
+    ) {
+      newErrors.kewarganegaraan =
+        "Kewarganegaraan wajib diisi.";
+    }
+
+    if (
+      !form.isi_keterangan.trim()
+    ) {
       newErrors.isi_keterangan =
         "Keterangan wajib diisi.";
-
     }
-
-    // Upload KTP hanya wajib saat create
 
     if (
       mode === "create" &&
+      role !== "admin" &&
       !fileKtp
     ) {
-
       newErrors.file_ktp =
         "Silakan upload KTP.";
-
     }
 
-    setErrors(newErrors);
-
-    return (
-      Object.keys(newErrors)
-        .length === 0
+    setErrors(
+      newErrors
     );
 
+    return (
+      Object.keys(
+        newErrors
+      ).length === 0
+    );
   }
-    // HANDLE SUBMIT
+
+  // ===========================
+  // SUBMIT
+  // ===========================
 
   async function handleSubmit(
     e: React.FormEvent
   ) {
-
     e.preventDefault();
 
-    if (!validateForm())
+    if (!validateForm()) {
       return;
+    }
 
     const formData =
       new FormData();
 
     // ======================
-    // IDENTITAS LAMA
+    // DATA PEMOHON
     // ======================
 
     formData.append(
-      "nama_lama",
-      form.nama_lama
+      "nik",
+      form.nik
     );
 
     formData.append(
-      "ttl_lama",
-      `${form.tempat_lahir_lama}, ${form.tanggal_lahir_lama}`
+      "nama",
+      form.nama
     );
 
     formData.append(
-      "nik_lama",
-      form.nik_lama
+      "ttl",
+      `${form.tempat_lahir}, ${form.tanggal_lahir}`
     );
 
     formData.append(
-      "jenis_kelamin_lama",
-      form.jenis_kelamin_lama
+      "agama",
+      form.agama
     );
 
     formData.append(
-      "pekerjaan_lama",
-      form.pekerjaan_lama
+      "jenis_kelamin",
+      form.jenis_kelamin
     );
 
     formData.append(
-      "alamat_lama",
-      form.alamat_lama
-    );
-
-    // ======================
-    // IDENTITAS BARU
-    // ======================
-
-    formData.append(
-      "nama_baru",
-      form.nama_baru
+      "status_perkawinan",
+      form.status_perkawinan
     );
 
     formData.append(
-      "ttl_baru",
-      `${form.tempat_lahir_baru}, ${form.tanggal_lahir_baru}`
+      "pekerjaan",
+      form.pekerjaan
     );
 
     formData.append(
-      "nik_baru",
-      form.nik_baru
+      "alamat",
+      form.alamat
     );
 
     formData.append(
-      "jenis_kelamin_baru",
-      form.jenis_kelamin_baru
+      "dusun",
+      form.dusun
     );
 
     formData.append(
-      "pekerjaan_baru",
-      form.pekerjaan_baru
+      "rt",
+      form.rt
     );
 
     formData.append(
-      "alamat_baru",
-      form.alamat_baru
+      "rw",
+      form.rw
+    );
+
+    formData.append(
+      "kewarganegaraan",
+      form.kewarganegaraan
     );
 
     // ======================
@@ -412,30 +576,37 @@ export default function BedaNamaIdentitasForm({
       form.isi_keterangan
     );
 
-    if (fileKtp) {
+    // ======================
+    // FILE KTP
+    // ======================
 
+    if (fileKtp) {
       formData.append(
         "file_ktp",
         fileKtp
       );
-
     }
+
+    // ======================
+    // ADMIN
+    // ======================
 
     if (
       role === "admin" &&
       onSubmit
     ) {
-
       await onSubmit(
         formData
       );
 
       return;
-
     }
 
-    try {
+    // ======================
+    // USER
+    // ======================
 
+    try {
       const url =
         mode === "edit"
           ? `/api/pengajuan/beda-nama-identitas/${initialData.id}`
@@ -459,14 +630,12 @@ export default function BedaNamaIdentitasForm({
         await res.json();
 
       if (!json.success) {
-
         toast.error(
           json.message ??
           "Gagal menyimpan."
         );
 
         return;
-
       }
 
       setErrors({});
@@ -475,7 +644,6 @@ export default function BedaNamaIdentitasForm({
       if (
         mode === "edit"
       ) {
-
         toast.success(
           "Perbaikan berhasil dikirim."
         );
@@ -484,27 +652,93 @@ export default function BedaNamaIdentitasForm({
           `/tracking/${initialData.kode_tracking}`;
 
       } else {
-
         window.location.href =
           `/success/${json.kode_tracking}`;
-
       }
 
-    } catch (err) {
+    } catch (error) {
 
-      console.error(err);
+      console.error(error);
 
       toast.error(
         "Terjadi kesalahan server."
       );
+    }
+  }
 
+  // ===========================
+  // LOOKUP MESSAGE
+  // ===========================
+
+  function renderLookupMessage() {
+    if (
+      lookupStatus ===
+      "found"
+    ) {
+      return (
+        <p
+          style={{
+            color: "#16a34a",
+            fontSize: 14,
+            marginTop: -10,
+            marginBottom: 16,
+          }}
+        >
+          Data penduduk ditemukan dan
+          telah diisi otomatis.
+        </p>
+      );
     }
 
+    if (
+      lookupStatus ===
+      "not-found"
+    ) {
+      return (
+        <p
+          style={{
+            color: "#666",
+            fontSize: 14,
+            marginTop: -10,
+            marginBottom: 16,
+          }}
+        >
+          Silakan lengkapi data penduduk.
+        </p>
+      );
+    }
+
+    if (
+      lookupStatus ===
+      "loading"
+    ) {
+      return (
+        <p
+          style={{
+            color: "#666",
+            fontSize: 14,
+            marginTop: -10,
+            marginBottom: 16,
+          }}
+        >
+          Mencari data penduduk...
+        </p>
+      );
+    }
+
+    return null;
   }
-    // RENDER
+
+  // ===========================
+  // RENDER
+  // ===========================
 
   return (
     <div className="pengajuan-page">
+
+      {/* =========================
+          HERO
+      ========================= */}
 
       <section className="pengajuan-hero">
 
@@ -530,16 +764,19 @@ export default function BedaNamaIdentitasForm({
 
         <div className="pengajuan-card">
 
-          {/* ALASAN PENOLAKAN */}
+          {/* ======================
+              ALASAN PENOLAKAN
+          ====================== */}
 
           {mode === "edit" && (
-
             <div
               className="reject-alert"
               style={{
                 background: "#fff7ed",
-                border: "1px solid #fdba74",
-                borderLeft: "6px solid #f97316",
+                border:
+                  "1px solid #fdba74",
+                borderLeft:
+                  "6px solid #f97316",
                 borderRadius: 12,
                 padding: 18,
                 marginBottom: 24,
@@ -548,10 +785,12 @@ export default function BedaNamaIdentitasForm({
               <div
                 style={{
                   display: "flex",
-                  alignItems: "flex-start",
+                  alignItems:
+                    "flex-start",
                   gap: 12,
                 }}
               >
+
                 <div
                   style={{
                     fontSize: 26,
@@ -561,6 +800,7 @@ export default function BedaNamaIdentitasForm({
                 </div>
 
                 <div>
+
                   <h3
                     style={{
                       margin: 0,
@@ -574,7 +814,8 @@ export default function BedaNamaIdentitasForm({
 
                   <p
                     style={{
-                      margin: "10px 0 4px",
+                      margin:
+                        "10px 0 4px",
                       fontWeight: 600,
                       color: "#7c2d12",
                     }}
@@ -589,31 +830,62 @@ export default function BedaNamaIdentitasForm({
                       lineHeight: 1.7,
                     }}
                   >
-                    {initialData.alasan_penolakan}
+                    {
+                      initialData?.alasan_penolakan
+                    }
                   </p>
+
                 </div>
+
               </div>
             </div>
-
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form
+            onSubmit={
+              handleSubmit
+            }
+          >
+
+            {/* ======================
+                DATA PEMOHON
+            ====================== */}
 
             <h3 className="mb-4 font-semibold text-lg">
-              Identitas Lama
+              Data Pemohon
             </h3>
 
             <InputField
-              label="Nama"
-              name="nama_lama"
-              value={form.nama_lama}
-              onChange={handleChange}
-              placeholder="Masukkan nama lama"
+              label="NIK"
+              name="nik"
+              value={form.nik}
+              onChange={
+                handleChange
+              }
+              placeholder="Masukkan NIK"
             />
 
-            {errors.nama_lama && (
+            {errors.nik && (
               <p className="form-error">
-                {errors.nama_lama}
+                {errors.nik}
+              </p>
+            )}
+
+            {renderLookupMessage()}
+
+            <InputField
+              label="Nama"
+              name="nama"
+              value={form.nama}
+              onChange={
+                handleChange
+              }
+              placeholder="Masukkan nama"
+            />
+
+            {errors.nama && (
+              <p className="form-error">
+                {errors.nama}
               </p>
             )}
 
@@ -621,241 +893,308 @@ export default function BedaNamaIdentitasForm({
 
               <InputField
                 label="Tempat Lahir"
-                name="tempat_lahir_lama"
-                value={form.tempat_lahir_lama}
-                onChange={handleChange}
+                name="tempat_lahir"
+                value={
+                  form.tempat_lahir
+                }
+                onChange={
+                  handleChange
+                }
                 placeholder="Masukkan tempat lahir"
               />
 
               <InputField
                 label="Tanggal Lahir"
-                name="tanggal_lahir_lama"
+                name="tanggal_lahir"
                 type="date"
-                value={form.tanggal_lahir_lama}
-                onChange={handleChange}
+                value={
+                  form.tanggal_lahir
+                }
+                onChange={
+                  handleChange
+                }
               />
 
             </div>
 
-            {errors.tanggal_lahir_lama && (
+            {errors.tempat_lahir && (
               <p className="form-error">
-                {errors.tanggal_lahir_lama}
+                {
+                  errors.tempat_lahir
+                }
               </p>
             )}
 
-            <InputField
-              label="NIK"
-              name="nik_lama"
-              value={form.nik_lama}
-              onChange={handleChange}
-              placeholder="Masukkan NIK"
+            {errors.tanggal_lahir && (
+              <p className="form-error">
+                {
+                  errors.tanggal_lahir
+                }
+              </p>
+            )}
+
+            <SelectField
+              label="Agama"
+              name="agama"
+              value={form.agama}
+              onChange={
+                handleChange
+              }
+              options={[
+                "Islam",
+                "Kristen",
+                "Katolik",
+                "Hindu",
+                "Buddha",
+                "Konghucu",
+              ]}
             />
 
-            {errors.nik_lama && (
+            {errors.agama && (
               <p className="form-error">
-                {errors.nik_lama}
+                {errors.agama}
               </p>
             )}
 
             <SelectField
               label="Jenis Kelamin"
-              name="jenis_kelamin_lama"
-              value={form.jenis_kelamin_lama}
-              onChange={handleChange}
+              name="jenis_kelamin"
+              value={
+                form.jenis_kelamin
+              }
+              onChange={
+                handleChange
+              }
               options={[
                 "Laki-laki",
                 "Perempuan",
               ]}
             />
 
-            {errors.jenis_kelamin_lama && (
+            {errors.jenis_kelamin && (
               <p className="form-error">
-                {errors.jenis_kelamin_lama}
-              </p>
-            )}
-
-            <InputField
-              label="Pekerjaan"
-              name="pekerjaan_lama"
-              value={form.pekerjaan_lama}
-              onChange={handleChange}
-              placeholder="Masukkan pekerjaan"
-            />
-
-            {errors.pekerjaan_lama && (
-              <p className="form-error">
-                {errors.pekerjaan_lama}
-              </p>
-            )}
-
-            <InputField
-              label="Alamat"
-              name="alamat_lama"
-              value={form.alamat_lama}
-              onChange={handleChange}
-              placeholder="Masukkan alamat"
-              textarea
-            />
-
-            {errors.alamat_lama && (
-              <p className="form-error">
-                {errors.alamat_lama}
-              </p>
-            )}
-                        <hr className="my-8" />
-
-            <h3 className="mb-4 font-semibold text-lg">
-              Identitas Baru
-            </h3>
-
-            <InputField
-              label="Nama"
-              name="nama_baru"
-              value={form.nama_baru}
-              onChange={handleChange}
-              placeholder="Masukkan nama baru"
-            />
-
-            {errors.nama_baru && (
-              <p className="form-error">
-                {errors.nama_baru}
-              </p>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-
-              <InputField
-                label="Tempat Lahir"
-                name="tempat_lahir_baru"
-                value={form.tempat_lahir_baru}
-                onChange={handleChange}
-                placeholder="Masukkan tempat lahir"
-              />
-
-              <InputField
-                label="Tanggal Lahir"
-                name="tanggal_lahir_baru"
-                type="date"
-                value={form.tanggal_lahir_baru}
-                onChange={handleChange}
-              />
-
-            </div>
-
-            {errors.tanggal_lahir_baru && (
-              <p className="form-error">
-                {errors.tanggal_lahir_baru}
-              </p>
-            )}
-
-            <InputField
-              label="NIK"
-              name="nik_baru"
-              value={form.nik_baru}
-              onChange={handleChange}
-              placeholder="Masukkan NIK"
-            />
-
-            {errors.nik_baru && (
-              <p className="form-error">
-                {errors.nik_baru}
+                {
+                  errors.jenis_kelamin
+                }
               </p>
             )}
 
             <SelectField
-              label="Jenis Kelamin"
-              name="jenis_kelamin_baru"
-              value={form.jenis_kelamin_baru}
-              onChange={handleChange}
+              label="Status Perkawinan"
+              name="status_perkawinan"
+              value={
+                form.status_perkawinan
+              }
+              onChange={
+                handleChange
+              }
               options={[
-                "Laki-laki",
-                "Perempuan",
+                "Belum Kawin",
+                "Kawin",
+                "Cerai Hidup",
+                "Cerai Mati",
               ]}
             />
 
-            {errors.jenis_kelamin_baru && (
+            {errors.status_perkawinan && (
               <p className="form-error">
-                {errors.jenis_kelamin_baru}
+                {
+                  errors.status_perkawinan
+                }
               </p>
             )}
 
             <InputField
               label="Pekerjaan"
-              name="pekerjaan_baru"
-              value={form.pekerjaan_baru}
-              onChange={handleChange}
+              name="pekerjaan"
+              value={
+                form.pekerjaan
+              }
+              onChange={
+                handleChange
+              }
               placeholder="Masukkan pekerjaan"
             />
 
-            {errors.pekerjaan_baru && (
+            {errors.pekerjaan && (
               <p className="form-error">
-                {errors.pekerjaan_baru}
+                {
+                  errors.pekerjaan
+                }
               </p>
             )}
 
             <InputField
               label="Alamat"
-              name="alamat_baru"
-              value={form.alamat_baru}
-              onChange={handleChange}
+              name="alamat"
+              value={form.alamat}
+              onChange={
+                handleChange
+              }
               placeholder="Masukkan alamat"
               textarea
             />
 
-            {errors.alamat_baru && (
+            {errors.alamat && (
               <p className="form-error">
-                {errors.alamat_baru}
+                {errors.alamat}
+              </p>
+            )}
+
+            <div className="grid grid-cols-3 gap-4">
+
+              <InputField
+                label="Dusun"
+                name="dusun"
+                value={form.dusun}
+                onChange={
+                  handleChange
+                }
+                placeholder="Dusun"
+              />
+
+              <InputField
+                label="RT"
+                name="rt"
+                value={form.rt}
+                onChange={
+                  handleChange
+                }
+                placeholder="RT"
+              />
+
+              <InputField
+                label="RW"
+                name="rw"
+                value={form.rw}
+                onChange={
+                  handleChange
+                }
+                placeholder="RW"
+              />
+
+            </div>
+
+            {errors.dusun && (
+              <p className="form-error">
+                {errors.dusun}
+              </p>
+            )}
+
+            {errors.rt && (
+              <p className="form-error">
+                {errors.rt}
+              </p>
+            )}
+
+            {errors.rw && (
+              <p className="form-error">
+                {errors.rw}
+              </p>
+            )}
+
+            <InputField
+              label="Kewarganegaraan"
+              name="kewarganegaraan"
+              value={
+                form.kewarganegaraan
+              }
+              onChange={
+                handleChange
+              }
+              placeholder="Contoh: WNI"
+            />
+
+            {errors.kewarganegaraan && (
+              <p className="form-error">
+                {
+                  errors.kewarganegaraan
+                }
               </p>
             )}
 
             <hr className="my-8" />
 
+            {/* ======================
+                KETERANGAN
+            ====================== */}
+
+            <h3 className="mb-4 font-semibold text-lg">
+              Keterangan
+            </h3>
+
             <InputField
-              label="Keterangan"
+              label="Keterangan Perbedaan Nama/Identitas"
               name="isi_keterangan"
-              value={form.isi_keterangan}
-              onChange={handleChange}
-              placeholder="Masukkan keterangan (contoh: nama yang di KTP tidak sama dengan yang di KK)"
+              value={
+                form.isi_keterangan
+              }
+              onChange={
+                handleChange
+              }
+              placeholder="Jelaskan perbedaan nama atau identitas yang dimiliki"
               textarea
             />
 
             {errors.isi_keterangan && (
               <p className="form-error">
-                {errors.isi_keterangan}
+                {
+                  errors.isi_keterangan
+                }
               </p>
             )}
 
+            {/* ======================
+                KTP
+            ====================== */}
+
             <FileUploadField
-              label="Upload KTP"
+              label={role === "admin" ? "Upload KTP (Opsional)" : "Upload KTP"}
               accept="image/jpeg,image/png"
-              onChange={(file: File | null) =>
-                setFileKtp(file)
-              }
+              onChange={(
+                file: File | null
+              ) => {
+                setFileKtp(
+                  file
+                );
+
+                if (
+                  errors.file_ktp
+                ) {
+                  setErrors(
+                    (prev) => ({
+                      ...prev,
+                      file_ktp:
+                        "",
+                    })
+                  );
+                }
+              }}
             />
 
             {mode === "edit" &&
-              initialData?.dokumen?.file_ktp && (
-
-              <div
-                style={{
-                  marginTop: 8,
-                  marginBottom: 16,
-                  fontSize: 14,
-                }}
-              >
-                File saat ini :
-                <a
-                  href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
-                  target="_blank"
-                  rel="noreferrer"
+              initialData?.dokumen
+                ?.file_ktp && (
+                <div
                   style={{
-                    marginLeft: 8,
+                    marginTop: 8,
+                    marginBottom: 16,
+                    fontSize: 14,
                   }}
                 >
-                  Lihat KTP
-                </a>
-              </div>
-            )}
+                  File saat ini :
+                  <a
+                    href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      marginLeft: 8,
+                    }}
+                  >
+                    Lihat KTP
+                  </a>
+                </div>
+              )}
 
             {errors.file_ktp && (
               <p className="form-error">
@@ -863,15 +1202,17 @@ export default function BedaNamaIdentitasForm({
               </p>
             )}
 
-            <SubmitButton>
+            {/* ======================
+                SUBMIT
+            ====================== */}
 
+            <SubmitButton>
               {submitLabel ??
                 (role === "admin"
                   ? "Buat Surat"
                   : mode === "edit"
                   ? "Perbaiki Pengajuan"
                   : "Ajukan Surat")}
-
             </SubmitButton>
 
           </form>
@@ -881,6 +1222,5 @@ export default function BedaNamaIdentitasForm({
       </section>
 
     </div>
-
   );
 }

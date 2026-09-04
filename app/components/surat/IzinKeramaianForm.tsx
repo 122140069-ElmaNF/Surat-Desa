@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
 import InputField from "@/app/components/form/InputField";
 import SelectField from "@/app/components/form/SelectField";
 import FileUploadField from "@/app/components/form/FileUploadField";
@@ -22,18 +23,21 @@ export default function IzinKeramaianForm({
   role = "user",
   onSubmit,
 }: Props) {
-
-
   const [form, setForm] = useState({
+    nik: "",
     nama: "",
     tempat_lahir: "",
     tanggal_lahir: "",
-    nik: "",
     agama: "",
     jenis_kelamin: "",
+    status_perkawinan: "",
     kewarganegaraan: "",
     pekerjaan: "",
     alamat: "",
+    dusun: "",
+    rt: "",
+    rw: "",
+
     jenis_kegiatan: "",
     tanggal_kegiatan: "",
     jam_kegiatan: "",
@@ -46,12 +50,17 @@ export default function IzinKeramaianForm({
   const [errors, setErrors] =
     useState<Record<string, string>>({});
 
-  // ===============================
+  const [loadingNik, setLoadingNik] =
+    useState(false);
+
+  const [lookupMessage, setLookupMessage] =
+    useState("");
+
+  // =========================================
   // LOAD DATA SAAT EDIT
-  // ===============================
+  // =========================================
 
   useEffect(() => {
-
     if (
       mode !== "edit" ||
       !initialData
@@ -63,6 +72,9 @@ export default function IzinKeramaianForm({
       initialData.ttl?.split(",") ?? [];
 
     setForm({
+      nik:
+        initialData.nik ?? "",
+
       nama:
         initialData.nama ?? "",
 
@@ -72,14 +84,14 @@ export default function IzinKeramaianForm({
       tanggal_lahir:
         ttl[1]?.trim() ?? "",
 
-      nik:
-        initialData.nik ?? "",
-
       agama:
         initialData.agama ?? "",
 
       jenis_kelamin:
         initialData.jenis_kelamin ?? "",
+
+      status_perkawinan:
+        initialData.status_perkawinan ?? "",
 
       kewarganegaraan:
         initialData.kewarganegaraan ?? "",
@@ -89,6 +101,15 @@ export default function IzinKeramaianForm({
 
       alamat:
         initialData.alamat ?? "",
+
+      dusun:
+        initialData.dusun ?? "",
+
+      rt:
+        initialData.rt ?? "",
+
+      rw:
+        initialData.rw ?? "",
 
       jenis_kegiatan:
         initialData.jenis_kegiatan ?? "",
@@ -102,12 +123,156 @@ export default function IzinKeramaianForm({
       acara:
         initialData.acara ?? "",
     });
-
   }, [mode, initialData]);
 
-  // ===============================
+  // =========================================
+  // LOOKUP NIK
+  // =========================================
+
+  useEffect(() => {
+    // Lookup hanya saat create
+    if (
+      mode !== "create" ||
+      form.nik.length !== 16
+    ) {
+      setLookupMessage("");
+      return;
+    }
+
+    let cancelled = false;
+
+    async function lookupNik() {
+      try {
+        setLoadingNik(true);
+        setLookupMessage("");
+
+        const res = await fetch(
+          `/api/pengajuan/izin-keramaian?nik=${form.nik}`
+        );
+
+        const json =
+          await res.json();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (
+          json.success &&
+          json.found &&
+          json.data
+        ) {
+          const data =
+            json.data;
+
+          const ttl =
+            data.ttl?.split(",") ?? [];
+
+          setForm((prev) => ({
+            ...prev,
+
+            nik:
+              data.nik ??
+              prev.nik,
+
+            nama:
+              data.nama ??
+              "",
+
+            tempat_lahir:
+              ttl[0]?.trim() ??
+              "",
+
+            tanggal_lahir:
+              ttl[1]?.trim() ??
+              "",
+
+            agama:
+              data.agama ??
+              "",
+
+            jenis_kelamin:
+              data.jenis_kelamin ??
+              "",
+
+            status_perkawinan:
+              data.status_perkawinan ??
+              "",
+
+            kewarganegaraan:
+              data.kewarganegaraan ??
+              "",
+
+            pekerjaan:
+              data.pekerjaan ??
+              "",
+
+            alamat:
+              data.alamat ??
+              "",
+
+            dusun:
+              data.dusun ??
+              "",
+
+            rt:
+              data.rt ??
+              "",
+
+            rw:
+              data.rw ??
+              "",
+
+            // Jangan ubah data khusus surat
+            jenis_kegiatan:
+              prev.jenis_kegiatan,
+
+            tanggal_kegiatan:
+              prev.tanggal_kegiatan,
+
+            jam_kegiatan:
+              prev.jam_kegiatan,
+
+            acara:
+              prev.acara,
+          }));
+
+          setLookupMessage(
+            "Data penduduk ditemukan dan telah diisi otomatis."
+          );
+        } else {
+          setLookupMessage(
+            "Silakan lengkapi data penduduk."
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Lookup NIK:",
+          error
+        );
+
+        if (!cancelled) {
+          setLookupMessage(
+            "Gagal mencari data penduduk."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingNik(false);
+        }
+      }
+    }
+
+    lookupNik();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.nik, mode]);
+
+  // =========================================
   // HANDLE INPUT
-  // ===============================
+  // =========================================
 
   function handleChange(
     e: React.ChangeEvent<
@@ -116,23 +281,84 @@ export default function IzinKeramaianForm({
       HTMLSelectElement
     >
   ) {
+    const {
+      name,
+      value,
+    } = e.target;
+
+    // =======================================
+    // KHUSUS NIK
+    // =======================================
+
+    if (name === "nik") {
+      const nikValue =
+        value
+          .replace(/\D/g, "")
+          .slice(0, 16);
+
+      setForm((prev) => ({
+        ...prev,
+
+        nik: nikValue,
+
+        // Saat NIK berubah,
+        // kosongkan data identitas.
+        ...(mode === "create"
+          ? {
+              nama: "",
+              tempat_lahir: "",
+              tanggal_lahir: "",
+              agama: "",
+              jenis_kelamin: "",
+              status_perkawinan: "",
+              kewarganegaraan: "",
+              pekerjaan: "",
+              alamat: "",
+              dusun: "",
+              rt: "",
+              rw: "",
+            }
+          : {}),
+      }));
+
+      setLookupMessage("");
+
+      setErrors((prev) => ({
+        ...prev,
+        nik: "",
+      }));
+
+      return;
+    }
 
     setForm((prev) => ({
       ...prev,
-      [e.target.name]:
-        e.target.value,
+      [name]: value,
     }));
 
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
   }
 
-  // ===============================
-  // VALIDASI
-  // ===============================
+  // =========================================
+  // VALIDASI FORM
+  // =========================================
 
   function validateForm() {
-
     const newErrors:
       Record<string, string> = {};
+
+    if (!form.nik.trim()) {
+      newErrors.nik =
+        "NIK wajib diisi.";
+    } else if (
+      !/^\d{16}$/.test(form.nik)
+    ) {
+      newErrors.nik =
+        "NIK harus terdiri dari 16 digit.";
+    }
 
     if (!form.nama.trim()) {
       newErrors.nama =
@@ -149,16 +375,6 @@ export default function IzinKeramaianForm({
         "Tanggal lahir wajib diisi.";
     }
 
-    if (!form.nik.trim()) {
-      newErrors.nik =
-        "NIK wajib diisi.";
-    } else if (
-      !/^\d{16}$/.test(form.nik)
-    ) {
-      newErrors.nik =
-        "NIK harus terdiri dari 16 digit.";
-    }
-
     if (!form.agama) {
       newErrors.agama =
         "Pilih agama.";
@@ -167,6 +383,11 @@ export default function IzinKeramaianForm({
     if (!form.jenis_kelamin) {
       newErrors.jenis_kelamin =
         "Pilih jenis kelamin.";
+    }
+
+    if (!form.status_perkawinan) {
+      newErrors.status_perkawinan =
+        "Pilih status perkawinan.";
     }
 
     if (!form.kewarganegaraan.trim()) {
@@ -183,6 +404,25 @@ export default function IzinKeramaianForm({
       newErrors.alamat =
         "Alamat wajib diisi.";
     }
+
+    if (!form.dusun.trim()) {
+      newErrors.dusun =
+        "Dusun wajib diisi.";
+    }
+
+    if (!form.rt.trim()) {
+      newErrors.rt =
+        "RT wajib diisi.";
+    }
+
+    if (!form.rw.trim()) {
+      newErrors.rw =
+        "RW wajib diisi.";
+    }
+
+    // =======================================
+    // DATA KHUSUS
+    // =======================================
 
     if (!form.jenis_kegiatan.trim()) {
       newErrors.jenis_kegiatan =
@@ -204,8 +444,13 @@ export default function IzinKeramaianForm({
         "Acara wajib diisi.";
     }
 
+    // =======================================
+    // FILE
+    // =======================================
+
     if (
       mode === "create" &&
+      role !== "admin" &&
       !fileKtp
     ) {
       newErrors.file_ktp =
@@ -215,25 +460,34 @@ export default function IzinKeramaianForm({
     setErrors(newErrors);
 
     return (
-      Object.keys(newErrors)
-        .length === 0
+      Object.keys(newErrors).length === 0
     );
   }
-    // ===============================
+
+  // =========================================
   // HANDLE SUBMIT
-  // ===============================
+  // =========================================
 
   async function handleSubmit(
     e: React.FormEvent
   ) {
-
     e.preventDefault();
 
-    if (!validateForm())
+    if (!validateForm()) {
       return;
+    }
 
     const formData =
       new FormData();
+
+    // =======================================
+    // DATA KEPENDUDUKAN
+    // =======================================
+
+    formData.append(
+      "nik",
+      form.nik
+    );
 
     formData.append(
       "nama",
@@ -246,11 +500,6 @@ export default function IzinKeramaianForm({
     );
 
     formData.append(
-      "nik",
-      form.nik
-    );
-
-    formData.append(
       "agama",
       form.agama
     );
@@ -258,6 +507,11 @@ export default function IzinKeramaianForm({
     formData.append(
       "jenis_kelamin",
       form.jenis_kelamin
+    );
+
+    formData.append(
+      "status_perkawinan",
+      form.status_perkawinan
     );
 
     formData.append(
@@ -274,6 +528,25 @@ export default function IzinKeramaianForm({
       "alamat",
       form.alamat
     );
+
+    formData.append(
+      "dusun",
+      form.dusun
+    );
+
+    formData.append(
+      "rt",
+      form.rt
+    );
+
+    formData.append(
+      "rw",
+      form.rw
+    );
+
+    // =======================================
+    // DATA KHUSUS IZIN KERAMAIAN
+    // =======================================
 
     formData.append(
       "jenis_kegiatan",
@@ -295,6 +568,10 @@ export default function IzinKeramaianForm({
       form.acara
     );
 
+    // =======================================
+    // FILE KTP
+    // =======================================
+
     if (fileKtp) {
       formData.append(
         "file_ktp",
@@ -302,23 +579,23 @@ export default function IzinKeramaianForm({
       );
     }
 
-    // ===============================
+    // =======================================
     // ADMIN
-    // ===============================
+    // =======================================
 
     if (
       role === "admin" &&
       onSubmit
     ) {
-
       await onSubmit(formData);
-
       return;
-
     }
 
-    try {
+    // =======================================
+    // USER
+    // =======================================
 
+    try {
       const url =
         mode === "edit"
           ? `/api/pengajuan/izin-keramaian/${initialData.id}`
@@ -341,49 +618,49 @@ export default function IzinKeramaianForm({
       if (!json.success) {
         toast.error(
           json.message ??
-          "Gagal menyimpan."
+            "Gagal menyimpan."
         );
 
         return;
-
       }
 
       setErrors({});
-
       setFileKtp(null);
 
       if (mode === "edit") {
-
         toast.success(
           "Perbaikan berhasil dikirim."
         );
 
         window.location.href =
           `/tracking/${initialData.kode_tracking}`;
-
       } else {
-
         window.location.href =
           `/success/${json.kode_tracking}`;
-
       }
-
     } catch (err) {
-
       console.error(err);
+
       toast.error(
         "Terjadi kesalahan server."
       );
     }
   }
-    // ===============================
+
+  // =========================================
   // RENDER
-  // ===============================
+  // =========================================
 
   return (
     <div className="pengajuan-page">
+
+      {/* =====================================
+          HERO
+      ===================================== */}
+
       <section className="pengajuan-hero">
         <div className="pengajuan-hero-content">
+
           <h1>
             {mode === "create"
               ? "Surat Pengantar Izin Keramaian"
@@ -395,76 +672,143 @@ export default function IzinKeramaianForm({
               ? "Lengkapi data di bawah ini dengan benar sebelum mengajukan surat."
               : "Perbaiki data sesuai catatan Admin kemudian kirim kembali."}
           </p>
+
         </div>
       </section>
 
       <section className="pengajuan-content">
         <div className="pengajuan-card">
 
+          {/* =================================
+              ALASAN PENOLAKAN
+          ================================= */}
+
           {mode === "edit" && (
             <div
-  className="reject-alert"
-  style={{
-    background: "#fff7ed",
-    border: "1px solid #fdba74",
-    borderLeft: "6px solid #f97316",
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 24,
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 12,
-    }}
-  >
-    <div
-      style={{
-        fontSize: 26,
-      }}
-    >
-      ⚠️
-    </div>
+              className="reject-alert"
+              style={{
+                background: "#fff7ed",
+                border:
+                  "1px solid #fdba74",
+                borderLeft:
+                  "6px solid #f97316",
+                borderRadius: 12,
+                padding: 18,
+                marginBottom: 24,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems:
+                    "flex-start",
+                  gap: 12,
+                }}
+              >
 
-    <div>
-      <h3
-        style={{
-          margin: 0,
-          color: "#9a3412",
-          fontWeight: 700,
-          fontSize: 18,
-        }}
-      >
-        Pengajuan Ditolak
-      </h3>
+                <div
+                  style={{
+                    fontSize: 26,
+                  }}
+                >
+                  ⚠️
+                </div>
 
-      <p
-        style={{
-          margin: "10px 0 4px",
-          fontWeight: 600,
-          color: "#7c2d12",
-        }}
-      >
-        Alasan Penolakan :
-      </p>
+                <div>
 
-      <p
-        style={{
-          margin: 0,
-          color: "#444",
-          lineHeight: 1.7,
-        }}
-      >
-        {initialData.alasan_penolakan}
-      </p>
-    </div>
-  </div>
-</div>
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: "#9a3412",
+                      fontWeight: 700,
+                      fontSize: 18,
+                    }}
+                  >
+                    Pengajuan Ditolak
+                  </h3>
+
+                  <p
+                    style={{
+                      margin:
+                        "10px 0 4px",
+                      fontWeight: 600,
+                      color: "#7c2d12",
+                    }}
+                  >
+                    Alasan Penolakan :
+                  </p>
+
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#444",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {
+                      initialData.alasan_penolakan
+                    }
+                  </p>
+
+                </div>
+              </div>
+            </div>
           )}
 
           <form onSubmit={handleSubmit}>
+
+            {/* =================================
+                NIK
+            ================================= */}
+
+            <InputField
+              label="NIK"
+              name="nik"
+              value={form.nik}
+              onChange={handleChange}
+              placeholder="Masukkan NIK 16 digit"
+            />
+
+            {loadingNik && (
+              <p
+                style={{
+                  marginTop: -8,
+                  marginBottom: 12,
+                  fontSize: 13,
+                  color: "#6b7280",
+                }}
+              >
+                Mencari data penduduk...
+              </p>
+            )}
+
+            {lookupMessage && (
+              <p
+                style={{
+                  marginTop: -8,
+                  marginBottom: 12,
+                  fontSize: 13,
+                  color:
+                    lookupMessage.startsWith(
+                      "Data penduduk ditemukan"
+                    )
+                      ? "#16a34a"
+                      : "#6b7280",
+                }}
+              >
+                {lookupMessage}
+              </p>
+            )}
+
+            {errors.nik && (
+              <p className="form-error">
+                {errors.nik}
+              </p>
+            )}
+
+            {/* =================================
+                NAMA
+            ================================= */}
 
             <InputField
               label="Nama Lengkap"
@@ -480,12 +824,18 @@ export default function IzinKeramaianForm({
               </p>
             )}
 
+            {/* =================================
+                TTL
+            ================================= */}
+
             <div className="grid grid-cols-2 gap-4">
 
               <InputField
                 label="Tempat Lahir"
                 name="tempat_lahir"
-                value={form.tempat_lahir}
+                value={
+                  form.tempat_lahir
+                }
                 onChange={handleChange}
                 placeholder="Masukkan tempat lahir"
               />
@@ -494,7 +844,9 @@ export default function IzinKeramaianForm({
                 label="Tanggal Lahir"
                 name="tanggal_lahir"
                 type="date"
-                value={form.tanggal_lahir}
+                value={
+                  form.tanggal_lahir
+                }
                 onChange={handleChange}
               />
 
@@ -502,29 +854,23 @@ export default function IzinKeramaianForm({
 
             {errors.tempat_lahir && (
               <p className="form-error">
-                {errors.tempat_lahir}
+                {
+                  errors.tempat_lahir
+                }
               </p>
             )}
 
             {errors.tanggal_lahir && (
               <p className="form-error">
-                {errors.tanggal_lahir}
+                {
+                  errors.tanggal_lahir
+                }
               </p>
             )}
 
-            <InputField
-              label="NIK"
-              name="nik"
-              value={form.nik}
-              onChange={handleChange}
-              placeholder="Masukkan NIK"
-            />
-
-            {errors.nik && (
-              <p className="form-error">
-                {errors.nik}
-              </p>
-            )}
+            {/* =================================
+                AGAMA
+            ================================= */}
 
             <SelectField
               label="Agama"
@@ -547,10 +893,43 @@ export default function IzinKeramaianForm({
               </p>
             )}
 
+            {/* =================================
+                STATUS PERKAWINAN
+            ================================= */}
+
+            <SelectField
+              label="Status Perkawinan"
+              name="status_perkawinan"
+              value={
+                form.status_perkawinan
+              }
+              onChange={handleChange}
+              options={[
+                "Belum Kawin",
+                "Kawin",
+                "Cerai Hidup",
+                "Cerai Mati",
+              ]}
+            />
+
+            {errors.status_perkawinan && (
+              <p className="form-error">
+                {
+                  errors.status_perkawinan
+                }
+              </p>
+            )}
+
+            {/* =================================
+                JENIS KELAMIN
+            ================================= */}
+
             <SelectField
               label="Jenis Kelamin"
               name="jenis_kelamin"
-              value={form.jenis_kelamin}
+              value={
+                form.jenis_kelamin
+              }
               onChange={handleChange}
               options={[
                 "Laki-laki",
@@ -560,14 +939,22 @@ export default function IzinKeramaianForm({
 
             {errors.jenis_kelamin && (
               <p className="form-error">
-                {errors.jenis_kelamin}
+                {
+                  errors.jenis_kelamin
+                }
               </p>
             )}
+
+            {/* =================================
+                KEWARGANEGARAAN
+            ================================= */}
 
             <SelectField
               label="Kewarganegaraan"
               name="kewarganegaraan"
-              value={form.kewarganegaraan}
+              value={
+                form.kewarganegaraan
+              }
               onChange={handleChange}
               options={[
                 "WNI",
@@ -577,14 +964,22 @@ export default function IzinKeramaianForm({
 
             {errors.kewarganegaraan && (
               <p className="form-error">
-                {errors.kewarganegaraan}
+                {
+                  errors.kewarganegaraan
+                }
               </p>
             )}
+
+            {/* =================================
+                PEKERJAAN
+            ================================= */}
 
             <InputField
               label="Pekerjaan"
               name="pekerjaan"
-              value={form.pekerjaan}
+              value={
+                form.pekerjaan
+              }
               onChange={handleChange}
               placeholder="Masukkan pekerjaan"
             />
@@ -594,6 +989,10 @@ export default function IzinKeramaianForm({
                 {errors.pekerjaan}
               </p>
             )}
+
+            {/* =================================
+                ALAMAT
+            ================================= */}
 
             <InputField
               label="Alamat"
@@ -610,19 +1009,81 @@ export default function IzinKeramaianForm({
               </p>
             )}
 
+            {/* =================================
+                DUSUN / RT / RW
+            ================================= */}
+
+            <div className="grid grid-cols-3 gap-4">
+
+              <InputField
+                label="Dusun"
+                name="dusun"
+                value={form.dusun}
+                onChange={handleChange}
+                placeholder="Dusun"
+              />
+
+              <InputField
+                label="RT"
+                name="rt"
+                value={form.rt}
+                onChange={handleChange}
+                placeholder="RT"
+              />
+
+              <InputField
+                label="RW"
+                name="rw"
+                value={form.rw}
+                onChange={handleChange}
+                placeholder="RW"
+              />
+
+            </div>
+
+            {errors.dusun && (
+              <p className="form-error">
+                {errors.dusun}
+              </p>
+            )}
+
+            {errors.rt && (
+              <p className="form-error">
+                {errors.rt}
+              </p>
+            )}
+
+            {errors.rw && (
+              <p className="form-error">
+                {errors.rw}
+              </p>
+            )}
+
+            {/* =================================
+                JENIS KEGIATAN
+            ================================= */}
+
             <InputField
               label="Jenis Kegiatan"
               name="jenis_kegiatan"
-              value={form.jenis_kegiatan}
+              value={
+                form.jenis_kegiatan
+              }
               onChange={handleChange}
               placeholder="Contoh : Orgen Tunggal"
             />
 
             {errors.jenis_kegiatan && (
               <p className="form-error">
-                {errors.jenis_kegiatan}
+                {
+                  errors.jenis_kegiatan
+                }
               </p>
             )}
+
+            {/* =================================
+                TANGGAL & JAM
+            ================================= */}
 
             <div className="grid grid-cols-2 gap-4">
 
@@ -630,7 +1091,9 @@ export default function IzinKeramaianForm({
                 label="Tanggal Kegiatan"
                 name="tanggal_kegiatan"
                 type="date"
-                value={form.tanggal_kegiatan}
+                value={
+                  form.tanggal_kegiatan
+                }
                 onChange={handleChange}
               />
 
@@ -638,7 +1101,9 @@ export default function IzinKeramaianForm({
                 label="Jam Kegiatan"
                 name="jam_kegiatan"
                 type="time"
-                value={form.jam_kegiatan}
+                value={
+                  form.jam_kegiatan
+                }
                 onChange={handleChange}
               />
 
@@ -646,15 +1111,23 @@ export default function IzinKeramaianForm({
 
             {errors.tanggal_kegiatan && (
               <p className="form-error">
-                {errors.tanggal_kegiatan}
+                {
+                  errors.tanggal_kegiatan
+                }
               </p>
             )}
 
             {errors.jam_kegiatan && (
               <p className="form-error">
-                {errors.jam_kegiatan}
+                {
+                  errors.jam_kegiatan
+                }
               </p>
             )}
+
+            {/* =================================
+                ACARA
+            ================================= */}
 
             <InputField
               label="Acara"
@@ -670,16 +1143,23 @@ export default function IzinKeramaianForm({
               </p>
             )}
 
+            {/* =================================
+                FILE KTP
+            ================================= */}
+
             <FileUploadField
-              label="Upload KTP"
+              label={role === "admin" ? "Upload KTP (Opsional)" : "Upload KTP"}
               accept="image/jpeg,image/png"
-              onChange={(file: File | null) =>
+              onChange={(
+                file: File | null
+              ) =>
                 setFileKtp(file)
               }
             />
 
             {mode === "edit" &&
-              initialData?.dokumen?.file_ktp && (
+              initialData?.dokumen
+                ?.file_ktp && (
                 <div
                   style={{
                     marginTop: 8,
@@ -688,6 +1168,7 @@ export default function IzinKeramaianForm({
                   }}
                 >
                   File saat ini :
+
                   <a
                     href={`/uploads/ktp/${initialData.dokumen.file_ktp}`}
                     target="_blank"
@@ -699,13 +1180,17 @@ export default function IzinKeramaianForm({
                     Lihat KTP
                   </a>
                 </div>
-            )}
+              )}
 
             {errors.file_ktp && (
               <p className="form-error">
                 {errors.file_ktp}
               </p>
             )}
+
+            {/* =================================
+                SUBMIT
+            ================================= */}
 
             <SubmitButton>
               {submitLabel ??

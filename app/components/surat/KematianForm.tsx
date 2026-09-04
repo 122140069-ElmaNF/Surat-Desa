@@ -19,10 +19,7 @@ type Props = {
 // NORMALISASI TANGGAL UNTUK INPUT TYPE="DATE"
 // ======================================================
 
-function normalizeDateForInput(
-  value: unknown
-): string {
-
+function normalizeDateForInput(value: unknown): string {
   if (
     value === null ||
     value === undefined ||
@@ -31,46 +28,25 @@ function normalizeDateForInput(
     return "";
   }
 
-  // ------------------------------------------
-  // Jika sudah YYYY-MM-DD
-  // ------------------------------------------
+  const stringValue = String(value).trim();
 
-  const stringValue =
-    String(value).trim();
-
-  if (
-    /^\d{4}-\d{2}-\d{2}$/.test(
-      stringValue
-    )
-  ) {
+  // YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(stringValue)) {
     return stringValue;
   }
 
-  // ------------------------------------------
-  // Jika ISO Date
-  // Contoh:
-  // 2026-08-17T00:00:00.000Z
-  // ------------------------------------------
-
-  const isoMatch =
-    stringValue.match(
-      /^(\d{4})-(\d{2})-(\d{2})/
-    );
+  // ISO Date
+  const isoMatch = stringValue.match(
+    /^(\d{4})-(\d{2})-(\d{2})/
+  );
 
   if (isoMatch) {
     return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
   }
 
-  // ------------------------------------------
-  // Jika format Indonesia
-  // Contoh:
-  // 17 Agustus 2026
-  // ------------------------------------------
-
-  const bulan: Record<
-    string,
-    string
-  > = {
+  // Format Indonesia
+  // Contoh: 17 Agustus 2026
+  const bulan: Record<string, string> = {
     januari: "01",
     februari: "02",
     maret: "03",
@@ -85,32 +61,22 @@ function normalizeDateForInput(
     desember: "12",
   };
 
-  const indoMatch =
-    stringValue.match(
-      /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/
-    );
+  const indoMatch = stringValue.match(
+    /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/
+  );
 
   if (indoMatch) {
-
-    const day =
-      indoMatch[1].padStart(2, "0");
+    const day = indoMatch[1].padStart(2, "0");
 
     const month =
-      bulan[
-        indoMatch[2].toLowerCase()
-      ];
+      bulan[indoMatch[2].toLowerCase()];
 
-    const year =
-      indoMatch[3];
+    const year = indoMatch[3];
 
     if (month) {
       return `${year}-${month}-${day}`;
     }
   }
-
-  // ------------------------------------------
-  // Jika gagal dikenali
-  // ------------------------------------------
 
   return "";
 }
@@ -123,10 +89,13 @@ export default function KematianForm({
   onSubmit,
 }: Props) {
 
-  const [form, setForm] = useState({
+  // ======================================================
+  // STATE FORM
+  // ======================================================
 
-    nama: "",
+  const [form, setForm] = useState({
     nik: "",
+    nama: "",
     jenis_kelamin: "",
     umur: "",
     agama: "",
@@ -136,13 +105,11 @@ export default function KematianForm({
     hari: "",
     tanggal: "",
     jam: "",
-
     bertempat_di: "",
     penyebab: "",
 
     pelapor: "",
     hubungan_pelapor: "",
-
   });
 
   const [fileKtp, setFileKtp] =
@@ -150,6 +117,12 @@ export default function KematianForm({
 
   const [errors, setErrors] =
     useState<Record<string, string>>({});
+
+  const [loadingNik, setLoadingNik] =
+    useState(false);
+
+  const [lookupMessage, setLookupMessage] =
+    useState("");
 
   // ======================================================
   // LOAD DATA EDIT
@@ -166,11 +139,11 @@ export default function KematianForm({
 
     setForm({
 
-      nama:
-        initialData.nama ?? "",
-
       nik:
         initialData.nik ?? "",
+
+      nama:
+        initialData.nama ?? "",
 
       jenis_kelamin:
         initialData.jenis_kelamin ?? "",
@@ -189,12 +162,6 @@ export default function KematianForm({
 
       hari:
         initialData.hari ?? "",
-
-      // ==========================================
-      // PENTING:
-      // Pastikan tanggal untuk input date
-      // selalu YYYY-MM-DD
-      // ==========================================
 
       tanggal:
         normalizeDateForInput(
@@ -215,10 +182,155 @@ export default function KematianForm({
 
       hubungan_pelapor:
         initialData.hubungan_pelapor ?? "",
-
     });
 
+    setLookupMessage("");
+
   }, [mode, initialData]);
+
+  // ======================================================
+  // LOOKUP NIK
+  // ======================================================
+
+  useEffect(() => {
+
+    // Hanya melakukan lookup ketika NIK
+    // sudah tepat 16 digit.
+    if (
+      form.nik.length !== 16
+    ) {
+      setLookupMessage("");
+      setLoadingNik(false);
+
+      return;
+    }
+
+    let cancelled = false;
+
+    async function lookupNik() {
+
+      try {
+
+        setLoadingNik(true);
+        setLookupMessage("");
+
+        const res =
+          await fetch(
+            `/api/pengajuan/kematian?nik=${encodeURIComponent(
+              form.nik
+            )}`
+          );
+
+        const json =
+          await res.json();
+
+        if (cancelled) {
+          return;
+        }
+
+        // ==================================================
+        // DATA DITEMUKAN
+        // ==================================================
+
+        if (
+          res.ok &&
+          json.success &&
+          json.data
+        ) {
+
+          const data =
+            json.data;
+
+          setForm((prev) => ({
+            ...prev,
+
+            nik:
+              data.nik ??
+              prev.nik,
+
+            nama:
+              data.nama ??
+              "",
+
+            jenis_kelamin:
+              data.jenis_kelamin ??
+              "",
+
+            agama:
+              data.agama ??
+              "",
+
+            pekerjaan:
+              data.pekerjaan ??
+              "",
+
+            alamat:
+              data.alamat ??
+              "",
+          }));
+
+          setLookupMessage(
+            "Data penduduk ditemukan dan telah diisi otomatis."
+          );
+
+        }
+
+        // ==================================================
+        // DATA TIDAK DITEMUKAN
+        // ==================================================
+
+        else {
+
+          setLookupMessage(
+            "Silakan lengkapi data penduduk."
+          );
+
+          // Bersihkan data identitas yang mungkin
+          // berasal dari hasil lookup NIK sebelumnya.
+          setForm((prev) => ({
+            ...prev,
+
+            nama: "",
+            jenis_kelamin: "",
+            agama: "",
+            pekerjaan: "",
+            alamat: "",
+          }));
+
+        }
+
+      } catch (error) {
+
+        console.error(
+          "Gagal melakukan lookup NIK:",
+          error
+        );
+
+        if (!cancelled) {
+
+          setLookupMessage(
+            "Gagal mencari data penduduk."
+          );
+
+        }
+
+      } finally {
+
+        if (!cancelled) {
+          setLoadingNik(false);
+        }
+
+      }
+
+    }
+
+    lookupNik();
+
+    return () => {
+      cancelled = true;
+    };
+
+  }, [form.nik]);
 
   // ======================================================
   // HANDLE CHANGE
@@ -232,11 +344,26 @@ export default function KematianForm({
     >
   ) {
 
+    const {
+      name,
+      value,
+    } = e.target;
+
     setForm((prev) => ({
       ...prev,
-      [e.target.name]:
-        e.target.value,
+      [name]: value,
     }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "",
+    }));
+
+    // Kalau NIK berubah sebelum 16 digit,
+    // hasil lookup sebelumnya dihapus.
+    if (name === "nik") {
+      setLookupMessage("");
+    }
 
   }
 
@@ -264,6 +391,7 @@ export default function KematianForm({
       }
     );
 
+    // Validasi NIK
     if (
       !/^\d{16}$/.test(form.nik)
     ) {
@@ -273,8 +401,11 @@ export default function KematianForm({
 
     }
 
+    // KTP wajib untuk user create.
+    // Admin boleh tanpa KTP.
     if (
       mode === "create" &&
+      role !== "admin" &&
       !fileKtp
     ) {
 
@@ -309,17 +440,17 @@ export default function KematianForm({
       new FormData();
 
     // ==================================================
-    // DATA JENAZAH
+    // DATA IDENTITAS PENDUDUK
     // ==================================================
-
-    formData.append(
-      "nama",
-      form.nama
-    );
 
     formData.append(
       "nik",
       form.nik
+    );
+
+    formData.append(
+      "nama",
+      form.nama
     );
 
     formData.append(
@@ -355,9 +486,6 @@ export default function KematianForm({
       "hari",
       form.hari
     );
-
-    // Tetap kirim ke backend sebagai "tanggal"
-    // karena nama kolom database masih "tanggal"
 
     formData.append(
       "tanggal",
@@ -416,12 +544,13 @@ export default function KematianForm({
     ) {
 
       await onSubmit(formData);
+
       return;
 
     }
 
     // ==================================================
-    // URL & METHOD
+    // USER
     // ==================================================
 
     try {
@@ -437,10 +566,13 @@ export default function KematianForm({
           : "POST";
 
       const res =
-        await fetch(url, {
-          method,
-          body: formData,
-        });
+        await fetch(
+          url,
+          {
+            method,
+            body: formData,
+          }
+        );
 
       const json =
         await res.json();
@@ -460,7 +592,7 @@ export default function KematianForm({
       setFileKtp(null);
 
       // ==================================================
-      // SELESAI EDIT
+      // EDIT BERHASIL
       // ==================================================
 
       if (mode === "edit") {
@@ -475,7 +607,7 @@ export default function KematianForm({
       }
 
       // ==================================================
-      // SELESAI CREATE
+      // CREATE BERHASIL
       // ==================================================
 
       else {
@@ -485,9 +617,9 @@ export default function KematianForm({
 
       }
 
-    } catch (err) {
+    } catch (error) {
 
-      console.error(err);
+      console.error(error);
 
       toast.error(
         "Terjadi kesalahan server."
@@ -505,24 +637,24 @@ export default function KematianForm({
 
     <div className="pengajuan-page">
 
+      {/* ==================================================
+          HERO
+      ================================================== */}
+
       <section className="pengajuan-hero">
 
         <div className="pengajuan-hero-content">
 
           <h1>
-
             {mode === "create"
               ? "Surat Keterangan Kematian"
               : "Perbaiki Pengajuan Surat Keterangan Kematian"}
-
           </h1>
 
           <p>
-
             {mode === "create"
               ? "Lengkapi data di bawah ini dengan benar sebelum mengajukan surat."
               : "Perbaiki data sesuai catatan Admin kemudian kirim kembali."}
-
           </p>
 
         </div>
@@ -533,6 +665,10 @@ export default function KematianForm({
 
         <div className="pengajuan-card">
 
+          {/* ==================================================
+              ALERT PENOLAKAN
+          ================================================== */}
+
           {mode === "edit" && (
 
             <div
@@ -540,7 +676,8 @@ export default function KematianForm({
               style={{
                 background: "#fff7ed",
                 border: "1px solid #fdba74",
-                borderLeft: "6px solid #f97316",
+                borderLeft:
+                  "6px solid #f97316",
                 borderRadius: 12,
                 padding: 18,
                 marginBottom: 24,
@@ -550,7 +687,8 @@ export default function KematianForm({
               <div
                 style={{
                   display: "flex",
-                  alignItems: "flex-start",
+                  alignItems:
+                    "flex-start",
                   gap: 12,
                 }}
               >
@@ -578,7 +716,8 @@ export default function KematianForm({
 
                   <p
                     style={{
-                      margin: "10px 0 4px",
+                      margin:
+                        "10px 0 4px",
                       fontWeight: 600,
                       color: "#7c2d12",
                     }}
@@ -593,7 +732,9 @@ export default function KematianForm({
                       lineHeight: 1.7,
                     }}
                   >
-                    {initialData.alasan_penolakan}
+                    {
+                      initialData.alasan_penolakan
+                    }
                   </p>
 
                 </div>
@@ -614,6 +755,59 @@ export default function KematianForm({
               Data Jenazah
             </h3>
 
+            {/* NIK */}
+            <InputField
+              label="NIK"
+              name="nik"
+              value={form.nik}
+              onChange={handleChange}
+              placeholder="Masukkan NIK 16 digit"
+            />
+
+            {errors.nik && (
+              <p className="form-error">
+                {errors.nik}
+              </p>
+            )}
+
+            {/* STATUS LOOKUP NIK */}
+            {loadingNik && (
+
+              <p
+                style={{
+                  color: "#666",
+                  fontSize: 14,
+                  marginTop: -10,
+                  marginBottom: 16,
+                }}
+              >
+                Mencari data penduduk...
+              </p>
+
+            )}
+
+            {!loadingNik &&
+              lookupMessage && (
+
+                <p
+                  style={{
+                    color:
+                      lookupMessage.startsWith(
+                        "Data penduduk ditemukan"
+                      )
+                        ? "#16a34a"
+                        : "#666",
+                    fontSize: 14,
+                    marginTop: -10,
+                    marginBottom: 16,
+                  }}
+                >
+                  {lookupMessage}
+                </p>
+
+              )}
+
+            {/* NAMA */}
             <InputField
               label="Nama"
               name="nama"
@@ -628,20 +822,7 @@ export default function KematianForm({
               </p>
             )}
 
-            <InputField
-              label="NIK"
-              name="nik"
-              value={form.nik}
-              onChange={handleChange}
-              placeholder="Masukkan NIK"
-            />
-
-            {errors.nik && (
-              <p className="form-error">
-                {errors.nik}
-              </p>
-            )}
-
+            {/* JENIS KELAMIN */}
             <SelectField
               label="Jenis Kelamin"
               name="jenis_kelamin"
@@ -659,6 +840,7 @@ export default function KematianForm({
               </p>
             )}
 
+            {/* UMUR */}
             <InputField
               label="Umur"
               name="umur"
@@ -673,6 +855,7 @@ export default function KematianForm({
               </p>
             )}
 
+            {/* AGAMA */}
             <SelectField
               label="Agama"
               name="agama"
@@ -694,6 +877,7 @@ export default function KematianForm({
               </p>
             )}
 
+            {/* PEKERJAAN */}
             <InputField
               label="Pekerjaan"
               name="pekerjaan"
@@ -708,6 +892,7 @@ export default function KematianForm({
               </p>
             )}
 
+            {/* ALAMAT */}
             <InputField
               label="Alamat"
               name="alamat"
@@ -826,7 +1011,9 @@ export default function KematianForm({
             <InputField
               label="Hubungan dengan Almarhum/Almarhumah"
               name="hubungan_pelapor"
-              value={form.hubungan_pelapor}
+              value={
+                form.hubungan_pelapor
+              }
               onChange={handleChange}
               placeholder="Contoh : Anak Kandung"
             />
@@ -837,10 +1024,16 @@ export default function KematianForm({
               </p>
             )}
 
+            {/* ==================================================
+                FILE KTP
+            ================================================== */}
+
             <FileUploadField
               label="Upload KTP Almarhum/Almarhumah"
               accept="image/jpeg,image/png"
-              onChange={(file: File | null) =>
+              onChange={(
+                file: File | null
+              ) =>
                 setFileKtp(file)
               }
             />
@@ -848,36 +1041,40 @@ export default function KematianForm({
             {mode === "edit" &&
               initialData?.file_ktp && (
 
-              <div
-                style={{
-                  marginTop: 8,
-                  marginBottom: 16,
-                  fontSize: 14,
-                }}
-              >
-
-                File KTP saat ini :
-
-                <a
-                  href={`/uploads/ktp/${initialData.file_ktp}`}
-                  target="_blank"
-                  rel="noreferrer"
+                <div
                   style={{
-                    marginLeft: 8,
+                    marginTop: 8,
+                    marginBottom: 16,
+                    fontSize: 14,
                   }}
                 >
-                  Lihat KTP
-                </a>
 
-              </div>
+                  File KTP saat ini :
 
-            )}
+                  <a
+                    href={`/uploads/ktp/${initialData.file_ktp}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      marginLeft: 8,
+                    }}
+                  >
+                    Lihat KTP
+                  </a>
+
+                </div>
+
+              )}
 
             {errors.file_ktp && (
               <p className="form-error">
                 {errors.file_ktp}
               </p>
             )}
+
+            {/* ==================================================
+                SUBMIT
+            ================================================== */}
 
             <SubmitButton>
               {submitLabel ??
@@ -895,7 +1092,5 @@ export default function KematianForm({
       </section>
 
     </div>
-
   );
-
 }

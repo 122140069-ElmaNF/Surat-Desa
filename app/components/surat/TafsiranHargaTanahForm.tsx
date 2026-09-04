@@ -22,22 +22,29 @@ export default function TafsiranHargaTanahForm({
   role = "user",
   onSubmit,
 }: Props) {
-
   const [form, setForm] = useState({
+    // ===========================
+    // NIK
+    // ===========================
+
+    nik: "",
 
     // ===========================
-    // Data Pemilik
+    // Data Kependudukan
     // ===========================
 
     nama: "",
     tempat_lahir: "",
     tanggal_lahir: "",
-    nik: "",
     agama: "",
     jenis_kelamin: "",
     status_perkawinan: "",
     pekerjaan: "",
     alamat: "",
+    dusun: "",
+    rt: "",
+    rw: "",
+    kewarganegaraan: "",
 
     // ===========================
     // Data Tanah
@@ -49,25 +56,24 @@ export default function TafsiranHargaTanahForm({
     asal_perolehan: "",
     letak_tanah: "",
     harga_taksiran: "",
-
   });
 
-  const [fileKtp, setFileKtp] =
-    useState<File | null>(null);
+  const [fileKtp, setFileKtp] = useState<File | null>(null);
 
   const [errors, setErrors] =
     useState<Record<string, string>>({});
+
+  const [loadingNik, setLoadingNik] = useState(false);
+
+  const [lookupMessage, setLookupMessage] =
+    useState("");
 
   // ===========================
   // LOAD DATA SAAT EDIT
   // ===========================
 
   useEffect(() => {
-
-    if (
-      mode !== "edit" ||
-      !initialData
-    ) {
+    if (mode !== "edit" || !initialData) {
       return;
     }
 
@@ -75,6 +81,7 @@ export default function TafsiranHargaTanahForm({
       initialData.ttl?.split(",") ?? [];
 
     setForm({
+      nik: initialData.nik ?? "",
 
       nama:
         initialData.nama ?? "",
@@ -84,9 +91,6 @@ export default function TafsiranHargaTanahForm({
 
       tanggal_lahir:
         ttl[1]?.trim() ?? "",
-
-      nik:
-        initialData.nik ?? "",
 
       agama:
         initialData.agama ?? "",
@@ -102,6 +106,18 @@ export default function TafsiranHargaTanahForm({
 
       alamat:
         initialData.alamat ?? "",
+
+      dusun:
+        initialData.dusun ?? "",
+
+      rt:
+        initialData.rt ?? "",
+
+      rw:
+        initialData.rw ?? "",
+
+      kewarganegaraan:
+        initialData.kewarganegaraan ?? "",
 
       nomor_sertifikat:
         initialData.nomor_sertifikat ?? "",
@@ -120,10 +136,121 @@ export default function TafsiranHargaTanahForm({
 
       harga_taksiran:
         initialData.harga_taksiran ?? "",
-
     });
 
+    setLookupMessage("");
   }, [mode, initialData]);
+
+  // ===========================
+  // LOOKUP DATA NIK
+  // ===========================
+
+  useEffect(() => {
+    if (mode !== "create") {
+      return;
+    }
+
+    if (!/^\d{16}$/.test(form.nik)) {
+      setLookupMessage("");
+      setLoadingNik(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function lookupNik() {
+      try {
+        setLoadingNik(true);
+        setLookupMessage("");
+
+        const res = await fetch(
+          `/api/pengajuan/tafsiran-harga-tanah?nik=${encodeURIComponent(
+            form.nik
+          )}`
+        );
+
+        const json = await res.json();
+
+        if (cancelled) return;
+
+        if (json.success && json.data) {
+          const data = json.data;
+
+          const ttl =
+            data.ttl?.split(",") ?? [];
+
+          setForm((prev) => ({
+            ...prev,
+
+            nama:
+              data.nama ?? "",
+
+            tempat_lahir:
+              ttl[0]?.trim() ?? "",
+
+            tanggal_lahir:
+              ttl[1]?.trim() ?? "",
+
+            agama:
+              data.agama ?? "",
+
+            jenis_kelamin:
+              data.jenis_kelamin ?? "",
+
+            status_perkawinan:
+              data.status_perkawinan ?? "",
+
+            pekerjaan:
+              data.pekerjaan ?? "",
+
+            alamat:
+              data.alamat ?? "",
+
+            dusun:
+              data.dusun ?? "",
+
+            rt:
+              data.rt ?? "",
+
+            rw:
+              data.rw ?? "",
+
+            kewarganegaraan:
+              data.kewarganegaraan ?? "",
+          }));
+
+          setLookupMessage(
+            "Data penduduk ditemukan dan telah diisi otomatis."
+          );
+        } else {
+          setLookupMessage(
+            "Silakan lengkapi data penduduk."
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Gagal melakukan lookup NIK:",
+          error
+        );
+
+        if (!cancelled) {
+          setLookupMessage(
+            "Silakan lengkapi data penduduk."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingNik(false);
+        }
+      }
+    }
+
+    lookupNik();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.nik, mode]);
 
   // ===========================
   // HANDLE INPUT
@@ -132,26 +259,61 @@ export default function TafsiranHargaTanahForm({
   function handleChange(
     e: React.ChangeEvent<
       HTMLInputElement |
-      HTMLTextAreaElement |
-      HTMLSelectElement
+        HTMLTextAreaElement |
+        HTMLSelectElement
     >
   ) {
+    const { name, value } = e.target;
+
+    if (name === "nik" && mode === "create") {
+      setForm((prev) => ({
+        ...prev,
+        nik: value.replace(/\D/g, ""),
+        nama: "",
+        tempat_lahir: "",
+        tanggal_lahir: "",
+        agama: "",
+        jenis_kelamin: "",
+        status_perkawinan: "",
+        pekerjaan: "",
+        alamat: "",
+        dusun: "",
+        rt: "",
+        rw: "",
+        kewarganegaraan: "",
+      }));
+
+      setLookupMessage("");
+      setErrors((prev) => ({
+        ...prev,
+        nik: "",
+      }));
+
+      return;
+    }
 
     setForm((prev) => ({
       ...prev,
-      [e.target.name]:
-        e.target.value,
+      [name]: value,
     }));
-
   }
-    // ===========================
+
+  // ===========================
   // VALIDASI FORM
   // ===========================
 
   function validateForm() {
+    const newErrors: Record<string, string> = {};
 
-    const newErrors:
-      Record<string, string> = {};
+    if (!form.nik.trim()) {
+      newErrors.nik =
+        "NIK wajib diisi.";
+    } else if (
+      !/^\d{16}$/.test(form.nik)
+    ) {
+      newErrors.nik =
+        "NIK harus terdiri dari 16 digit.";
+    }
 
     if (!form.nama.trim()) {
       newErrors.nama =
@@ -166,16 +328,6 @@ export default function TafsiranHargaTanahForm({
     if (!form.tanggal_lahir) {
       newErrors.tanggal_lahir =
         "Tanggal lahir wajib diisi.";
-    }
-
-    if (!form.nik.trim()) {
-      newErrors.nik =
-        "NIK wajib diisi.";
-    } else if (
-      !/^\d{16}$/.test(form.nik)
-    ) {
-      newErrors.nik =
-        "NIK harus terdiri dari 16 digit.";
     }
 
     if (!form.agama) {
@@ -201,6 +353,26 @@ export default function TafsiranHargaTanahForm({
     if (!form.alamat.trim()) {
       newErrors.alamat =
         "Alamat wajib diisi.";
+    }
+
+    if (!form.dusun.trim()) {
+      newErrors.dusun =
+        "Dusun wajib diisi.";
+    }
+
+    if (!form.rt.trim()) {
+      newErrors.rt =
+        "RT wajib diisi.";
+    }
+
+    if (!form.rw.trim()) {
+      newErrors.rw =
+        "RW wajib diisi.";
+    }
+
+    if (!form.kewarganegaraan.trim()) {
+      newErrors.kewarganegaraan =
+        "Kewarganegaraan wajib diisi.";
     }
 
     if (!form.nomor_sertifikat.trim()) {
@@ -237,6 +409,7 @@ export default function TafsiranHargaTanahForm({
 
     if (
       mode === "create" &&
+      role !== "admin" &&
       !fileKtp
     ) {
       newErrors.file_ktp =
@@ -246,10 +419,8 @@ export default function TafsiranHargaTanahForm({
     setErrors(newErrors);
 
     return (
-      Object.keys(newErrors)
-        .length === 0
+      Object.keys(newErrors).length === 0
     );
-
   }
 
   // ===========================
@@ -259,17 +430,22 @@ export default function TafsiranHargaTanahForm({
   async function handleSubmit(
     e: React.FormEvent
   ) {
-
     e.preventDefault();
 
-    if (!validateForm())
+    if (!validateForm()) {
       return;
+    }
 
-    const formData =
-      new FormData();
-          // ===========================
-    // Data Pemilik
+    const formData = new FormData();
+
     // ===========================
+    // DATA KEPENDUDUKAN
+    // ===========================
+
+    formData.append(
+      "nik",
+      form.nik
+    );
 
     formData.append(
       "nama",
@@ -279,11 +455,6 @@ export default function TafsiranHargaTanahForm({
     formData.append(
       "ttl",
       `${form.tempat_lahir}, ${form.tanggal_lahir}`
-    );
-
-    formData.append(
-      "nik",
-      form.nik
     );
 
     formData.append(
@@ -311,8 +482,28 @@ export default function TafsiranHargaTanahForm({
       form.alamat
     );
 
+    formData.append(
+      "dusun",
+      form.dusun
+    );
+
+    formData.append(
+      "rt",
+      form.rt
+    );
+
+    formData.append(
+      "rw",
+      form.rw
+    );
+
+    formData.append(
+      "kewarganegaraan",
+      form.kewarganegaraan
+    );
+
     // ===========================
-    // Data Tanah
+    // DATA TANAH
     // ===========================
 
     formData.append(
@@ -345,13 +536,15 @@ export default function TafsiranHargaTanahForm({
       form.harga_taksiran
     );
 
-    if (fileKtp) {
+    // ===========================
+    // FILE KTP
+    // ===========================
 
+    if (fileKtp) {
       formData.append(
         "file_ktp",
         fileKtp
       );
-
     }
 
     // ===========================
@@ -362,14 +555,11 @@ export default function TafsiranHargaTanahForm({
       role === "admin" &&
       onSubmit
     ) {
-
       await onSubmit(formData);
       return;
-
     }
 
     try {
-
       const url =
         mode === "edit"
           ? `/api/pengajuan/tafsiran-harga-tanah/${initialData.id}`
@@ -380,55 +570,44 @@ export default function TafsiranHargaTanahForm({
           ? "PUT"
           : "POST";
 
-      const res =
-        await fetch(url, {
-          method,
-          body: formData,
-        });
+      const res = await fetch(url, {
+        method,
+        body: formData,
+      });
 
       const json =
         await res.json();
 
       if (!json.success) {
-
         toast.error(
           json.message ??
-          "Gagal menyimpan."
+            "Gagal menyimpan."
         );
 
         return;
-
       }
 
       setErrors({});
       setFileKtp(null);
 
       if (mode === "edit") {
-
         toast.success(
           "Perbaikan berhasil dikirim."
         );
 
         window.location.href =
           `/tracking/${initialData.kode_tracking}`;
-
       } else {
-
         window.location.href =
           `/success/${json.kode_tracking}`;
-
       }
-
     } catch (err) {
-
       console.error(err);
 
       toast.error(
         "Terjadi kesalahan server."
       );
-
     }
-
   }
 
   // ===========================
@@ -436,104 +615,145 @@ export default function TafsiranHargaTanahForm({
   // ===========================
 
   return (
-        <div className="pengajuan-page">
-
+    <div className="pengajuan-page">
       <section className="pengajuan-hero">
-
         <div className="pengajuan-hero-content">
-
           <h1>
-
             {mode === "create"
               ? "Surat Keterangan Tafsiran Harga Tanah"
               : "Perbaiki Pengajuan Surat Tafsiran Harga Tanah"}
-
           </h1>
 
           <p>
-
             {mode === "create"
               ? "Lengkapi data di bawah ini dengan benar sebelum mengajukan surat."
               : "Perbaiki data sesuai catatan Admin kemudian kirim kembali."}
-
           </p>
-
         </div>
-
       </section>
 
       <section className="pengajuan-content">
-
         <div className="pengajuan-card">
 
-          {/* ALASAN PENOLAKAN */}
+          {/* ===========================
+              ALASAN PENOLAKAN
+          =========================== */}
 
           {mode === "edit" && (
+            <div
+              className="reject-alert"
+              style={{
+                background: "#fff7ed",
+                border: "1px solid #fdba74",
+                borderLeft: "6px solid #f97316",
+                borderRadius: 12,
+                padding: 18,
+                marginBottom: 24,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 12,
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 26,
+                  }}
+                >
+                  ⚠️
+                </div>
 
-           <div
-  className="reject-alert"
-  style={{
-    background: "#fff7ed",
-    border: "1px solid #fdba74",
-    borderLeft: "6px solid #f97316",
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 24,
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 12,
-    }}
-  >
-    <div
-      style={{
-        fontSize: 26,
-      }}
-    >
-      ⚠️
-    </div>
+                <div>
+                  <h3
+                    style={{
+                      margin: 0,
+                      color: "#9a3412",
+                      fontWeight: 700,
+                      fontSize: 18,
+                    }}
+                  >
+                    Pengajuan Ditolak
+                  </h3>
 
-    <div>
-      <h3
-        style={{
-          margin: 0,
-          color: "#9a3412",
-          fontWeight: 700,
-          fontSize: 18,
-        }}
-      >
-        Pengajuan Ditolak
-      </h3>
+                  <p
+                    style={{
+                      margin:
+                        "10px 0 4px",
+                      fontWeight: 600,
+                      color: "#7c2d12",
+                    }}
+                  >
+                    Alasan Penolakan :
+                  </p>
 
-      <p
-        style={{
-          margin: "10px 0 4px",
-          fontWeight: 600,
-          color: "#7c2d12",
-        }}
-      >
-        Alasan Penolakan :
-      </p>
-
-      <p
-        style={{
-          margin: 0,
-          color: "#444",
-          lineHeight: 1.7,
-        }}
-      >
-        {initialData.alasan_penolakan}
-      </p>
-    </div>
-  </div>
-</div>
-
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#444",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {
+                      initialData.alasan_penolakan
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
 
           <form onSubmit={handleSubmit}>
+
+            {/* ===========================
+                NIK
+            =========================== */}
+
+            <InputField
+              label="NIK"
+              name="nik"
+              value={form.nik}
+              onChange={handleChange}
+              placeholder="Masukkan NIK 16 digit"
+            />
+
+            {loadingNik && (
+              <p
+                style={{
+                  color: "#666",
+                  fontSize: 14,
+                  marginTop: 6,
+                }}
+              >
+                Mencari data penduduk...
+              </p>
+            )}
+
+            {!loadingNik &&
+              lookupMessage && (
+                <p
+                  style={{
+                    color:
+                      lookupMessage.includes(
+                        "ditemukan"
+                      )
+                        ? "#16a34a"
+                        : "#666",
+                    fontSize: 14,
+                    marginTop: 6,
+                  }}
+                >
+                  {lookupMessage}
+                </p>
+              )}
+
+            {errors.nik && (
+              <p className="form-error">
+                {errors.nik}
+              </p>
+            )}
 
             {/* ===========================
                 DATA PEMILIK
@@ -548,17 +768,12 @@ export default function TafsiranHargaTanahForm({
             />
 
             {errors.nama && (
-
               <p className="form-error">
-
                 {errors.nama}
-
               </p>
-
             )}
 
             <div className="grid grid-cols-2 gap-4">
-
               <InputField
                 label="Tempat Lahir"
                 name="tempat_lahir"
@@ -574,45 +789,18 @@ export default function TafsiranHargaTanahForm({
                 value={form.tanggal_lahir}
                 onChange={handleChange}
               />
-
             </div>
 
             {errors.tempat_lahir && (
-
               <p className="form-error">
-
                 {errors.tempat_lahir}
-
               </p>
-
             )}
 
             {errors.tanggal_lahir && (
-
               <p className="form-error">
-
                 {errors.tanggal_lahir}
-
               </p>
-
-            )}
-
-            <InputField
-              label="NIK"
-              name="nik"
-              value={form.nik}
-              onChange={handleChange}
-              placeholder="Masukkan NIK"
-            />
-
-            {errors.nik && (
-
-              <p className="form-error">
-
-                {errors.nik}
-
-              </p>
-
             )}
 
             <SelectField
@@ -631,17 +819,12 @@ export default function TafsiranHargaTanahForm({
             />
 
             {errors.agama && (
-
               <p className="form-error">
-
                 {errors.agama}
-
               </p>
-
             )}
 
             <div className="grid grid-cols-2 gap-4">
-
               <SelectField
                 label="Jenis Kelamin"
                 name="jenis_kelamin"
@@ -656,7 +839,9 @@ export default function TafsiranHargaTanahForm({
               <SelectField
                 label="Status Perkawinan"
                 name="status_perkawinan"
-                value={form.status_perkawinan}
+                value={
+                  form.status_perkawinan
+                }
                 onChange={handleChange}
                 options={[
                   "Belum Kawin",
@@ -665,27 +850,18 @@ export default function TafsiranHargaTanahForm({
                   "Cerai Mati",
                 ]}
               />
-
             </div>
 
             {errors.jenis_kelamin && (
-
               <p className="form-error">
-
                 {errors.jenis_kelamin}
-
               </p>
-
             )}
 
             {errors.status_perkawinan && (
-
               <p className="form-error">
-
                 {errors.status_perkawinan}
-
               </p>
-
             )}
 
             <InputField
@@ -695,7 +871,8 @@ export default function TafsiranHargaTanahForm({
               onChange={handleChange}
               placeholder="Masukkan pekerjaan"
             />
-                        {errors.pekerjaan && (
+
+            {errors.pekerjaan && (
               <p className="form-error">
                 {errors.pekerjaan}
               </p>
@@ -716,6 +893,66 @@ export default function TafsiranHargaTanahForm({
               </p>
             )}
 
+            <div className="grid grid-cols-3 gap-4">
+              <InputField
+                label="Dusun"
+                name="dusun"
+                value={form.dusun}
+                onChange={handleChange}
+                placeholder="Masukkan dusun"
+              />
+
+              <InputField
+                label="RT"
+                name="rt"
+                value={form.rt}
+                onChange={handleChange}
+                placeholder="Contoh: 001"
+              />
+
+              <InputField
+                label="RW"
+                name="rw"
+                value={form.rw}
+                onChange={handleChange}
+                placeholder="Contoh: 002"
+              />
+            </div>
+
+            {errors.dusun && (
+              <p className="form-error">
+                {errors.dusun}
+              </p>
+            )}
+
+            {errors.rt && (
+              <p className="form-error">
+                {errors.rt}
+              </p>
+            )}
+
+            {errors.rw && (
+              <p className="form-error">
+                {errors.rw}
+              </p>
+            )}
+
+            <InputField
+              label="Kewarganegaraan"
+              name="kewarganegaraan"
+              value={
+                form.kewarganegaraan
+              }
+              onChange={handleChange}
+              placeholder="Contoh: WNI"
+            />
+
+            {errors.kewarganegaraan && (
+              <p className="form-error">
+                {errors.kewarganegaraan}
+              </p>
+            )}
+
             {/* ===========================
                 DATA TANAH
             =========================== */}
@@ -723,7 +960,9 @@ export default function TafsiranHargaTanahForm({
             <InputField
               label="Nomor Sertifikat"
               name="nomor_sertifikat"
-              value={form.nomor_sertifikat}
+              value={
+                form.nomor_sertifikat
+              }
               onChange={handleChange}
               placeholder="Contoh: SHM No. 123"
             />
@@ -735,7 +974,6 @@ export default function TafsiranHargaTanahForm({
             )}
 
             <div className="grid grid-cols-2 gap-4">
-
               <InputField
                 label="Luas Tanah (m²)"
                 name="luas_tanah"
@@ -747,11 +985,12 @@ export default function TafsiranHargaTanahForm({
               <InputField
                 label="Tahun Perolehan"
                 name="tahun_perolehan"
-                value={form.tahun_perolehan}
+                value={
+                  form.tahun_perolehan
+                }
                 onChange={handleChange}
                 placeholder="Contoh: 2015"
               />
-
             </div>
 
             {errors.luas_tanah && (
@@ -769,7 +1008,9 @@ export default function TafsiranHargaTanahForm({
             <InputField
               label="Asal Perolehan"
               name="asal_perolehan"
-              value={form.asal_perolehan}
+              value={
+                form.asal_perolehan
+              }
               onChange={handleChange}
               placeholder="Contoh: Warisan / Jual Beli"
             />
@@ -798,7 +1039,9 @@ export default function TafsiranHargaTanahForm({
             <InputField
               label="Harga Taksiran (Rp)"
               name="harga_taksiran"
-              value={form.harga_taksiran}
+              value={
+                form.harga_taksiran
+              }
               onChange={handleChange}
               placeholder="Contoh: 250000000"
             />
@@ -809,8 +1052,12 @@ export default function TafsiranHargaTanahForm({
               </p>
             )}
 
+            {/* ===========================
+                FILE KTP
+            =========================== */}
+
             <FileUploadField
-              label="Upload KTP"
+              label={role === "admin" ? "Upload KTP (Opsional)" : "Upload KTP"}
               accept="image/jpeg,image/png"
               onChange={(file: File | null) =>
                 setFileKtp(file)
@@ -818,8 +1065,8 @@ export default function TafsiranHargaTanahForm({
             />
 
             {mode === "edit" &&
-              initialData?.dokumen?.file_ktp && (
-
+              initialData?.dokumen
+                ?.file_ktp && (
                 <div
                   style={{
                     marginTop: 8,
@@ -839,8 +1086,7 @@ export default function TafsiranHargaTanahForm({
                     Lihat KTP
                   </a>
                 </div>
-
-            )}
+              )}
 
             {errors.file_ktp && (
               <p className="form-error">
