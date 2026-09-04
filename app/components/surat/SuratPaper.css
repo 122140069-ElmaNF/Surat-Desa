@@ -59,3 +59,20 @@
   box-shadow: none;
   padding: 2cm 2.54cm 2.54cm 2.54cm;
 }
+.surat-paper {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  box-sizing: border-box;
+  padding: 2.54cm;
+  position: relative;
+  overflow: visible;
+  flex-shrink: 0;
+
+  color: #000;
+}
+
+.surat-paper .surat-content,
+.surat-paper .surat-content * {
+  color: #000 !important;
+}

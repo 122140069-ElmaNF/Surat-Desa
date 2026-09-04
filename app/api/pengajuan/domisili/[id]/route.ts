@@ -131,13 +131,13 @@ export async function PUT(
     }
 
     // ===============================
-    // Ambil file KTP lama
+    // Pastikan data domisili ada
     // ===============================
 
     const [domisiliRows]: any =
       await conn.query(
         `
-        SELECT file_ktp
+        SELECT id
         FROM domisili
         WHERE pengajuan_id = ?
         LIMIT 1
@@ -160,17 +160,17 @@ export async function PUT(
       );
     }
 
-    const oldFile =
-      domisiliRows[0]?.file_ktp ?? null;
-
     // ===============================
-    // Cek data penduduk
+    // Ambil data KTP lama
+    // dari kependudukan
     // ===============================
 
     const [pendudukRows]: any =
       await conn.query(
         `
-        SELECT nik
+        SELECT
+          nik,
+          file_ktp
         FROM kependudukan
         WHERE nik = ?
         LIMIT 1
@@ -178,43 +178,11 @@ export async function PUT(
         [nik]
       );
 
-    // ===============================
-    // Jika NIK belum ada
-    // → simpan sebagai penduduk baru
-    // ===============================
+    let oldFile: string | null = null;
 
-    if (pendudukRows.length === 0) {
-      await conn.query(
-        `
-        INSERT INTO kependudukan
-        (
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw
-        )
-        VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-        ]
-      );
+    if (pendudukRows.length > 0) {
+      oldFile =
+        pendudukRows[0]?.file_ktp ?? null;
     }
 
     // ===============================
@@ -228,7 +196,10 @@ export async function PUT(
       fileKtp &&
       fileKtp.size > 0
     ) {
+      // ===============================
       // Validasi tipe file
+      // ===============================
+
       const allowedTypes = [
         "image/jpeg",
         "image/png",
@@ -253,7 +224,10 @@ export async function PUT(
         );
       }
 
-      // Validasi ukuran maksimal 5 MB
+      // ===============================
+      // Validasi ukuran
+      // ===============================
+
       const maxSize =
         5 * 1024 * 1024;
 
@@ -271,6 +245,10 @@ export async function PUT(
           }
         );
       }
+
+      // ===============================
+      // Simpan file baru
+      // ===============================
 
       const bytes =
         await fileKtp.arrayBuffer();
@@ -303,6 +281,103 @@ export async function PUT(
     }
 
     // ===============================
+    // Cek apakah NIK sudah ada
+    // ===============================
+
+    const [existingPendudukRows]: any =
+      await conn.query(
+        `
+        SELECT nik
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    // ===============================
+    // Simpan / Update Kependudukan
+    // ===============================
+
+    if (
+      existingPendudukRows.length === 0
+    ) {
+      // ===============================
+      // NIK belum ada
+      // ===============================
+
+      await conn.query(
+        `
+        INSERT INTO kependudukan
+        (
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          file_ktp
+        )
+        VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          newFileName,
+        ]
+      );
+
+    } else {
+      // ===============================
+      // NIK sudah ada
+      // ===============================
+
+      await conn.query(
+        `
+        UPDATE kependudukan
+        SET
+          nama = ?,
+          ttl = ?,
+          agama = ?,
+          jenis_kelamin = ?,
+          pekerjaan = ?,
+          alamat = ?,
+          dusun = ?,
+          rt = ?,
+          rw = ?,
+          file_ktp = ?
+        WHERE nik = ?
+        `,
+        [
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          newFileName,
+          nik,
+        ]
+      );
+    }
+
+    // ===============================
     // Update pengajuan_surat
     // ===============================
 
@@ -322,26 +397,14 @@ export async function PUT(
     );
 
     // ===============================
-    // Update tabel domisili
-    // Hanya data khusus dokumen
+    // Tabel domisili
     // ===============================
-
-    await conn.query(
-      `
-      UPDATE domisili
-      SET
-        file_ktp = ?
-      WHERE pengajuan_id = ?
-      `,
-      [
-        newFileName,
-        id,
-      ]
-    );
+    // Tidak ada lagi update file_ktp
+    // karena KTP sekarang berada
+    // di kependudukan.file_ktp
 
     // ===============================
     // Activity Log
-    // Masih di dalam transaction
     // ===============================
 
     await logActivity({
@@ -448,8 +511,6 @@ export async function PUT(
     );
 
   } finally {
-
     conn.release();
-
   }
 }

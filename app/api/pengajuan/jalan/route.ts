@@ -25,7 +25,8 @@ export async function GET(request: Request) {
       return NextResponse.json({
         success: true,
         found: false,
-        message: "NIK harus terdiri dari 16 digit.",
+        message:
+          "NIK harus terdiri dari 16 digit.",
       });
     }
 
@@ -33,27 +34,28 @@ export async function GET(request: Request) {
     // Cari Penduduk
     // ===============================
 
-    const [rows]: any = await db.query(
-      `
-      SELECT
-        nik,
-        nama,
-        ttl,
-        agama,
-        jenis_kelamin,
-        status_perkawinan,
-        pekerjaan,
-        alamat,
-        dusun,
-        rt,
-        rw,
-        kewarganegaraan
-      FROM kependudukan
-      WHERE nik = ?
-      LIMIT 1
-      `,
-      [nik]
-    );
+    const [rows]: any =
+      await db.query(
+        `
+        SELECT
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
 
     // ===============================
     // NIK DITEMUKAN
@@ -74,7 +76,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       found: false,
-      message: "Data penduduk belum terdaftar.",
+      message:
+        "Data penduduk belum terdaftar.",
     });
 
   } catch (error) {
@@ -101,9 +104,20 @@ export async function GET(request: Request) {
 // =====================================================
 
 export async function POST(request: Request) {
-  const conn = await db.getConnection();
+  const conn =
+    await db.getConnection();
 
-  let uploadedFilePath: string | null = null;
+  let uploadedFilePath:
+    | string
+    | null = null;
+
+  let uploadedFileName:
+    | string
+    | null = null;
+
+  let oldFileKtp:
+    | string
+    | null = null;
 
   try {
     await conn.beginTransaction();
@@ -116,60 +130,97 @@ export async function POST(request: Request) {
     // =================================================
 
     const nama =
-      formData.get("nama") as string;
+      String(
+        formData.get("nama") ?? ""
+      ).trim();
 
     const ttl =
-      formData.get("ttl") as string;
+      String(
+        formData.get("ttl") ?? ""
+      ).trim();
 
     const nik =
-      formData.get("nik") as string;
+      String(
+        formData.get("nik") ?? ""
+      ).trim();
 
     const agama =
-      formData.get("agama") as string;
+      String(
+        formData.get("agama") ?? ""
+      ).trim();
 
     const jenis_kelamin =
-      formData.get("jenis_kelamin") as string;
+      String(
+        formData.get(
+          "jenis_kelamin"
+        ) ?? ""
+      ).trim();
 
     const status_perkawinan =
-      formData.get("status_perkawinan") as string;
+      String(
+        formData.get(
+          "status_perkawinan"
+        ) ?? ""
+      ).trim();
 
     const pekerjaan =
-      formData.get("pekerjaan") as string;
+      String(
+        formData.get("pekerjaan") ?? ""
+      ).trim();
 
     const alamat =
-      formData.get("alamat") as string;
+      String(
+        formData.get("alamat") ?? ""
+      ).trim();
 
     const dusun =
-      formData.get("dusun") as string;
+      String(
+        formData.get("dusun") ?? ""
+      ).trim();
 
     const rt =
-      formData.get("rt") as string;
+      String(
+        formData.get("rt") ?? ""
+      ).trim();
 
     const rw =
-      formData.get("rw") as string;
+      String(
+        formData.get("rw") ?? ""
+      ).trim();
 
     const kewarganegaraan =
-      formData.get("kewarganegaraan") as string;
+      String(
+        formData.get(
+          "kewarganegaraan"
+        ) ?? ""
+      ).trim();
 
     // =================================================
     // DATA KHUSUS SURAT JALAN
     // =================================================
 
     const keperluan =
-      formData.get("keperluan") as string;
+      String(
+        formData.get("keperluan") ?? ""
+      ).trim();
 
     // =================================================
     // FILE KTP
     // =================================================
 
     const fileKtp =
-      formData.get("file_ktp") as File | null;
+      formData.get(
+        "file_ktp"
+      ) as File | null;
 
     // =================================================
     // VALIDASI NIK
     // =================================================
 
-    if (!nik || !/^\d{16}$/.test(nik)) {
+    if (
+      !nik ||
+      !/^\d{16}$/.test(nik)
+    ) {
       await conn.rollback();
 
       return NextResponse.json(
@@ -189,18 +240,18 @@ export async function POST(request: Request) {
     // =================================================
 
     if (
-      !nama?.trim() ||
-      !ttl?.trim() ||
-      !agama?.trim() ||
-      !jenis_kelamin?.trim() ||
-      !status_perkawinan?.trim() ||
-      !pekerjaan?.trim() ||
-      !alamat?.trim() ||
-      !dusun?.trim() ||
-      !rt?.trim() ||
-      !rw?.trim() ||
-      !kewarganegaraan?.trim() ||
-      !keperluan?.trim()
+      !nama ||
+      !ttl ||
+      !agama ||
+      !jenis_kelamin ||
+      !status_perkawinan ||
+      !pekerjaan ||
+      !alamat ||
+      !dusun ||
+      !rt ||
+      !rw ||
+      !kewarganegaraan ||
+      !keperluan
     ) {
       await conn.rollback();
 
@@ -262,7 +313,9 @@ export async function POST(request: Request) {
     const maxSize =
       5 * 1024 * 1024;
 
-    if (fileKtp.size > maxSize) {
+    if (
+      fileKtp.size > maxSize
+    ) {
       await conn.rollback();
 
       return NextResponse.json(
@@ -275,6 +328,30 @@ export async function POST(request: Request) {
           status: 400,
         }
       );
+    }
+
+    // =================================================
+    // AMBIL KTP LAMA DARI KEPENDUDUKAN
+    // =================================================
+
+    const [oldKtpRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    if (
+      oldKtpRows.length > 0
+    ) {
+      oldFileKtp =
+        oldKtpRows[0]
+          ?.file_ktp ?? null;
     }
 
     // =================================================
@@ -293,7 +370,7 @@ export async function POST(request: Request) {
         .pop()
         ?.toLowerCase();
 
-    const fileName =
+    uploadedFileName =
       `${randomUUID()}.${ext}`;
 
     const uploadPath =
@@ -302,7 +379,7 @@ export async function POST(request: Request) {
         "public",
         "uploads",
         "ktp",
-        fileName
+        uploadedFileName
       );
 
     await writeFile(
@@ -320,7 +397,9 @@ export async function POST(request: Request) {
     const [jenisRows]: any =
       await conn.query(
         `
-        SELECT id, kode_surat
+        SELECT
+          id,
+          kode_surat
         FROM jenis_surat
         WHERE kode_surat = 'SKJ'
         LIMIT 1
@@ -346,98 +425,56 @@ export async function POST(request: Request) {
     // UPDATE / INSERT KEPENDUDUKAN
     // =================================================
 
-    const [pendudukRows]: any =
-      await conn.query(
-        `
-        SELECT nik
-        FROM kependudukan
-        WHERE nik = ?
-        LIMIT 1
-        `,
-        [nik]
-      );
-
-    if (
-      pendudukRows.length === 0
-    ) {
-      // =============================
-      // INSERT PENDUDUK BARU
-      // =============================
-
-      await conn.query(
-        `
-        INSERT INTO kependudukan
-        (
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan
-        )
-        VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan,
-        ]
-      );
-
-    } else {
-      // =============================
-      // UPDATE PENDUDUK
-      // =============================
-
-      await conn.query(
-        `
-        UPDATE kependudukan
-        SET
-          nama = ?,
-          ttl = ?,
-          agama = ?,
-          jenis_kelamin = ?,
-          status_perkawinan = ?,
-          pekerjaan = ?,
-          alamat = ?,
-          dusun = ?,
-          rt = ?,
-          rw = ?,
-          kewarganegaraan = ?
-        WHERE nik = ?
-        `,
-        [
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan,
-          nik,
-        ]
-      );
-    }
+    await conn.query(
+      `
+      INSERT INTO kependudukan
+      (
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan,
+        file_ktp
+      )
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        nama = VALUES(nama),
+        ttl = VALUES(ttl),
+        agama = VALUES(agama),
+        jenis_kelamin = VALUES(jenis_kelamin),
+        status_perkawinan = VALUES(status_perkawinan),
+        pekerjaan = VALUES(pekerjaan),
+        alamat = VALUES(alamat),
+        dusun = VALUES(dusun),
+        rt = VALUES(rt),
+        rw = VALUES(rw),
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
+      `,
+      [
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan,
+        uploadedFileName,
+      ]
+    );
 
     // =================================================
     // GENERATE KODE TRACKING
@@ -449,16 +486,19 @@ export async function POST(request: Request) {
     const tanggal =
       `${String(
         sekarang.getDate()
-      ).padStart(2, "0")}${String(
+      ).padStart(2, "0")}` +
+      `${String(
         sekarang.getMonth() + 1
-      ).padStart(2, "0")}${String(
+      ).padStart(2, "0")}` +
+      `${String(
         sekarang.getFullYear()
       ).slice(-2)}`;
 
     const [countRows]: any =
       await conn.query(
         `
-        SELECT COUNT(*) total
+        SELECT
+          COUNT(*) AS total
         FROM pengajuan_surat
         WHERE jenis_surat_id = ?
         `,
@@ -512,16 +552,14 @@ export async function POST(request: Request) {
       INSERT INTO jalan
       (
         pengajuan_id,
-        keperluan,
-        file_ktp
+        keperluan
       )
       VALUES
-      (?, ?, ?)
+      (?, ?)
       `,
       [
         pengajuan_id,
         keperluan,
-        fileName,
       ]
     );
 
@@ -546,6 +584,33 @@ export async function POST(request: Request) {
 
     uploadedFilePath = null;
 
+    // =================================================
+    // HAPUS FILE KTP LAMA
+    // =================================================
+
+    if (
+      oldFileKtp &&
+      oldFileKtp !== uploadedFileName
+    ) {
+      try {
+        const oldFilePath =
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldFileKtp
+          );
+
+        await unlink(
+          oldFilePath
+        );
+      } catch {
+        // Abaikan jika file lama
+        // sudah tidak ada
+      }
+    }
+
     return NextResponse.json({
       success: true,
       kode_tracking,
@@ -566,7 +631,7 @@ export async function POST(request: Request) {
     );
 
     // =================================================
-    // HAPUS FILE JIKA DATABASE GAGAL
+    // HAPUS FILE BARU JIKA DATABASE GAGAL
     // =================================================
 
     if (uploadedFilePath) {

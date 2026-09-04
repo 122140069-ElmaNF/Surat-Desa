@@ -53,6 +53,12 @@ export default function KebenaranDataForm({
     no_hp: "",
     nomor_porsi: "",
     bin_binti: "",
+
+    // ==========================
+    // DATA PERSYARATAN
+    // ==========================
+
+    no_kk: "",
   });
 
   const [fileKtp, setFileKtp] =
@@ -133,6 +139,9 @@ export default function KebenaranDataForm({
 
       bin_binti:
         initialData.bin_binti ?? "",
+
+      no_kk:
+        initialData.no_kk ?? "",
     });
 
     setLookupMessage("");
@@ -426,6 +435,25 @@ export default function KebenaranDataForm({
     }
 
     // ==========================
+    // DATA PERSYARATAN
+    // ==========================
+
+    if (
+      mode === "create" &&
+      role !== "admin" &&
+      !form.no_kk.trim()
+    ) {
+      newErrors.no_kk =
+        "Nomor KK wajib diisi.";
+    } else if (
+      form.no_kk.trim() &&
+      !/^\d{16}$/.test(form.no_kk)
+    ) {
+      newErrors.no_kk =
+        "Nomor KK harus terdiri dari 16 digit.";
+    }
+
+    // ==========================
     // FILE
     // ==========================
 
@@ -555,6 +583,15 @@ export default function KebenaranDataForm({
     );
 
     // ==========================
+    // DATA PERSYARATAN
+    // ==========================
+
+    formData.append(
+      "no_kk",
+      form.no_kk
+    );
+
+    // ==========================
     // FILE
     // ==========================
 
@@ -675,10 +712,8 @@ export default function KebenaranDataForm({
               className="reject-alert"
               style={{
                 background: "#fff7ed",
-                border:
-                  "1px solid #fdba74",
-                borderLeft:
-                  "6px solid #f97316",
+                border: "1px solid #fdba74",
+                borderLeft: "6px solid #f97316",
                 borderRadius: 12,
                 padding: 18,
                 marginBottom: 24,
@@ -687,8 +722,7 @@ export default function KebenaranDataForm({
               <div
                 style={{
                   display: "flex",
-                  alignItems:
-                    "flex-start",
+                  alignItems: "flex-start",
                   gap: 12,
                 }}
               >
@@ -714,8 +748,7 @@ export default function KebenaranDataForm({
 
                   <p
                     style={{
-                      margin:
-                        "10px 0 4px",
+                      margin: "10px 0 4px",
                       fontWeight: 600,
                       color: "#7c2d12",
                     }}
@@ -985,6 +1018,7 @@ export default function KebenaranDataForm({
               </p>
             )}
 
+
             <InputField
               label="Kewarganegaraan"
               name="kewarganegaraan"
@@ -1052,11 +1086,33 @@ export default function KebenaranDataForm({
             )}
 
             {/* ==========================
+                NOMOR KK
+            ========================== */}
+
+            <InputField
+              label="Nomor KK"
+              name="no_kk"
+              value={form.no_kk}
+              onChange={handleChange}
+              placeholder="Masukkan Nomor KK 16 digit"
+            />
+
+            {errors.no_kk && (
+              <p className="form-error">
+                {errors.no_kk}
+              </p>
+            )}
+
+            {/* ==========================
                 KTP
             ========================== */}
 
             <FileUploadField
-              label={role === "admin" ? "Upload KTP (Opsional)" : "Upload KTP"}
+              label={
+                role === "admin"
+                  ? "Upload KTP (Opsional)"
+                  : "Upload KTP"
+              }
               accept="image/jpeg,image/png"
               onChange={(
                 file: File | null
@@ -1101,7 +1157,11 @@ export default function KebenaranDataForm({
             ========================== */}
 
             <FileUploadField
-              label={role === "admin" ? "Upload KK (Opsional)" : "Upload KK"}
+              label={
+                role === "admin"
+                  ? "Upload KK (Opsional)"
+                  : "Upload KK"
+              }
               accept="image/jpeg,image/png"
               onChange={(
                 file: File | null

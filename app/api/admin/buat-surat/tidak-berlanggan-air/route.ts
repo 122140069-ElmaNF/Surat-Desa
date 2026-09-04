@@ -16,6 +16,7 @@ export async function POST(request: Request) {
   const conn = await db.getConnection();
 
   let uploadedFilePath: string | null = null;
+  let oldKtpFile: string | null = null;
 
   try {
     await conn.beginTransaction();
@@ -291,6 +292,28 @@ export async function POST(request: Request) {
     }
 
     // =====================================================
+    // AMBIL KTP LAMA ORANG TUA / WALI
+    // =====================================================
+
+    const [oldKtpRows]: any =
+      await conn.query(
+        `
+        SELECT file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nikPertama]
+      );
+
+    oldKtpFile =
+      oldKtpRows?.[0]?.file_ktp ||
+      null;
+
+    const finalKtpFile =
+      fileName ?? oldKtpFile;
+
+    // =====================================================
     // AMBIL JENIS SURAT
     // =====================================================
 
@@ -327,10 +350,11 @@ export async function POST(request: Request) {
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
         ttl = VALUES(ttl),
@@ -342,7 +366,8 @@ export async function POST(request: Request) {
         dusun = VALUES(dusun),
         rt = VALUES(rt),
         rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
       `,
       [
         nikPertama,
@@ -357,37 +382,18 @@ export async function POST(request: Request) {
         rtPertama,
         rwPertama,
         kewarganegaraanPertama,
+        finalKtpFile,
       ]
     );
 
     // =====================================================
     // UPSERT KEPENDUDUKAN CALON MAHASISWA
     // =====================================================
-    //
-    // Karena form calon mahasiswa hanya meminta:
-    // nama, tempat/tanggal lahir, NIK, prodi, alamat,
-    // maka field kependudukan lainnya dikosongkan.
-    //
-    // Jika NIK sudah ada, data yang tidak dikirim dari form
-    // tidak akan ditimpa.
-    // =====================================================
 
     const [existingKeduaRows]: any =
       await conn.query(
         `
-        SELECT
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan
+        SELECT nik
         FROM kependudukan
         WHERE nik = ?
         LIMIT 1
@@ -395,7 +401,9 @@ export async function POST(request: Request) {
         [nikKedua]
       );
 
-    if (existingKeduaRows.length) {
+    if (
+      existingKeduaRows.length
+    ) {
       await conn.query(
         `
         UPDATE kependudukan
@@ -511,18 +519,16 @@ export async function POST(request: Request) {
         pengajuan_id,
         nik_pertama,
         nik_kedua,
-        prodi_kedua,
-        file_ktp
+        prodi_kedua
       )
       VALUES
-      (?, ?, ?, ?, ?)
+      (?, ?, ?, ?)
       `,
       [
         pengajuanId,
         nikPertama,
         nikKedua,
         prodiKedua,
-        fileName,
       ]
     );
 
@@ -535,7 +541,7 @@ export async function POST(request: Request) {
       nomor_surat: "",
 
       tanggal:
-        new Date().toLocaleDateString(
+        sekarang.toLocaleDateString(
           "id-ID",
           {
             day: "2-digit",
@@ -622,6 +628,34 @@ export async function POST(request: Request) {
 
     await conn.commit();
 
+    // =====================================================
+    // HAPUS KTP LAMA
+    // JIKA DIGANTI DENGAN KTP BARU
+    // =====================================================
+
+    if (
+      fileName &&
+      oldKtpFile &&
+      oldKtpFile !== fileName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldKtpFile
+          )
+        );
+      } catch {
+        // Abaikan jika file lama tidak ditemukan
+      }
+    }
+
+    // File baru sudah berhasil disimpan
+    uploadedFilePath = null;
+
     return NextResponse.json({
       success: true,
       pengajuan_id:
@@ -633,9 +667,16 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    await conn.rollback();
+    try {
+      await conn.rollback();
+    } catch {
+      // Abaikan jika transaksi belum dimulai
+    }
 
-    // Hapus file jika database gagal
+    // =====================================================
+    // CLEANUP FILE
+    // =====================================================
+
     if (uploadedFilePath) {
       try {
         await unlink(

@@ -1,5 +1,8 @@
 import db from "@/lib/db";
-import { writeFile } from "fs/promises";
+import {
+  writeFile,
+  unlink,
+} from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
@@ -8,37 +11,46 @@ import getJenisSurat from "@/lib/surat/getJenisSurat";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const nik = searchParams.get("nik")?.trim();
+    const { searchParams } =
+      new URL(request.url);
 
-    if (!nik || !/^\d{16}$/.test(nik)) {
+    const nik =
+      searchParams
+        .get("nik")
+        ?.trim();
+
+    if (
+      !nik ||
+      !/^\d{16}$/.test(nik)
+    ) {
       return NextResponse.json({
         success: false,
         found: false,
       });
     }
 
-    const [rows]: any = await db.query(
-      `
-      SELECT
-        nik,
-        nama,
-        ttl,
-        agama,
-        jenis_kelamin,
-        status_perkawinan,
-        pekerjaan,
-        alamat,
-        dusun,
-        rt,
-        rw,
-        kewarganegaraan
-      FROM kependudukan
-      WHERE nik = ?
-      LIMIT 1
-      `,
-      [nik]
-    );
+    const [rows]: any =
+      await db.query(
+        `
+        SELECT
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
 
     if (!rows.length) {
       return NextResponse.json({
@@ -52,7 +64,9 @@ export async function GET(request: Request) {
       found: true,
       data: rows[0],
     });
+
   } catch (error) {
+
     console.error(
       "GET STHT ERROR:",
       error
@@ -64,17 +78,27 @@ export async function GET(request: Request) {
         message:
           "Gagal mengambil data penduduk.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
 
-export async function POST(request: Request) {
-  const conn = await db.getConnection();
+export async function POST(
+  request: Request
+) {
+  const conn =
+    await db.getConnection();
 
-  let uploadedFilePath: string | null = null;
+  let uploadedFilePath:
+    string | null = null;
+
+  let oldFileName:
+    string | null = null;
 
   try {
+
     await conn.beginTransaction();
 
     const formData =
@@ -106,22 +130,30 @@ export async function POST(request: Request) {
 
     const jenis_kelamin =
       String(
-        formData.get("jenis_kelamin") ?? ""
+        formData.get(
+          "jenis_kelamin"
+        ) ?? ""
       ).trim();
 
     const status_perkawinan =
       String(
-        formData.get("status_perkawinan") ?? ""
+        formData.get(
+          "status_perkawinan"
+        ) ?? ""
       ).trim();
 
     const pekerjaan =
       String(
-        formData.get("pekerjaan") ?? ""
+        formData.get(
+          "pekerjaan"
+        ) ?? ""
       ).trim();
 
     const alamat =
       String(
-        formData.get("alamat") ?? ""
+        formData.get(
+          "alamat"
+        ) ?? ""
       ).trim();
 
     const dusun =
@@ -141,7 +173,9 @@ export async function POST(request: Request) {
 
     const kewarganegaraan =
       String(
-        formData.get("kewarganegaraan") ?? ""
+        formData.get(
+          "kewarganegaraan"
+        ) ?? ""
       ).trim();
 
     // ===============================
@@ -201,18 +235,24 @@ export async function POST(request: Request) {
           message:
             "NIK wajib diisi.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
-    if (!/^\d{16}$/.test(nik)) {
+    if (
+      !/^\d{16}$/.test(nik)
+    ) {
       return NextResponse.json(
         {
           success: false,
           message:
             "NIK harus terdiri dari 16 digit.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
@@ -239,7 +279,9 @@ export async function POST(request: Request) {
           message:
             "Data pemilik wajib dilengkapi.",
         },
-        { status: 400 }
+        {
+          status: 400
+        }
       );
     }
 
@@ -261,7 +303,9 @@ export async function POST(request: Request) {
           message:
             "Data tanah wajib dilengkapi.",
         },
-        { status: 400 }
+        {
+          status: 400
+        }
       );
     }
 
@@ -274,14 +318,19 @@ export async function POST(request: Request) {
         "file_ktp"
       ) as File | null;
 
-    if (!fileKtp) {
+    if (
+      !fileKtp ||
+      fileKtp.size === 0
+    ) {
       return NextResponse.json(
         {
           success: false,
           message:
             "File KTP wajib diupload.",
         },
-        { status: 400 }
+        {
+          status: 400
+        }
       );
     }
 
@@ -305,7 +354,9 @@ export async function POST(request: Request) {
           message:
             "File harus berupa JPG atau PNG.",
         },
-        { status: 400 }
+        {
+          status: 400
+        }
       );
     }
 
@@ -325,8 +376,34 @@ export async function POST(request: Request) {
           message:
             "Ukuran file maksimal 5 MB.",
         },
-        { status: 400 }
+        {
+          status: 400
+        }
       );
+    }
+
+    // ===============================
+    // AMBIL KTP LAMA
+    // ===============================
+
+    const [pendudukRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    if (
+      pendudukRows.length > 0
+    ) {
+      oldFileName =
+        pendudukRows[0]
+          ?.file_ktp ?? null;
     }
 
     // ===============================
@@ -343,7 +420,8 @@ export async function POST(request: Request) {
       fileKtp.name
         .split(".")
         .pop()
-        ?.toLowerCase() || "jpg";
+        ?.toLowerCase() ||
+      "jpg";
 
     const fileName =
       `${randomUUID()}.${ext}`;
@@ -384,14 +462,18 @@ export async function POST(request: Request) {
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        nama = VALUES(nama),
-        ttl = VALUES(ttl),
-        agama = VALUES(agama),
+        nama =
+          VALUES(nama),
+        ttl =
+          VALUES(ttl),
+        agama =
+          VALUES(agama),
         jenis_kelamin =
           VALUES(jenis_kelamin),
         status_perkawinan =
@@ -407,7 +489,9 @@ export async function POST(request: Request) {
         rw =
           VALUES(rw),
         kewarganegaraan =
-          VALUES(kewarganegaraan)
+          VALUES(kewarganegaraan),
+        file_ktp =
+          VALUES(file_ktp)
       `,
       [
         nik,
@@ -422,6 +506,7 @@ export async function POST(request: Request) {
         rt,
         rw,
         kewarganegaraan,
+        fileName,
       ]
     );
 
@@ -430,7 +515,9 @@ export async function POST(request: Request) {
     // ===============================
 
     const jenis =
-      await getJenisSurat("STHT");
+      await getJenisSurat(
+        "STHT"
+      );
 
     const jenisSuratId =
       jenis.id;
@@ -518,11 +605,10 @@ export async function POST(request: Request) {
         tahun_perolehan,
         asal_perolehan,
         letak_tanah,
-        harga_taksiran,
-        file_ktp
+        harga_taksiran
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?)
       `,
       [
         pengajuan_id,
@@ -532,7 +618,6 @@ export async function POST(request: Request) {
         asal_perolehan,
         letak_tanah,
         harga_taksiran,
-        fileName,
       ]
     );
 
@@ -556,6 +641,33 @@ export async function POST(request: Request) {
 
     await conn.commit();
 
+    // ===============================
+    // HAPUS KTP LAMA
+    // ===============================
+
+    if (
+      oldFileName &&
+      oldFileName !== fileName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldFileName
+          )
+        );
+      } catch {
+        // Abaikan jika file lama
+        // sudah tidak ditemukan.
+      }
+    }
+
+    uploadedFilePath =
+      null;
+
     return NextResponse.json({
       success: true,
       kode_tracking,
@@ -564,14 +676,15 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
+
     await conn.rollback();
 
-    // Hapus file jika transaksi gagal
+    // ===============================
+    // HAPUS FILE JIKA TRANSAKSI GAGAL
+    // ===============================
+
     if (uploadedFilePath) {
       try {
-        const { unlink } =
-          await import("fs/promises");
-
         await unlink(
           uploadedFilePath
         );
@@ -592,10 +705,13 @@ export async function POST(request: Request) {
           "Terjadi kesalahan server.",
       },
       {
-        status: 500,
+        status: 500
       }
     );
+
   } finally {
+
     conn.release();
+
   }
 }

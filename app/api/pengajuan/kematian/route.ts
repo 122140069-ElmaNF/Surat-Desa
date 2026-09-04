@@ -1,5 +1,9 @@
 import db from "@/lib/db";
-import { writeFile, mkdir } from "fs/promises";
+import {
+  writeFile,
+  mkdir,
+  unlink,
+} from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
@@ -72,7 +76,6 @@ export async function GET(request: Request) {
     });
 
   } catch (error) {
-
     console.error(
       "ERROR LOOKUP KEMATIAN:",
       error
@@ -96,16 +99,21 @@ export async function GET(request: Request) {
 // POST - PENGAJUAN SURAT KEMATIAN
 // =========================================================
 
-export async function POST(request: Request) {
-
+export async function POST(
+  request: Request
+) {
   const conn =
     await db.getConnection();
 
   let uploadedFilePath:
-    string | null = null;
+    | string
+    | null = null;
+
+  let oldFileName:
+    | string
+    | null = null;
 
   try {
-
     await conn.beginTransaction();
 
     const formData =
@@ -146,7 +154,9 @@ export async function POST(request: Request) {
 
     const alamat =
       String(
-        formData.get("alamat") ?? ""
+        formData.get(
+          "alamat"
+        ) ?? ""
       ).trim();
 
     // =====================================================
@@ -209,7 +219,6 @@ export async function POST(request: Request) {
       !nik ||
       !/^\d{16}$/.test(nik)
     ) {
-
       await conn.rollback();
 
       return NextResponse.json(
@@ -436,7 +445,6 @@ export async function POST(request: Request) {
       !fileKtp ||
       fileKtp.size === 0
     ) {
-
       await conn.rollback();
 
       return NextResponse.json(
@@ -462,7 +470,6 @@ export async function POST(request: Request) {
         fileKtp.type
       )
     ) {
-
       await conn.rollback();
 
       return NextResponse.json(
@@ -484,7 +491,6 @@ export async function POST(request: Request) {
       fileKtp.size >
       maxSize
     ) {
-
       await conn.rollback();
 
       return NextResponse.json(
@@ -497,6 +503,30 @@ export async function POST(request: Request) {
           status: 400,
         }
       );
+    }
+
+    // =====================================================
+    // AMBIL KTP LAMA DARI KEPENDUDUKAN
+    // =====================================================
+
+    const [oldKtpRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    if (
+      oldKtpRows.length > 0
+    ) {
+      oldFileName =
+        oldKtpRows[0]
+          ?.file_ktp ?? null;
     }
 
     // =====================================================
@@ -528,7 +558,8 @@ export async function POST(request: Request) {
       fileKtp.name
         .split(".")
         .pop()
-        ?.toLowerCase() || "jpg";
+        ?.toLowerCase() ||
+      "jpg";
 
     const fileName =
       `${randomUUID()}.${ext}`;
@@ -566,11 +597,9 @@ export async function POST(request: Request) {
     if (
       jenisRows.length === 0
     ) {
-
       throw new Error(
         "Jenis surat SKM tidak ditemukan."
       );
-
     }
 
     const kodeSurat =
@@ -580,88 +609,41 @@ export async function POST(request: Request) {
       jenisRows[0].id;
 
     // =====================================================
-    // SIMPAN / UPDATE KEPENDUDUKAN
+    // UPDATE / INSERT KEPENDUDUKAN
     // =====================================================
 
-    const [pendudukRows]: any =
-      await conn.query(
-        `
-        SELECT
-          nik
-        FROM kependudukan
-        WHERE nik = ?
-        LIMIT 1
-        `,
-        [nik]
-      );
-
-    if (
-      pendudukRows.length === 0
-    ) {
-
-      // ===================================================
-      // NIK BELUM ADA
-      // ===================================================
-
-      await conn.query(
-        `
-        INSERT INTO kependudukan
-        (
-          nik,
-          nama,
-          agama,
-          jenis_kelamin,
-          pekerjaan,
-          alamat
-        )
-        VALUES
-        (?, ?, ?, ?, ?, ?)
-        `,
-        [
-          nik,
-          nama,
-          agama,
-          jenis_kelamin,
-          pekerjaan,
-          alamat,
-        ]
-      );
-
-    } else {
-
-      // ===================================================
-      // NIK SUDAH ADA
-      // Update hanya data yang memang ada
-      // pada form Kematian.
-      //
-      // Data lain seperti:
-      // ttl, status_perkawinan,
-      // dusun, rt, rw, kewarganegaraan
-      // tetap dipertahankan.
-      // ===================================================
-
-      await conn.query(
-        `
-        UPDATE kependudukan
-        SET
-          nama = ?,
-          agama = ?,
-          jenis_kelamin = ?,
-          pekerjaan = ?,
-          alamat = ?
-        WHERE nik = ?
-        `,
-        [
-          nama,
-          agama,
-          jenis_kelamin,
-          pekerjaan,
-          alamat,
-          nik,
-        ]
-      );
-
-    }
+    await conn.query(
+      `
+      INSERT INTO kependudukan
+      (
+        nik,
+        nama,
+        agama,
+        jenis_kelamin,
+        pekerjaan,
+        alamat,
+        file_ktp
+      )
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        nama = VALUES(nama),
+        agama = VALUES(agama),
+        jenis_kelamin = VALUES(jenis_kelamin),
+        pekerjaan = VALUES(pekerjaan),
+        alamat = VALUES(alamat),
+        file_ktp = VALUES(file_ktp)
+      `,
+      [
+        nik,
+        nama,
+        agama,
+        jenis_kelamin,
+        pekerjaan,
+        alamat,
+        fileName,
+      ]
+    );
 
     // =====================================================
     // GENERATE KODE TRACKING
@@ -673,9 +655,11 @@ export async function POST(request: Request) {
     const tanggalTracking =
       `${String(
         sekarang.getDate()
-      ).padStart(2, "0")}${String(
+      ).padStart(2, "0")}` +
+      `${String(
         sekarang.getMonth() + 1
-      ).padStart(2, "0")}${String(
+      ).padStart(2, "0")}` +
+      `${String(
         sekarang.getFullYear()
       ).slice(-2)}`;
 
@@ -683,7 +667,7 @@ export async function POST(request: Request) {
       await conn.query(
         `
         SELECT
-          COUNT(*) total
+          COUNT(*) AS total
         FROM pengajuan_surat
         WHERE jenis_surat_id = ?
         `,
@@ -701,7 +685,7 @@ export async function POST(request: Request) {
       `${kodeSurat}-${tanggalTracking}-${urut}`;
 
     // =====================================================
-    // INSERT PENGAJUAN
+    // INSERT PENGAJUAN SURAT
     // =====================================================
 
     const [result]: any =
@@ -731,9 +715,8 @@ export async function POST(request: Request) {
     // =====================================================
     // INSERT DETAIL KEMATIAN
     //
-    // NIK TIDAK LAGI DISIMPAN DI SINI.
-    // NIK berada di pengajuan_surat dan terhubung
-    // dengan kependudukan.
+    // NIK TIDAK DISIMPAN DI TABEL KEMATIAN.
+    // FILE KTP JUGA TIDAK DISIMPAN DI SINI.
     // =====================================================
 
     await conn.query(
@@ -748,11 +731,10 @@ export async function POST(request: Request) {
         bertempat_di,
         penyebab,
         pelapor,
-        hubungan_pelapor,
-        file_ktp
+        hubungan_pelapor
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         pengajuan_id,
@@ -764,7 +746,6 @@ export async function POST(request: Request) {
         penyebab,
         pelapor,
         hubungan_pelapor,
-        fileName,
       ]
     );
 
@@ -773,16 +754,13 @@ export async function POST(request: Request) {
     // =====================================================
 
     await logActivity({
+      conn,
       pengajuanId:
         pengajuan_id,
-
       status:
         "pending",
-
       aktivitas:
         "Pengajuan surat berhasil dikirim.",
-
-      conn,
     });
 
     // =====================================================
@@ -791,7 +769,36 @@ export async function POST(request: Request) {
 
     await conn.commit();
 
+    // File baru sudah tersimpan
+    // dan tidak perlu dihapus
     uploadedFilePath = null;
+
+    // =====================================================
+    // HAPUS FILE KTP LAMA
+    // =====================================================
+
+    if (
+      oldFileName &&
+      oldFileName !== fileName
+    ) {
+      try {
+        const oldFilePath =
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldFileName
+          );
+
+        await unlink(
+          oldFilePath
+        );
+      } catch {
+        // Abaikan jika file lama
+        // sudah tidak ada
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -805,26 +812,17 @@ export async function POST(request: Request) {
     await conn.rollback();
 
     // =====================================================
-    // HAPUS FILE JIKA DATABASE GAGAL
+    // HAPUS FILE BARU JIKA DATABASE GAGAL
     // =====================================================
 
     if (uploadedFilePath) {
-
       try {
-
-        const { unlink } =
-          await import(
-            "fs/promises"
-          );
-
         await unlink(
           uploadedFilePath
         );
-
       } catch {
-        // Abaikan jika file tidak ditemukan
+        // Abaikan jika file sudah tidak ada
       }
-
     }
 
     console.error(
@@ -844,8 +842,6 @@ export async function POST(request: Request) {
     );
 
   } finally {
-
     conn.release();
-
   }
 }

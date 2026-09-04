@@ -287,9 +287,6 @@ export default async function buildFields(
   // ==========================================
 
   if (!table) {
-    // Untuk surat biasa, tetap ambil
-    // data penduduk berdasarkan ps.nik.
-
     if (pengajuan.nik) {
       const penduduk =
         await getPendudukByNik(
@@ -326,14 +323,6 @@ export default async function buildFields(
   // ==========================================
   // SURAT DENGAN SATU PENDUDUK
   // ==========================================
-  //
-  // Surat biasa menggunakan:
-  //
-  // pengajuan_surat.nik
-  //       ↓
-  // kependudukan
-  //
-  // ==========================================
 
   if (
     pengajuan.kode_surat !== "SKPHS" &&
@@ -354,25 +343,6 @@ export default async function buildFields(
 
   // ==========================================
   // KHUSUS SKPHS / PENGHASILAN
-  // ==========================================
-  //
-  // Ada dua penduduk:
-  //
-  // nik_kepala_keluarga
-  // nik_anak
-  //
-  // Template menggunakan:
-  //
-  // nama_kepala_keluarga
-  // ttl_kepala_keluarga
-  // nik_kepala_keluarga
-  // ...
-  //
-  // nama_anak
-  // ttl_anak
-  // nik_anak
-  // ...
-  //
   // ==========================================
 
   if (
@@ -403,19 +373,6 @@ export default async function buildFields(
 
   // ==========================================
   // KHUSUS SKTBAPT
-  // ==========================================
-  //
-  // Ada dua penduduk:
-  //
-  // nik_pertama
-  // nik_kedua
-  //
-  // Orang kedua hanya membutuhkan:
-  // nama
-  // ttl
-  // nik
-  // alamat
-  //
   // ==========================================
 
   if (
@@ -474,14 +431,51 @@ export default async function buildFields(
   }
 
   // ==========================================
-  // MASUKKAN FIELD DETAIL SURAT
+  // KHUSUS SKKD / KEBENARAN DATA
   // ==========================================
   //
-  // Field identitas tidak lagi berasal
-  // dari tabel detail.
+  // No KK sekarang disimpan di:
   //
-  // Tetapi field khusus surat tetap dimasukkan.
+  // persyaratan
+  //      ↓
+  // nik
+  // no_kk
   //
+  // Template menggunakan:
+  //
+  // {{no_kk}}
+  //
+  // ==========================================
+
+  if (
+    pengajuan.kode_surat === "SKKD" &&
+    pengajuan.nik
+  ) {
+    const [persyaratanRows]: any =
+      await db.query(
+        `
+        SELECT no_kk
+        FROM persyaratan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [pengajuan.nik]
+      );
+
+    const persyaratan =
+      persyaratanRows[0];
+
+    if (persyaratan) {
+      fields.no_kk =
+        formatValue(
+          "no_kk",
+          persyaratan.no_kk
+        );
+    }
+  }
+
+  // ==========================================
+  // MASUKKAN FIELD DETAIL SURAT
   // ==========================================
 
   Object.keys(row).forEach(
@@ -503,14 +497,6 @@ export default async function buildFields(
         return;
       }
 
-      // ----------------------------------------
-      // NIK dua penduduk sudah digunakan
-      // untuk mengambil data kependudukan.
-      //
-      // Tetap masukkan NIK-nya karena template
-      // membutuhkan field tersebut.
-      // ----------------------------------------
-
       fields[key] =
         formatValue(
           key,
@@ -521,20 +507,6 @@ export default async function buildFields(
 
   // ==========================================
   // KHUSUS SURAT KEMATIAN
-  // ==========================================
-  //
-  // Field "tanggal" pada tabel kematian
-  // merupakan tanggal meninggal.
-  //
-  // Sedangkan "tanggal" sistem digunakan
-  // sebagai tanggal surat.
-  //
-  // Oleh karena itu:
-  //
-  // row.tanggal
-  //      ↓
-  // tanggal_kematian
-  //
   // ==========================================
 
   if (

@@ -226,13 +226,14 @@ export async function PUT(
     }
 
     // ==========================
-    // AMBIL FILE KTP LAMA
+    // AMBIL DETAIL LISTRIK
     // ==========================
 
     const [rows]: any =
       await conn.query(
         `
-        SELECT file_ktp
+        SELECT
+          pengajuan_id
         FROM listrik
         WHERE pengajuan_id = ?
         LIMIT 1
@@ -251,8 +252,27 @@ export async function PUT(
       );
     }
 
+    // ==========================
+    // AMBIL FILE KTP LAMA
+    // DARI KEPENDUDUKAN
+    // ==========================
+
+    const [pendudukRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
     const oldFile =
-      rows[0]?.file_ktp ?? null;
+      pendudukRows.length > 0
+        ? pendudukRows[0]?.file_ktp ?? null
+        : null;
 
     let newFileName =
       oldFile;
@@ -371,15 +391,17 @@ export async function PUT(
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
         ttl = VALUES(ttl),
         agama = VALUES(agama),
-        jenis_kelamin = VALUES(jenis_kelamin),
+        jenis_kelamin =
+          VALUES(jenis_kelamin),
         status_perkawinan =
           VALUES(status_perkawinan),
         pekerjaan =
@@ -393,7 +415,9 @@ export async function PUT(
         rw =
           VALUES(rw),
         kewarganegaraan =
-          VALUES(kewarganegaraan)
+          VALUES(kewarganegaraan),
+        file_ktp =
+          VALUES(file_ktp)
       `,
       [
         nik,
@@ -408,6 +432,7 @@ export async function PUT(
         rt,
         rw,
         kewarganegaraan,
+        newFileName,
       ]
     );
 
@@ -437,45 +462,16 @@ export async function PUT(
       SET
         idpel = ?,
         jenis_meteran = ?,
-        keperluan = ?,
-        file_ktp = ?
+        keperluan = ?
       WHERE pengajuan_id = ?
       `,
       [
         idpel,
         jenis_meteran,
         keperluan,
-        newFileName,
         id,
       ]
     );
-
-    // ==========================
-    // HAPUS FILE KTP LAMA
-    // ==========================
-
-    if (
-      newUploadedFile &&
-      oldFile &&
-      oldFile !== newFileName
-    ) {
-      const oldPath =
-        path.join(
-          process.cwd(),
-          "public",
-          "uploads",
-          "ktp",
-          oldFile
-        );
-
-      if (
-        fs.existsSync(oldPath)
-      ) {
-        await unlink(
-          oldPath
-        );
-      }
-    }
 
     // ==========================
     // ACTIVITY LOG
@@ -497,6 +493,45 @@ export async function PUT(
 
     await conn.commit();
 
+    // ==========================
+    // HAPUS FILE KTP LAMA
+    // SETELAH COMMIT
+    // ==========================
+
+    if (
+      newUploadedFile &&
+      oldFile &&
+      oldFile !== newFileName
+    ) {
+      const oldPath =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp",
+          oldFile
+        );
+
+      try {
+        if (
+          fs.existsSync(
+            oldPath
+          )
+        ) {
+          await unlink(
+            oldPath
+          );
+        }
+      } catch (fileError) {
+        console.error(
+          "Gagal menghapus file KTP lama:",
+          fileError
+        );
+      }
+    }
+
+    newUploadedFile = null;
+
     return NextResponse.json({
       success: true,
       message:
@@ -504,10 +539,14 @@ export async function PUT(
     });
 
   } catch (err: any) {
+
     await conn.rollback();
 
-    // Hapus file baru jika
-    // transaction gagal
+    // ==========================
+    // HAPUS FILE BARU JIKA
+    // TRANSAKSI GAGAL
+    // ==========================
+
     if (newUploadedFile) {
       try {
         if (
@@ -540,7 +579,10 @@ export async function PUT(
         status: 500,
       }
     );
+
   } finally {
+
     conn.release();
+
   }
 }

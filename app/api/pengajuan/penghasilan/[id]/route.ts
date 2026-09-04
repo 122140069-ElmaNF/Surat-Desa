@@ -1,6 +1,10 @@
 import db from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, unlink, mkdir } from "fs/promises";
+import {
+  writeFile,
+  unlink,
+  mkdir,
+} from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
 import { logActivity } from "@/lib/activity";
@@ -15,15 +19,21 @@ export async function PUT(
   request: NextRequest,
   { params }: Params
 ) {
-  const conn = await db.getConnection();
+  const conn =
+    await db.getConnection();
 
-  let newFilePath: string | null = null;
-  let oldFileName: string | null = null;
+  let newFilePath:
+    string | null = null;
+
+  let oldFileName:
+    string | null = null;
 
   try {
-    const { id } = await params;
+    const { id } =
+      await params;
 
-    const formData = await request.formData();
+    const formData =
+      await request.formData();
 
     // =====================================================
     // DATA KEPALA KELUARGA
@@ -31,22 +41,30 @@ export async function PUT(
 
     const nikKepalaKeluarga =
       String(
-        formData.get("nik_kepala_keluarga") ?? ""
+        formData.get(
+          "nik_kepala_keluarga"
+        ) ?? ""
       ).trim();
 
     const namaKepalaKeluarga =
       String(
-        formData.get("nama_kepala_keluarga") ?? ""
+        formData.get(
+          "nama_kepala_keluarga"
+        ) ?? ""
       ).trim();
 
     const ttlKepalaKeluarga =
       String(
-        formData.get("ttl_kepala_keluarga") ?? ""
+        formData.get(
+          "ttl_kepala_keluarga"
+        ) ?? ""
       ).trim();
 
     const agamaKepalaKeluarga =
       String(
-        formData.get("agama_kepala_keluarga") ?? ""
+        formData.get(
+          "agama_kepala_keluarga"
+        ) ?? ""
       ).trim();
 
     const jenisKelaminKepalaKeluarga =
@@ -111,22 +129,30 @@ export async function PUT(
 
     const nikAnak =
       String(
-        formData.get("nik_anak") ?? ""
+        formData.get(
+          "nik_anak"
+        ) ?? ""
       ).trim();
 
     const namaAnak =
       String(
-        formData.get("nama_anak") ?? ""
+        formData.get(
+          "nama_anak"
+        ) ?? ""
       ).trim();
 
     const ttlAnak =
       String(
-        formData.get("ttl_anak") ?? ""
+        formData.get(
+          "ttl_anak"
+        ) ?? ""
       ).trim();
 
     const agamaAnak =
       String(
-        formData.get("agama_anak") ?? ""
+        formData.get(
+          "agama_anak"
+        ) ?? ""
       ).trim();
 
     const jenisKelaminAnak =
@@ -191,35 +217,51 @@ export async function PUT(
 
     const nilaiPenghasilan =
       String(
-        formData.get("penghasilan") ?? ""
+        formData.get(
+          "penghasilan"
+        ) ?? ""
       ).trim();
 
     const fileKtp =
-      formData.get("file_ktp") as File | null;
+      formData.get(
+        "file_ktp"
+      ) as File | null;
 
     // =====================================================
     // VALIDASI NIK
     // =====================================================
 
-    if (!/^\d{16}$/.test(nikKepalaKeluarga)) {
+    if (
+      !/^\d{16}$/.test(
+        nikKepalaKeluarga
+      )
+    ) {
       return NextResponse.json(
         {
           success: false,
           message:
             "NIK kepala keluarga harus terdiri dari 16 digit.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
-    if (!/^\d{16}$/.test(nikAnak)) {
+    if (
+      !/^\d{16}$/.test(
+        nikAnak
+      )
+    ) {
       return NextResponse.json(
         {
           success: false,
           message:
             "NIK anak harus terdiri dari 16 digit.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
@@ -241,7 +283,9 @@ export async function PUT(
           message:
             "Data kepala keluarga belum lengkap.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
@@ -263,7 +307,9 @@ export async function PUT(
           message:
             "Data anak belum lengkap.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
@@ -278,7 +324,9 @@ export async function PUT(
           message:
             "Penghasilan wajib diisi.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
@@ -294,26 +342,40 @@ export async function PUT(
     const maxSize =
       5 * 1024 * 1024;
 
-    if (fileKtp && fileKtp.size > 0) {
-      if (!allowedTypes.includes(fileKtp.type)) {
+    if (
+      fileKtp &&
+      fileKtp.size > 0
+    ) {
+      if (
+        !allowedTypes.includes(
+          fileKtp.type
+        )
+      ) {
         return NextResponse.json(
           {
             success: false,
             message:
               "File harus berupa JPG atau PNG.",
           },
-          { status: 400 }
+          {
+            status: 400,
+          }
         );
       }
 
-      if (fileKtp.size > maxSize) {
+      if (
+        fileKtp.size >
+        maxSize
+      ) {
         return NextResponse.json(
           {
             success: false,
             message:
               "Ukuran file maksimal 5 MB.",
           },
-          { status: 400 }
+          {
+            status: 400,
+          }
         );
       }
     }
@@ -325,47 +387,76 @@ export async function PUT(
     await conn.beginTransaction();
 
     // =====================================================
-    // AMBIL DATA LAMA
+    // AMBIL DATA PENGAJUAN
     // =====================================================
 
-    const [rows]: any =
+    const [pengajuanRows]: any =
       await conn.query(
         `
         SELECT
-          id,
-          pengajuan_id,
-          file_ktp
-        FROM penghasilan
-        WHERE pengajuan_id = ?
+          nik
+        FROM pengajuan_surat
+        WHERE id = ?
         LIMIT 1
         `,
         [id]
       );
 
-    if (!rows.length) {
+    if (
+      !pengajuanRows.length
+    ) {
       await conn.rollback();
 
       return NextResponse.json(
         {
           success: false,
           message:
-            "Data penghasilan tidak ditemukan.",
+            "Data pengajuan tidak ditemukan.",
         },
-        { status: 404 }
+        {
+          status: 404,
+        }
       );
     }
 
-    oldFileName =
-      rows[0].file_ktp ?? null;
+    const nikLama =
+      pengajuanRows[0].nik;
 
     // =====================================================
-    // UPLOAD FILE BARU
+    // AMBIL KTP LAMA DARI KEPENDUDUKAN
+    // =====================================================
+
+    const [pendudukRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nikLama]
+      );
+
+    if (
+      pendudukRows.length
+    ) {
+      oldFileName =
+        pendudukRows[0]
+          ?.file_ktp ?? null;
+    }
+
+    // =====================================================
+    // FILE KTP
     // =====================================================
 
     let fileName =
       oldFileName;
 
-    if (fileKtp && fileKtp.size > 0) {
+    if (
+      fileKtp &&
+      fileKtp.size > 0
+    ) {
       const uploadDir =
         path.join(
           process.cwd(),
@@ -376,14 +467,17 @@ export async function PUT(
 
       await mkdir(
         uploadDir,
-        { recursive: true }
+        {
+          recursive: true,
+        }
       );
 
       const ext =
         fileKtp.name
           .split(".")
           .pop()
-          ?.toLowerCase() || "jpg";
+          ?.toLowerCase() ||
+        "jpg";
 
       fileName =
         `${randomUUID()}.${ext}`;
@@ -424,21 +518,36 @@ export async function PUT(
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        nama = VALUES(nama),
-        ttl = VALUES(ttl),
-        agama = VALUES(agama),
-        jenis_kelamin = VALUES(jenis_kelamin),
-        status_perkawinan = VALUES(status_perkawinan),
-        pekerjaan = VALUES(pekerjaan),
-        alamat = VALUES(alamat),
-        dusun = VALUES(dusun),
-        rt = VALUES(rt),
-        rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        nama =
+          VALUES(nama),
+        ttl =
+          VALUES(ttl),
+        agama =
+          VALUES(agama),
+        jenis_kelamin =
+          VALUES(jenis_kelamin),
+        status_perkawinan =
+          VALUES(status_perkawinan),
+        pekerjaan =
+          VALUES(pekerjaan),
+        alamat =
+          VALUES(alamat),
+        dusun =
+          VALUES(dusun),
+        rt =
+          VALUES(rt),
+        rw =
+          VALUES(rw),
+        kewarganegaraan =
+          VALUES(kewarganegaraan),
+        file_ktp =
+          VALUES(file_ktp)
       `,
       [
         nikKepalaKeluarga,
@@ -453,6 +562,7 @@ export async function PUT(
         rtKepalaKeluarga,
         rwKepalaKeluarga,
         kewarganegaraanKepalaKeluarga,
+        fileName,
       ]
     );
 
@@ -477,19 +587,31 @@ export async function PUT(
         rw,
         kewarganegaraan
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
-        nama = VALUES(nama),
-        ttl = VALUES(ttl),
-        agama = VALUES(agama),
-        jenis_kelamin = VALUES(jenis_kelamin),
-        status_perkawinan = VALUES(status_perkawinan),
-        pekerjaan = VALUES(pekerjaan),
-        alamat = VALUES(alamat),
-        dusun = VALUES(dusun),
-        rt = VALUES(rt),
-        rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        nama =
+          VALUES(nama),
+        ttl =
+          VALUES(ttl),
+        agama =
+          VALUES(agama),
+        jenis_kelamin =
+          VALUES(jenis_kelamin),
+        status_perkawinan =
+          VALUES(status_perkawinan),
+        pekerjaan =
+          VALUES(pekerjaan),
+        alamat =
+          VALUES(alamat),
+        dusun =
+          VALUES(dusun),
+        rt =
+          VALUES(rt),
+        rw =
+          VALUES(rw),
+        kewarganegaraan =
+          VALUES(kewarganegaraan)
       `,
       [
         nikAnak,
@@ -536,15 +658,13 @@ export async function PUT(
       SET
         nik_kepala_keluarga = ?,
         nik_anak = ?,
-        penghasilan = ?,
-        file_ktp = ?
+        penghasilan = ?
       WHERE pengajuan_id = ?
       `,
       [
         nikKepalaKeluarga,
         nikAnak,
         nilaiPenghasilan,
-        fileName,
         id,
       ]
     );
@@ -554,8 +674,10 @@ export async function PUT(
     // =====================================================
 
     await logActivity({
-      pengajuanId: Number(id),
-      status: "pending",
+      pengajuanId:
+        Number(id),
+      status:
+        "pending",
       aktivitas:
         "Pemohon mengirim perbaikan pengajuan.",
       conn,
@@ -568,7 +690,8 @@ export async function PUT(
     await conn.commit();
 
     // =====================================================
-    // HAPUS FILE LAMA SETELAH COMMIT
+    // HAPUS FILE KTP LAMA
+    // SETELAH COMMIT
     // =====================================================
 
     if (
@@ -587,7 +710,8 @@ export async function PUT(
           )
         );
       } catch {
-        // Abaikan jika file lama sudah tidak ada
+        // Abaikan jika file lama
+        // sudah tidak ada.
       }
     }
 
@@ -596,15 +720,23 @@ export async function PUT(
       message:
         "Pengajuan berhasil diperbarui.",
     });
+
   } catch (error) {
+
     await conn.rollback();
 
-    // Hapus file baru jika transaksi gagal
+    // =====================================================
+    // HAPUS FILE BARU JIKA TRANSAKSI GAGAL
+    // =====================================================
+
     if (newFilePath) {
       try {
-        await unlink(newFilePath);
+        await unlink(
+          newFilePath
+        );
       } catch {
-        // Abaikan jika file tidak ditemukan
+        // Abaikan jika file
+        // tidak ditemukan.
       }
     }
 
@@ -619,9 +751,14 @@ export async function PUT(
         message:
           "Terjadi kesalahan server.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
+
   } finally {
+
     conn.release();
+
   }
 }

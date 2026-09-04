@@ -86,6 +86,15 @@ export async function POST(request: Request) {
       ).trim();
 
     // ==================================
+    // DATA PERSYARATAN
+    // ==================================
+
+    const no_kk =
+      String(
+        formData.get("no_kk") ?? ""
+      ).trim();
+
+    // ==================================
     // DATA KHUSUS SURAT
     // ==================================
 
@@ -562,6 +571,55 @@ export async function POST(request: Request) {
       jenisRows[0].template_surat ?? "";
 
     // ==================================
+    // AMBIL DATA DOKUMEN LAMA
+    // ==================================
+
+    const [
+      dokumenRows,
+    ]: any = await conn.query(
+      `
+      SELECT
+        kp.file_ktp,
+        pr.no_kk,
+        pr.file_kk
+      FROM kependudukan kp
+      LEFT JOIN persyaratan pr
+        ON pr.nik = kp.nik
+      WHERE kp.nik = ?
+      LIMIT 1
+      `,
+      [nik]
+    );
+
+    const oldKtpName =
+      dokumenRows[0]?.file_ktp ??
+      null;
+
+    const oldKkName =
+      dokumenRows[0]?.file_kk ??
+      null;
+
+    const oldNoKk =
+      dokumenRows[0]?.no_kk ??
+      null;
+
+    // ==================================
+    // TENTUKAN FILE YANG AKAN DISIMPAN
+    // ==================================
+
+    const finalKtpName =
+      fileKtpName ??
+      oldKtpName;
+
+    const finalKkName =
+      fileKkName ??
+      oldKkName;
+
+    const finalNoKk =
+      no_kk ||
+      oldNoKk;
+
+    // ==================================
     // SIMPAN / UPDATE KEPENDUDUKAN
     // ==================================
 
@@ -580,10 +638,11 @@ export async function POST(request: Request) {
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
@@ -596,7 +655,8 @@ export async function POST(request: Request) {
         dusun = VALUES(dusun),
         rt = VALUES(rt),
         rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
       `,
       [
         nik,
@@ -611,6 +671,33 @@ export async function POST(request: Request) {
         rt,
         rw,
         kewarganegaraan,
+        finalKtpName,
+      ]
+    );
+
+    // ==================================
+    // SIMPAN / UPDATE PERSYARATAN
+    // ==================================
+
+    await conn.query(
+      `
+      INSERT INTO persyaratan
+      (
+        nik,
+        no_kk,
+        file_kk
+      )
+      VALUES
+      (?, ?, ?)
+
+      ON DUPLICATE KEY UPDATE
+        no_kk = VALUES(no_kk),
+        file_kk = VALUES(file_kk)
+      `,
+      [
+        nik,
+        finalNoKk,
+        finalKkName,
       ]
     );
 
@@ -693,20 +780,16 @@ export async function POST(request: Request) {
         pengajuan_id,
         no_hp,
         nomor_porsi,
-        bin_binti,
-        file_ktp,
-        file_kk
+        bin_binti
       )
       VALUES
-      (?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?)
       `,
       [
         pengajuan_id,
         no_hp,
         nomor_porsi,
         bin_binti,
-        fileKtpName,
-        fileKkName,
       ]
     );
 
@@ -799,6 +882,56 @@ export async function POST(request: Request) {
 
     uploadedKtpPath = null;
     uploadedKkPath = null;
+
+    // ==================================
+    // HAPUS FILE LAMA SETELAH COMMIT
+    // ==================================
+
+    if (
+      fileKtpName &&
+      oldKtpName &&
+      oldKtpName !== fileKtpName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldKtpName
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Gagal menghapus KTP lama:",
+          error
+        );
+      }
+    }
+
+    if (
+      fileKkName &&
+      oldKkName &&
+      oldKkName !== fileKkName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "kk",
+            oldKkName
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Gagal menghapus KK lama:",
+          error
+        );
+      }
+    }
 
     // ==================================
     // RESPONSE

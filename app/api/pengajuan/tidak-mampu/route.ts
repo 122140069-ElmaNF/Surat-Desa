@@ -17,6 +17,7 @@ export async function POST(request: Request) {
   const conn = await db.getConnection();
 
   let uploadedFilePath: string | null = null;
+  let oldFileName: string | null = null;
 
   try {
     await conn.beginTransaction();
@@ -165,6 +166,30 @@ export async function POST(request: Request) {
     }
 
     // =================================================
+    // CEK KTP LAMA DI KEPENDUDUKAN
+    // =================================================
+
+    const [oldPendudukRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    if (
+      oldPendudukRows.length > 0
+    ) {
+      oldFileName =
+        oldPendudukRows[0]?.file_ktp ??
+        null;
+    }
+
+    // =================================================
     // UPLOAD FILE KTP
     // =================================================
 
@@ -245,89 +270,98 @@ export async function POST(request: Request) {
         [nik]
       );
 
-// =================================================
-// SIMPAN / UPDATE DATA KEPENDUDUKAN
-// =================================================
+    // =================================================
+    // SIMPAN / UPDATE DATA KEPENDUDUKAN
+    // =================================================
 
-if (pendudukRows.length === 0) {
-  // =================================================
-  // JIKA NIK BELUM ADA → INSERT
-  // =================================================
+    if (
+      pendudukRows.length === 0
+    ) {
 
-  await conn.query(
-    `
-    INSERT INTO kependudukan
-    (
-      nik,
-      nama,
-      ttl,
-      agama,
-      jenis_kelamin,
-      status_perkawinan,
-      pekerjaan,
-      alamat,
-      dusun,
-      rt,
-      rw,
-      kewarganegaraan
-    )
-    VALUES
-    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `,
-    [
-      nik,
-      nama,
-      ttl,
-      agama,
-      jenis_kelamin,
-      status_perkawinan,
-      pekerjaan,
-      alamat,
-      dusun,
-      rt,
-      rw,
-      kewarganegaraan,
-    ]
-  );
+      // =================================================
+      // JIKA NIK BELUM ADA → INSERT
+      // =================================================
 
-} else {
-  // =================================================
-  // JIKA NIK SUDAH ADA → UPDATE
-  // =================================================
+      await conn.query(
+        `
+        INSERT INTO kependudukan
+        (
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan,
+          file_ktp
+        )
+        VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan,
+          fileName,
+        ]
+      );
 
-  await conn.query(
-    `
-    UPDATE kependudukan
-    SET
-      nama = ?,
-      ttl = ?,
-      agama = ?,
-      jenis_kelamin = ?,
-      status_perkawinan = ?,
-      pekerjaan = ?,
-      alamat = ?,
-      dusun = ?,
-      rt = ?,
-      rw = ?,
-      kewarganegaraan = ?
-    WHERE nik = ?
-    `,
-    [
-      nama,
-      ttl,
-      agama,
-      jenis_kelamin,
-      status_perkawinan,
-      pekerjaan,
-      alamat,
-      dusun,
-      rt,
-      rw,
-      kewarganegaraan,
-      nik,
-    ]
-  );
-}
+    } else {
+
+      // =================================================
+      // JIKA NIK SUDAH ADA → UPDATE
+      // =================================================
+
+      await conn.query(
+        `
+        UPDATE kependudukan
+        SET
+          nama = ?,
+          ttl = ?,
+          agama = ?,
+          jenis_kelamin = ?,
+          status_perkawinan = ?,
+          pekerjaan = ?,
+          alamat = ?,
+          dusun = ?,
+          rt = ?,
+          rw = ?,
+          kewarganegaraan = ?,
+          file_ktp = ?
+        WHERE nik = ?
+        `,
+        [
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan,
+          fileName,
+          nik,
+        ]
+      );
+    }
+
     // =================================================
     // GENERATE KODE TRACKING
     // =================================================
@@ -403,16 +437,14 @@ if (pendudukRows.length === 0) {
       INSERT INTO tidak_mampu
       (
         pengajuan_id,
-        keperluan,
-        file_ktp
+        keperluan
       )
       VALUES
-      (?, ?, ?)
+      (?, ?)
       `,
       [
         pengajuan_id,
         keperluan,
-        fileName,
       ]
     );
 
@@ -496,6 +528,30 @@ if (pendudukRows.length === 0) {
 
     await conn.commit();
 
+    // =================================================
+    // HAPUS KTP LAMA
+    // =================================================
+
+    if (
+      oldFileName &&
+      oldFileName !== fileName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldFileName
+          )
+        );
+      } catch {
+        // Abaikan jika file lama
+        // tidak ditemukan
+      }
+    }
+
     uploadedFilePath = null;
 
     return NextResponse.json({
@@ -507,7 +563,13 @@ if (pendudukRows.length === 0) {
     });
 
   } catch (err) {
-    await conn.rollback();
+
+    try {
+      await conn.rollback();
+    } catch {
+      // Abaikan jika transaksi
+      // belum dimulai
+    }
 
     // Hapus file jika database gagal
     if (uploadedFilePath) {
@@ -516,7 +578,8 @@ if (pendudukRows.length === 0) {
           uploadedFilePath
         );
       } catch {
-        // Abaikan jika file tidak ditemukan
+        // Abaikan jika file
+        // tidak ditemukan
       }
     }
 

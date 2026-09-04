@@ -168,6 +168,14 @@ export async function POST(request: Request) {
       )?.trim() ?? "";
 
     // =================================================
+    // DATA PERSYARATAN
+    // =================================================
+
+    const no_kk =
+      (formData.get("no_kk") as string | null)
+        ?.trim() ?? "";
+
+    // =================================================
     // DATA KHUSUS SKKD
     // =================================================
 
@@ -330,6 +338,32 @@ export async function POST(request: Request) {
           success: false,
           message:
             "Kewarganegaraan wajib diisi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // =================================================
+    // VALIDASI DATA PERSYARATAN
+    // =================================================
+
+    if (!no_kk) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Nomor KK wajib diisi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!/^\d{16}$/.test(no_kk)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Nomor KK harus terdiri dari 16 digit.",
         },
         { status: 400 }
       );
@@ -519,6 +553,46 @@ export async function POST(request: Request) {
       jenisRows[0].kode_surat;
 
     // =================================================
+    // AMBIL KTP LAMA
+    // =================================================
+
+    const [oldKtpRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    const oldKtp =
+      oldKtpRows[0]?.file_ktp ??
+      null;
+
+    // =================================================
+    // AMBIL KK LAMA
+    // =================================================
+
+    const [oldKkRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_kk
+        FROM persyaratan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    const oldKk =
+      oldKkRows[0]?.file_kk ??
+      null;
+
+    // =================================================
     // UPSERT KEPENDUDUKAN
     // =================================================
 
@@ -537,10 +611,11 @@ export async function POST(request: Request) {
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
         ttl = VALUES(ttl),
@@ -552,7 +627,8 @@ export async function POST(request: Request) {
         dusun = VALUES(dusun),
         rt = VALUES(rt),
         rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
       `,
       [
         nik,
@@ -567,6 +643,32 @@ export async function POST(request: Request) {
         rt,
         rw,
         kewarganegaraan,
+        ktpName,
+      ]
+    );
+
+    // =================================================
+    // UPSERT PERSYARATAN
+    // =================================================
+
+    await conn.query(
+      `
+      INSERT INTO persyaratan
+      (
+        nik,
+        no_kk,
+        file_kk
+      )
+      VALUES
+      (?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        no_kk = VALUES(no_kk),
+        file_kk = VALUES(file_kk)
+      `,
+      [
+        nik,
+        no_kk,
+        kkName,
       ]
     );
 
@@ -637,7 +739,7 @@ export async function POST(request: Request) {
     // =================================================
     // INSERT KEBENARAN DATA
     // =================================================
-    // Hanya data khusus surat + dokumen.
+    // Hanya data khusus surat.
 
     await conn.query(
       `
@@ -646,20 +748,16 @@ export async function POST(request: Request) {
         pengajuan_id,
         no_hp,
         nomor_porsi,
-        bin_binti,
-        file_ktp,
-        file_kk
+        bin_binti
       )
       VALUES
-      (?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?)
       `,
       [
         pengajuan_id,
         no_hp,
         nomor_porsi,
         bin_binti,
-        ktpName,
-        kkName,
       ]
     );
 
@@ -685,6 +783,50 @@ export async function POST(request: Request) {
     // =================================================
 
     await conn.commit();
+
+    // =================================================
+    // HAPUS FILE LAMA SETELAH COMMIT
+    // =================================================
+
+    try {
+      const { unlink } =
+        await import("fs/promises");
+
+      if (
+        oldKtp &&
+        oldKtp !== ktpName
+      ) {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldKtp
+          )
+        );
+      }
+
+      if (
+        oldKk &&
+        oldKk !== kkName
+      ) {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "kk",
+            oldKk
+          )
+        );
+      }
+    } catch (fileError) {
+      console.error(
+        "Gagal menghapus file lama:",
+        fileError
+      );
+    }
 
     return NextResponse.json({
       success: true,

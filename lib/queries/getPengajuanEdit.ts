@@ -104,7 +104,8 @@ export default async function getPengajuanEdit(
           dusun,
           rt,
           rw,
-          kewarganegaraan
+          kewarganegaraan,
+          file_ktp
         FROM kependudukan
         WHERE nik = ?
         LIMIT 1
@@ -139,12 +140,18 @@ export default async function getPengajuanEdit(
         | undefined) ?? null;
 
     // ===========================
-    // Ambil dokumen
+    // Ambil dokumen dari tabel detail
     // ===========================
 
     if (detail) {
       FILE_COLUMNS.forEach(
         (column) => {
+          // file_ktp sudah dipindahkan
+          // ke tabel kependudukan
+          if (column === "file_ktp") {
+            return;
+          }
+
           const value =
             detail?.[column];
 
@@ -170,6 +177,20 @@ export default async function getPengajuanEdit(
       ...(detail ?? {}),
       ...dataKependudukan,
     };
+
+    // ===========================
+    // KTP dari kependudukan
+    // ===========================
+
+    if (
+      dataKependudukan.file_ktp &&
+      String(
+        dataKependudukan.file_ktp
+      ).trim() !== ""
+    ) {
+      dokumen.file_ktp =
+        dataKependudukan.file_ktp;
+    }
   }
 
   // ===========================

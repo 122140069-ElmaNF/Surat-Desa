@@ -1,6 +1,6 @@
 import db from "@/lib/db";
 import { NextResponse } from "next/server";
-import { writeFile, unlink } from "fs/promises";
+import { writeFile, unlink, mkdir } from "fs/promises";
 import { randomUUID } from "crypto";
 import path from "path";
 
@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   const conn = await db.getConnection();
 
   let uploadedFilePath: string | null = null;
+  let oldKtpFile: string | null = null;
 
   try {
     await conn.beginTransaction();
@@ -140,6 +141,13 @@ export async function POST(request: Request) {
           "ktp"
         );
 
+      await mkdir(
+        uploadDir,
+        {
+          recursive: true,
+        }
+      );
+
       const uploadPath =
         path.join(
           uploadDir,
@@ -172,13 +180,13 @@ export async function POST(request: Request) {
       jenis.template_surat ?? "";
 
     // =========================================
-    // CEK DATA KEPENDUDUKAN
+    // AMBIL KTP LAMA
     // =========================================
 
-    const [pendudukRows]: any =
+    const [oldKtpRows]: any =
       await conn.query(
         `
-        SELECT nik
+        SELECT file_ktp
         FROM kependudukan
         WHERE nik = ?
         LIMIT 1
@@ -186,80 +194,67 @@ export async function POST(request: Request) {
         [nik]
       );
 
+    oldKtpFile =
+      oldKtpRows?.[0]?.file_ktp || null;
+
+    const finalKtpFile =
+      fileName ?? oldKtpFile;
+
     // =========================================
-    // INSERT / UPDATE KEPENDUDUKAN
+    // UPSERT DATA KEPENDUDUKAN
     // =========================================
 
-    if (pendudukRows.length === 0) {
-      await conn.query(
-        `
-        INSERT INTO kependudukan
-        (
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan
-        )
-        VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan,
-        ]
-      );
-    } else {
-      await conn.query(
-        `
-        UPDATE kependudukan
-        SET
-          nama = ?,
-          ttl = ?,
-          agama = ?,
-          jenis_kelamin = ?,
-          status_perkawinan = ?,
-          pekerjaan = ?,
-          alamat = ?,
-          dusun = ?,
-          rt = ?,
-          rw = ?,
-          kewarganegaraan = ?
-        WHERE nik = ?
-        `,
-        [
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan,
-          nik,
-        ]
-      );
-    }
+    await conn.query(
+      `
+      INSERT INTO kependudukan
+      (
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan,
+        file_ktp
+      )
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+      ON DUPLICATE KEY UPDATE
+        nama = VALUES(nama),
+        ttl = VALUES(ttl),
+        agama = VALUES(agama),
+        jenis_kelamin = VALUES(jenis_kelamin),
+        status_perkawinan = VALUES(status_perkawinan),
+        pekerjaan = VALUES(pekerjaan),
+        alamat = VALUES(alamat),
+        dusun = VALUES(dusun),
+        rt = VALUES(rt),
+        rw = VALUES(rw),
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
+      `,
+      [
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan,
+        finalKtpFile,
+      ]
+    );
 
     // =========================================
     // GENERATE KODE TRACKING
@@ -332,16 +327,14 @@ export async function POST(request: Request) {
       INSERT INTO tidak_mampu
       (
         pengajuan_id,
-        keperluan,
-        file_ktp
+        keperluan
       )
       VALUES
-      (?, ?, ?)
+      (?, ?)
       `,
       [
         pengajuan_id,
         keperluan,
-        fileName,
       ]
     );
 
@@ -354,7 +347,7 @@ export async function POST(request: Request) {
         nomor_surat: "",
 
         tanggal:
-          new Date().toLocaleDateString(
+          sekarang.toLocaleDateString(
             "id-ID",
             {
               day: "2-digit",
@@ -421,6 +414,31 @@ export async function POST(request: Request) {
 
     await conn.commit();
 
+    // =========================================
+    // HAPUS KTP LAMA
+    // JIKA DIGANTI DENGAN KTP BARU
+    // =========================================
+
+    if (
+      fileName &&
+      oldKtpFile &&
+      oldKtpFile !== fileName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldKtpFile
+          )
+        );
+      } catch {
+        // Abaikan jika file lama tidak ditemukan
+      }
+    }
+
     uploadedFilePath = null;
 
     // =========================================
@@ -435,12 +453,18 @@ export async function POST(request: Request) {
     });
 
   } catch (err) {
-    await conn.rollback();
+    try {
+      await conn.rollback();
+    } catch {
+      // Abaikan jika transaksi belum dimulai
+    }
 
     // Hapus file jika database gagal
     if (uploadedFilePath) {
       try {
-        await unlink(uploadedFilePath);
+        await unlink(
+          uploadedFilePath
+        );
       } catch {
         // Abaikan jika file tidak ditemukan
       }

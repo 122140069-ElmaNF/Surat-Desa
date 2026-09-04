@@ -222,6 +222,13 @@
 
   .hero-buttons {
     flex-direction: column;
+    gap: 14px;
+  }
+
+  .hero-buttons a {
+    padding: 14px 24px;
+    border-radius: 14px;
+    font-size: 15px;
   }
 }
 
@@ -271,15 +278,16 @@
 }
 
 /* HERO */
-.pengajuan-hero{
-    background:linear-gradient(
-        180deg,
-        #60a5fa,
-        #dbeafe
-    );
 
-    padding:60px 20px 120px;
-    text-align:center;
+.pengajuan-hero {
+  background: linear-gradient(
+    180deg,
+    #60a5fa,
+    #dbeafe
+  );
+
+  padding: 60px 20px 120px;
+  text-align: center;
 }
 
 .pengajuan-hero-content {
@@ -287,41 +295,41 @@
   margin: auto;
 }
 
-.pengajuan-hero h1{
-    font-size:48px;
-    font-weight:800;
-    color:white;
-    margin-bottom:16px;
-    line-height:1.2;
+.pengajuan-hero h1 {
+  font-size: 48px;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 16px;
+  line-height: 1.2;
 }
 
-.pengajuan-hero p{
-    color:white;
-    opacity:.95;
-    font-size:20px;
-    line-height:1.8;
-    max-width:700px;
-    margin:auto;
+.pengajuan-hero p {
+  color: white;
+  opacity: .95;
+  font-size: 20px;
+  line-height: 1.8;
+  max-width: 700px;
+  margin: auto;
 }
 
 /* CONTENT */
 
-.pengajuan-content{
-    margin-top:-70px;
-    position:relative;
-    z-index:10;
-    padding:0 20px 70px;
+.pengajuan-content {
+  margin-top: -70px;
+  position: relative;
+  z-index: 10;
+  padding: 0 20px 70px;
 }
 
-.pengajuan-card{
-    width:100%;
-    max-width:760px;
-    margin:auto;
-    background:#fff;
-    border-radius:24px; 
-    padding:40px;
-    box-shadow:
-        0 15px 40px rgba(15,23,42,.08);
+.pengajuan-card {
+  width: 100%;
+  max-width: 760px;
+  margin: auto;
+  background: #fff;
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow:
+    0 15px 40px rgba(15,23,42,.08);
 }
 
 .pengajuan-header {
@@ -345,30 +353,30 @@
   margin-bottom: 34px;
 }
 
-.form-group label{
-    display:block;
-    font-weight:700;
-    font-size:15px;
-    margin-bottom:10px;
-    color:#1e293b;
+.form-group label {
+  display: block;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 10px;
+  color: #1e293b;
 }
 
-.input-control{
-    height:54px;
-    width:100%;
-    padding:0 18px;
-    border-radius:14px;
-    border:1px solid #cbd5e1;
-    background:#fff;
-    transition:.25s;
+.input-control {
+  height: 54px;
+  width: 100%;
+  padding: 0 18px;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  transition: .25s;
 }
 
-.input-control:focus{
-    outline:none;
-    border-color:#2563eb;
-    box-shadow:
-        0 0 0 4px
-        rgba(37,99,235,.12);
+.input-control:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow:
+    0 0 0 4px
+    rgba(37,99,235,.12);
 }
 
 .form-grid {
@@ -388,55 +396,62 @@
   gap: 14px;
 }
 
-.submit-btn{
-    width:100%;
-    margin-top:45px;
-    height:56px;
-    border:none;
-    border-radius:16px;
-    background:linear-gradient(
-        135deg,
-        #3b82f6,
-        #2563eb
-    );
-    color:white;
-    font-size:17px;
-    font-weight:700;
-    cursor:pointer;
-    transition:.25s;
+.submit-btn {
+  width: 100%;
+  margin-top: 45px;
+  height: 56px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    #3b82f6,
+    #2563eb
+  );
+  color: white;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .25s;
 }
 
-.submit-btn:hover{
-    transform:translateY(-2px);
-    box-shadow:
-        0 12px 30px
-        rgba(37,99,235,.25);
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 30px
+    rgba(37,99,235,.25);
 }
 
-@media(max-width:768px){
-    .pengajuan-hero{
-        padding:50px 20px 100px;
-    }
-    .pengajuan-hero h1{
-        font-size:34px;
-    }
-    .pengajuan-hero p{
-        font-size:17px;
-    }
-    .pengajuan-content{
-        margin-top:-60px;
-    }
-    .pengajuan-card{
-        padding:24px;
-        border-radius:20px;
-    }
-    .split-field{
-        grid-template-columns:1fr;
-    }
-    .submit-btn{
-        width:100%;
-    }
+@media(max-width:768px) {
+  .pengajuan-hero {
+    padding: 50px 20px 100px;
+  }
+
+  .pengajuan-hero h1 {
+    font-size: 34px;
+  }
+
+  .pengajuan-hero p {
+    font-size: 17px;
+  }
+
+  .pengajuan-content {
+    margin-top: -60px;
+  }
+
+  .pengajuan-card {
+    padding: 24px;
+    border-radius: 20px;
+  }
+
+  .split-field {
+    grid-template-columns: 1fr;
+  }
+
+  .submit-btn {
+    width: 100%;
+  }
 }
+
 /* =====================
    TRACKING
 ===================== */
@@ -528,9 +543,7 @@
 
 .tracking-btn {
   width: 100%;
-
   padding: 18px;
-
   border: none;
   border-radius: 18px;
 
@@ -1004,36 +1017,26 @@
    TRACKING DITOLAK
 =========================== */
 
-.tracking-reject-box{
-
-    margin-top:24px;
-
-    padding:22px;
-
-    border-radius:16px;
-
-    background:#fef2f2;
-
-    border:1px solid #fecaca;
+.tracking-reject-box {
+  margin-top: 24px;
+  padding: 22px;
+  border-radius: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
 }
 
-.tracking-reject-box h4{
-
-    margin-bottom:12px;
-
-    color:#b91c1c;
-
-    font-size:18px;
+.tracking-reject-box h4 {
+  margin-bottom: 12px;
+  color: #b91c1c;
+  font-size: 18px;
 }
 
-.tracking-reject-box p{
-
-    margin-bottom:18px;
-
-    color:#7f1d1d;
-
-    line-height:1.7;
+.tracking-reject-box p {
+  margin-bottom: 18px;
+  color: #7f1d1d;
+  line-height: 1.7;
 }
+
 /* ============================
    TRACKING RESPONSIVE MOBILE
 ============================ */
@@ -1264,14 +1267,857 @@
     width: auto !important;
     min-width: 0 !important;
     max-width: none !important;
-
     white-space: normal !important;
-
-    /* PENTING */
     word-break: normal !important;
     overflow-wrap: anywhere !important;
-
     display: block !important;
   }
 
+}
+
+/* =========================
+   HERO LOGIN MENU
+========================= */
+
+.hero {
+  position: relative;
+}
+
+.hero-menu {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  z-index: 50;
+}
+
+/* =========================
+   TOMBOL HAMBURGER
+========================= */
+
+.hero-menu-button {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  color: white;
+
+  font-size: 23px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 6px 18px rgba(15, 23, 42, 0.12);
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.hero-menu-button:hover {
+  background: rgba(255, 255, 255, 0.28);
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 22px rgba(15, 23, 42, 0.16);
+}
+
+/* =========================
+   DROPDOWN LOGIN
+========================= */
+
+.hero-menu-dropdown {
+  position: absolute;
+
+  top: 54px;
+  right: 0;
+
+  width: 175px;
+
+  padding: 5px;
+
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.20);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.15);
+
+  animation: hero-menu-show 0.15s ease-out;
+}
+
+.hero-menu-dropdown a {
+  display: block;
+
+  padding: 11px 14px;
+
+  border-radius: 10px;
+
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.hero-menu-dropdown a:hover {
+  background: rgba(255, 255, 255, 0.18);
+
+  transform: translateX(2px);
+}
+
+/* =========================
+   ANIMASI
+========================= */
+
+@keyframes hero-menu-show {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   MOBILE HERO LOGIN MENU
+========================= */
+
+@media (max-width: 640px) {
+
+  .hero-menu {
+    top: 18px;
+    right: 18px;
+  }
+
+  .hero-menu-button {
+    width: 42px;
+    height: 42px;
+
+    font-size: 22px;
+  }
+
+  .hero-menu-dropdown {
+    top: 50px;
+    width: 165px;
+  }
+
+  .hero-menu-dropdown a {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+}
+
+/* ============================
+   SUCCESS PAGE - MOBILE
+============================ */
+
+@media (max-width: 640px) {
+
+  /* ============================
+     SUCCESS HERO
+  ============================ */
+
+  .success-hero {
+    padding: 35px 18px 90px;
+  }
+
+  .success-hero-content {
+    max-width: 100%;
+  }
+
+  .success-hero h1,
+  .success-title {
+    font-size: 26px;
+    line-height: 1.2;
+    margin-bottom: 14px;
+  }
+
+  .success-hero p,
+  .success-desc {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  /* ============================
+     SUCCESS CARD
+  ============================ */
+
+  .success-content {
+    padding: 0 12px 50px;
+  }
+
+  .success-card {
+    width: 100%;
+    max-width: 100%;
+
+    margin: -55px auto 0;
+
+    padding: 22px 16px;
+
+    border-radius: 18px;
+  }
+
+  .success-card h2 {
+    font-size: 16px;
+    margin-bottom: 18px;
+  }
+
+  /* ============================
+     TRACKING BOX
+  ============================ */
+
+  .tracking-box {
+    width: 100%;
+
+    padding: 16px 8px;
+
+    margin-bottom: 20px;
+
+    border-radius: 14px;
+
+    font-size: 20px;
+    line-height: 1.3;
+
+    letter-spacing: 2px;
+
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* ============================
+     SUCCESS ICON
+  ============================ */
+
+  .success-icon {
+    width: 55px;
+    height: 55px;
+
+    margin-bottom: 14px;
+
+    font-size: 25px;
+  }
+
+  .tracking-icon {
+    width: 46px;
+    height: 46px;
+
+    margin-bottom: 14px;
+
+    border-radius: 12px;
+  }
+
+  /* ============================
+     SUCCESS BUTTON
+  ============================ */
+
+  .success-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    width: 100%;
+
+    padding: 11px 16px;
+
+    border-radius: 10px;
+
+    font-size: 13px;
+  }
+
+  /* ============================
+     SUCCESS INFO
+  ============================ */
+
+  .success-info {
+    margin-top: 20px;
+
+    gap: 10px;
+
+    font-size: 12px;
+  }
+
+  .success-info-icon {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 10px;
+  }
+}
+
+/* =========================================
+   JENIS SURAT
+========================================= */
+
+.surat-section {
+  max-width: 1000px;
+  margin: auto;
+  padding: 70px 30px;
+}
+
+.surat-section h2 {
+  text-align: center;
+
+  font-size: 38px;
+  font-weight: 800;
+
+  color: #2d50a3;
+
+  margin-bottom: 50px;
+}
+
+/* =========================
+   LIST
+========================= */
+
+.surat-list {
+  width: 100%;
+}
+
+/* =========================
+   ITEM
+========================= */
+
+.surat-item {
+  position: relative;
+
+  display: grid;
+
+  grid-template-columns:
+    70px
+    1fr
+    40px;
+
+  align-items: center;
+
+  gap: 20px;
+
+  padding: 25px 10px;
+
+  border-bottom: 1px solid #dbeafe;
+
+  transition:
+    padding 0.25s ease,
+    background 0.25s ease;
+}
+
+.surat-item:first-child {
+  border-top: 1px solid #dbeafe;
+}
+
+.surat-item:hover {
+  padding-left: 18px;
+  padding-right: 2px;
+}
+
+/* =========================
+   NUMBER
+========================= */
+
+.surat-number {
+  font-size: 15px;
+
+  font-weight: 700;
+
+  color: #60a5fa;
+
+  letter-spacing: 1px;
+}
+
+/* =========================
+   CONTENT
+========================= */
+
+.surat-content h3 {
+  margin: 0 0 6px;
+
+  font-size: 19px;
+
+  font-weight: 700;
+
+  color: #1e293b;
+}
+
+.surat-content p {
+  margin: 0;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+
+  color: #64748b;
+}
+
+/* =========================
+   ARROW
+========================= */
+
+.surat-arrow {
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+
+  border-radius: 50%;
+
+  color: #2563eb;
+
+  font-size: 20px;
+
+  transition:
+    background 0.25s ease,
+    transform 0.25s ease;
+}
+
+.surat-item:hover .surat-arrow {
+  background: #eff6ff;
+
+  transform: translateX(3px);
+}
+
+/* =========================================
+   JENIS SURAT - MOBILE
+========================================= */
+
+@media (max-width: 640px) {
+
+  .surat-section {
+    padding: 45px 24px 55px;
+  }
+
+  .surat-section h2 {
+    font-size: 27px;
+    line-height: 1.25;
+
+    margin-bottom: 32px;
+  }
+
+  .surat-item {
+    grid-template-columns:
+      42px
+      minmax(0, 1fr)
+      28px;
+
+    gap: 12px;
+
+    padding: 20px 4px;
+  }
+
+  .surat-item:hover {
+    padding-left: 8px;
+    padding-right: 0;
+  }
+
+  /* =========================
+     NUMBER
+  ========================= */
+
+  .surat-number {
+    font-size: 12px;
+
+    letter-spacing: 0.5px;
+  }
+
+  /* =========================
+     CONTENT
+  ========================= */
+
+  .surat-content h3 {
+    font-size: 14px;
+
+    line-height: 1.4;
+
+    margin-bottom: 4px;
+  }
+
+  .surat-content p {
+    font-size: 11px;
+
+    line-height: 1.5;
+  }
+
+  /* =========================
+     ARROW
+  ========================= */
+
+  .surat-arrow {
+    width: 28px;
+    height: 28px;
+
+    font-size: 16px;
+  }
+}
+
+
+/* =========================================
+   CARA PENGAJUAN
+========================================= */
+
+.cara-section {
+  max-width: 1200px;
+  margin: auto;
+  padding: 70px 30px;
+}
+
+.cara-section h2 {
+  text-align: center;
+  font-size: 38px;
+  font-weight: 800;
+  color: #2d50a3;
+  margin-bottom: 60px;
+}
+
+/* =========================
+   STEPPER
+========================= */
+
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+
+.step-item {
+  position: relative;
+  text-align: center;
+  padding: 0 25px;
+}
+
+/* GARIS PENGHUBUNG */
+
+.step-item:not(:last-child)::after {
+  content: "";
+
+  position: absolute;
+
+  top: 27px;
+  left: calc(50% + 30px);
+  right: calc(-50% + 30px);
+
+  height: 2px;
+
+  background: #bfdbfe;
+
+  z-index: 0;
+}
+
+/* NOMOR */
+
+.step-number {
+  position: relative;
+
+  width: 54px;
+  height: 54px;
+
+  margin: 0 auto 20px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    #60a5fa,
+    #2563eb
+  );
+
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  z-index: 1;
+
+  box-shadow:
+    0 6px 15px
+    rgba(37, 99, 235, 0.2);
+}
+
+/* CONTENT */
+
+.step-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+
+  color: #1e293b;
+
+  margin-bottom: 8px;
+}
+
+.step-content p {
+  max-width: 190px;
+
+  margin: 0 auto;
+
+  color: #64748b;
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+/* =========================================
+   CARA PENGAJUAN - MOBILE FINAL
+========================================= */
+
+@media (max-width: 640px) {
+
+  .cara-section {
+    padding: 45px 24px 55px;
+  }
+
+  .cara-section h2 {
+    font-size: 27px;
+    line-height: 1.25;
+    margin-bottom: 38px;
+  }
+
+  /* =========================
+     LIST STEP
+  ========================= */
+
+  .step-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* =========================
+     STEP
+  ========================= */
+
+  .step-item {
+    position: relative;
+
+    display: flex;
+
+    width: 100%;
+
+    min-height: 92px;
+
+    padding: 0;
+
+    text-align: left;
+  }
+
+  /* =========================
+     GARIS VERTIKAL
+  ========================= */
+
+  .step-item:not(:last-child)::after {
+    content: "";
+
+    position: absolute;
+
+    top: 42px;
+    left: 19px;
+
+    width: 2px;
+    height: calc(100% - 18px);
+
+    background: #bfdbfe;
+
+    z-index: 0;
+  }
+
+  /* =========================
+     NOMOR
+  ========================= */
+
+  .step-number {
+    position: relative;
+    z-index: 1;
+
+    flex-shrink: 0;
+
+    width: 40px;
+    height: 40px;
+
+    margin: 0 17px 0 0;
+
+    border-radius: 50%;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    box-shadow:
+      0 4px 10px
+      rgba(37, 99, 235, 0.18);
+  }
+
+  /* =========================
+     ISI
+  ========================= */
+
+  .step-content {
+    flex: 1;
+
+    padding-top: 1px;
+
+    min-width: 0;
+  }
+
+  .step-content h3 {
+    font-size: 15px;
+
+    line-height: 1.35;
+
+    margin: 0 0 5px;
+
+    color: #1e293b;
+  }
+
+  .step-content p {
+    max-width: 230px;
+
+    margin: 0;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+
+    color: #64748b;
+  }
+}
+
+/* ======================
+   HERO
+====================== */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+
+  width: 100%;
+  min-height: 85vh;
+
+  background:
+    /* Titik-titik */
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.18) 1.5px,
+      transparent 1.5px
+    ) 0 0 / 28px 28px,
+
+    /* Garis diagonal */
+    linear-gradient(
+      135deg,
+      transparent 0%,
+      transparent 45%,
+      rgba(255, 255, 255, 0.05) 45%,
+      rgba(255, 255, 255, 0.05) 46%,
+      transparent 46%,
+      transparent 100%
+    ),
+
+    /* Gradient utama */
+    linear-gradient(
+      180deg,
+      #3b82f6 0%,
+      #60a5fa 45%,
+      #dbeafe 100%
+    );
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 100px 20px;
+}
+
+/* =========================
+   MOTIF LINGKARAN
+========================= */
+
+.hero::before {
+  content: "";
+
+  position: absolute;
+
+  width: 430px;
+  height: 430px;
+
+  top: -210px;
+  left: -180px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 0 35px rgba(255, 255, 255, 0.035),
+    0 0 0 70px rgba(255, 255, 255, 0.025);
+
+  pointer-events: none;
+}
+
+/* =========================
+   MOTIF KANAN BAWAH
+========================= */
+
+.hero::after {
+  content: "";
+
+  position: absolute;
+
+  width: 380px;
+  height: 380px;
+
+  right: -160px;
+  bottom: -190px;
+
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 0 30px rgba(255, 255, 255, 0.035),
+    0 0 0 60px rgba(255, 255, 255, 0.025);
+
+  pointer-events: none;
+}
+
+/* =========================
+   KONTEN HERO
+========================= */
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+
+  max-width: 900px;
+
+  text-align: center;
 }

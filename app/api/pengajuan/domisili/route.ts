@@ -34,7 +34,8 @@ export async function GET(request: Request) {
         alamat,
         dusun,
         rt,
-        rw
+        rw,
+        file_ktp
       FROM kependudukan
       WHERE nik = ?
       LIMIT 1
@@ -74,93 +75,93 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   let filePath: string | null = null;
 
-  const formData = await request.formData();
-
-  // ===============================
-  // Ambil data dari form
-  // ===============================
-
-  const nama = formData.get("nama") as string;
-  const ttl = formData.get("ttl") as string;
-  const nik = formData.get("nik") as string;
-  const agama = formData.get("agama") as string;
-  const jenis_kelamin = formData.get("jenis_kelamin") as string;
-  const pekerjaan = formData.get("pekerjaan") as string;
-  const alamat = formData.get("alamat") as string;
-  const dusun = formData.get("dusun") as string;
-  const rt = formData.get("rt") as string;
-  const rw = formData.get("rw") as string;
-
-  const fileKtp = formData.get("file_ktp") as File | null;
-
-  // ===============================
-  // Validasi NIK
-  // ===============================
-
-  if (!nik || !/^\d{16}$/.test(nik)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "NIK harus terdiri dari 16 digit.",
-      },
-      {
-        status: 400,
-      }
-    );
-  }
-
-  // ===============================
-  // Validasi file KTP
-  // ===============================
-
-  if (!fileKtp) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "File KTP wajib diupload.",
-      },
-      {
-        status: 400,
-      }
-    );
-  }
-
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-  ];
-
-  if (!allowedTypes.includes(fileKtp.type)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "File harus berupa JPG atau PNG.",
-      },
-      {
-        status: 400,
-      }
-    );
-  }
-
-  const maxSize = 5 * 1024 * 1024;
-
-  if (fileKtp.size > maxSize) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Ukuran file maksimal 5 MB.",
-      },
-      {
-        status: 400,
-      }
-    );
-  }
-
-  // ===============================
-  // Upload File KTP
-  // ===============================
-
   try {
+    const formData = await request.formData();
+
+    // ===============================
+    // Ambil data dari form
+    // ===============================
+
+    const nama = formData.get("nama") as string;
+    const ttl = formData.get("ttl") as string;
+    const nik = formData.get("nik") as string;
+    const agama = formData.get("agama") as string;
+    const jenis_kelamin = formData.get("jenis_kelamin") as string;
+    const pekerjaan = formData.get("pekerjaan") as string;
+    const alamat = formData.get("alamat") as string;
+    const dusun = formData.get("dusun") as string;
+    const rt = formData.get("rt") as string;
+    const rw = formData.get("rw") as string;
+
+    const fileKtp = formData.get("file_ktp") as File | null;
+
+    // ===============================
+    // Validasi NIK
+    // ===============================
+
+    if (!nik || !/^\d{16}$/.test(nik)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "NIK harus terdiri dari 16 digit.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===============================
+    // Validasi file KTP
+    // ===============================
+
+    if (!fileKtp) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "File KTP wajib diupload.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+    ];
+
+    if (!allowedTypes.includes(fileKtp.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "File harus berupa JPG atau PNG.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+
+    if (fileKtp.size > maxSize) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Ukuran file maksimal 5 MB.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // ===============================
+    // Upload File KTP
+    // ===============================
+
     const bytes = await fileKtp.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -227,11 +228,11 @@ export async function POST(request: Request) {
       );
 
       // ===============================
-      // Jika NIK belum ada,
-      // simpan data ke kependudukan
+      // Simpan / Update Data Penduduk
       // ===============================
 
       if (pendudukRows.length === 0) {
+        // NIK belum ada → INSERT
         await conn.query(
           `
           INSERT INTO kependudukan
@@ -245,10 +246,11 @@ export async function POST(request: Request) {
             alamat,
             dusun,
             rt,
-            rw
+            rw,
+            file_ktp
           )
           VALUES
-          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `,
           [
             nik,
@@ -261,6 +263,40 @@ export async function POST(request: Request) {
             dusun,
             rt,
             rw,
+            fileName,
+          ]
+        );
+
+      } else {
+        // NIK sudah ada → UPDATE
+        await conn.query(
+          `
+          UPDATE kependudukan
+          SET
+            nama = ?,
+            ttl = ?,
+            agama = ?,
+            jenis_kelamin = ?,
+            pekerjaan = ?,
+            alamat = ?,
+            dusun = ?,
+            rt = ?,
+            rw = ?,
+            file_ktp = ?
+          WHERE nik = ?
+          `,
+          [
+            nama,
+            ttl,
+            agama,
+            jenis_kelamin,
+            pekerjaan,
+            alamat,
+            dusun,
+            rt,
+            rw,
+            fileName,
+            nik,
           ]
         );
       }
@@ -324,21 +360,21 @@ export async function POST(request: Request) {
       // ===============================
       // Insert domisili
       // ===============================
+      // file_ktp TIDAK lagi disimpan di sini.
+      // Untuk sementara kolom file_ktp di tabel
+      // domisili tetap dibiarkan ada karena belum
+      // kita hapus dari database.
 
       await conn.query(
         `
         INSERT INTO domisili
         (
-          pengajuan_id,
-          file_ktp
+          pengajuan_id
         )
         VALUES
-        (?, ?)
+        (?)
         `,
-        [
-          pengajuan_id,
-          fileName,
-        ]
+        [pengajuan_id]
       );
 
       // ===============================
@@ -365,7 +401,6 @@ export async function POST(request: Request) {
       });
 
     } catch (error) {
-
       await conn.rollback();
 
       console.error(
@@ -388,8 +423,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Terjadi kesalahan server.",
+          message: "Terjadi kesalahan server.",
         },
         {
           status: 500,
@@ -401,7 +435,6 @@ export async function POST(request: Request) {
     }
 
   } catch (error) {
-
     console.error(
       "ERROR UPLOAD/API DOMISILI:",
       error
@@ -421,8 +454,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message:
-          "Terjadi kesalahan server.",
+        message: "Terjadi kesalahan server.",
       },
       {
         status: 500,

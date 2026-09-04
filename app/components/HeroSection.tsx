@@ -1,8 +1,33 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 export default function HeroSection() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <section className="hero">
+      {/* MENU LOGIN */}
+      <div className="hero-menu">
+        <button
+          type="button"
+          className="hero-menu-button"
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label="Buka menu"
+        >
+          ☰
+        </button>
+
+        {menuOpen && (
+          <div className="hero-menu-dropdown">
+            <Link href="/login">
+              Login Pengelola
+            </Link>
+          </div>
+        )}
+      </div>
+
       <div className="hero-content">
         <img
           src="\logoSurat.png"

@@ -169,22 +169,25 @@ export async function PUT(
     }
 
     // =================================================
-    // AMBIL FILE KTP LAMA
+    // AMBIL FILE KTP LAMA DARI KEPENDUDUKAN
     // =================================================
 
-    const [rows]: any =
+    const [pendudukLamaRows]: any =
       await conn.query(
         `
-        SELECT file_ktp
-        FROM usaha
-        WHERE pengajuan_id = ?
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
         LIMIT 1
         `,
-        [id]
+        [nik]
       );
 
     const oldFile =
-      rows[0]?.file_ktp ?? null;
+      pendudukLamaRows.length > 0
+        ? pendudukLamaRows[0]?.file_ktp ?? null
+        : null;
 
     let newFileName =
       oldFile;
@@ -310,10 +313,11 @@ export async function PUT(
           dusun,
           rt,
           rw,
-          kewarganegaraan
+          kewarganegaraan,
+          file_ktp
         )
         VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           nik,
@@ -328,6 +332,7 @@ export async function PUT(
           rt,
           rw,
           kewarganegaraan,
+          newFileName,
         ]
       );
     } else {
@@ -349,7 +354,8 @@ export async function PUT(
           dusun = ?,
           rt = ?,
           rw = ?,
-          kewarganegaraan = ?
+          kewarganegaraan = ?,
+          file_ktp = ?
         WHERE nik = ?
         `,
         [
@@ -364,6 +370,7 @@ export async function PUT(
           rt,
           rw,
           kewarganegaraan,
+          newFileName,
           nik,
         ]
       );
@@ -396,13 +403,11 @@ export async function PUT(
       `
       UPDATE usaha
       SET
-        nama_usaha = ?,
-        file_ktp = ?
+        nama_usaha = ?
       WHERE pengajuan_id = ?
       `,
       [
         nama_usaha,
-        newFileName,
         id,
       ]
     );
@@ -467,7 +472,12 @@ export async function PUT(
     });
 
   } catch (err: any) {
-    await conn.rollback();
+
+    try {
+      await conn.rollback();
+    } catch {
+      // Abaikan jika transaksi belum berjalan
+    }
 
     // =================================================
     // HAPUS FILE BARU JIKA TRANSAKSI GAGAL
@@ -501,6 +511,8 @@ export async function PUT(
     );
 
   } finally {
+
     conn.release();
+
   }
 }

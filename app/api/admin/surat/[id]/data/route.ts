@@ -299,7 +299,75 @@ export async function PATCH(
     );
 
     // =====================================================
-    // 3. UPDATE DATA KHUSUS SURAT
+    // 3. UPDATE NOMOR KK
+    // =====================================================
+    // no_kk sekarang disimpan di tabel persyaratan,
+    // bukan di tabel detail surat.
+    // =====================================================
+
+    if (
+      Object.prototype.hasOwnProperty.call(
+        fields,
+        "no_kk"
+      )
+    ) {
+      const noKk =
+        fields.no_kk ?? "";
+
+      const [persyaratanRows]: any =
+        await conn.query(
+          `
+          SELECT id
+          FROM persyaratan
+          WHERE nik = ?
+          LIMIT 1
+          `,
+          [nik]
+        );
+
+      if (
+        persyaratanRows.length > 0
+      ) {
+        // =========================
+        // UPDATE PERSYARATAN
+        // =========================
+
+        await conn.query(
+          `
+          UPDATE persyaratan
+          SET no_kk = ?
+          WHERE nik = ?
+          `,
+          [
+            noKk,
+            nik,
+          ]
+        );
+      } else {
+        // =========================
+        // INSERT PERSYARATAN
+        // =========================
+
+        await conn.query(
+          `
+          INSERT INTO persyaratan
+          (
+            nik,
+            no_kk
+          )
+          VALUES
+          (?, ?)
+          `,
+          [
+            nik,
+            noKk,
+          ]
+        );
+      }
+    }
+
+    // =====================================================
+    // 4. UPDATE DATA KHUSUS SURAT
     // =====================================================
 
     const detailFields =
@@ -310,7 +378,8 @@ export async function PATCH(
           ) &&
           !SYSTEM_FIELDS.includes(
             key
-          )
+          ) &&
+          key !== "no_kk"
       );
 
     if (
@@ -343,7 +412,7 @@ export async function PATCH(
     }
 
     // =====================================================
-    // 4. AMBIL DATA TERBARU
+    // 5. AMBIL DATA TERBARU
     // =====================================================
 
     const [
@@ -366,7 +435,7 @@ export async function PATCH(
       updatedPengajuanRows[0];
 
     // =====================================================
-    // 5. AMBIL DATA KEPENDUDUKAN TERBARU
+    // 6. AMBIL DATA KEPENDUDUKAN TERBARU
     // =====================================================
 
     const [
@@ -397,7 +466,7 @@ export async function PATCH(
       updatedPendudukRows[0];
 
     // =====================================================
-    // 6. AMBIL DETAIL TERBARU
+    // 7. AMBIL DATA DETAIL TERBARU
     // =====================================================
 
     const [detailRows]: any =
@@ -430,7 +499,7 @@ export async function PATCH(
     }
 
     // =====================================================
-    // 7. BANGUN FIELD TEMPLATE
+    // 8. BANGUN FIELD TEMPLATE
     // =====================================================
 
     const templateFields: Record<
@@ -473,7 +542,36 @@ export async function PATCH(
     );
 
     // =====================================================
-    // 8. FIELD SISTEM
+    // 9. AMBIL NO KK DARI PERSYARATAN
+    // =====================================================
+
+    if (
+      updatedPengajuan.nik
+    ) {
+      const [
+        persyaratanRows,
+      ]: any = await conn.query(
+        `
+        SELECT
+          no_kk
+        FROM persyaratan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [updatedPengajuan.nik]
+      );
+
+      const persyaratan =
+        persyaratanRows[0];
+
+      templateFields.no_kk =
+        String(
+          persyaratan?.no_kk ?? ""
+        );
+    }
+
+    // =====================================================
+    // 10. FIELD SISTEM
     // =====================================================
 
     templateFields.nomor_surat =
@@ -495,7 +593,7 @@ export async function PATCH(
         : "";
 
     // =====================================================
-    // 9. DATA KEPALA DESA
+    // 11. DATA KEPALA DESA
     // =====================================================
 
     if (
@@ -533,7 +631,7 @@ export async function PATCH(
     }
 
     // =====================================================
-    // 10. GENERATE ULANG SURAT
+    // 12. GENERATE ULANG SURAT
     // =====================================================
 
     const html = generateSurat(
@@ -546,7 +644,7 @@ export async function PATCH(
     );
 
     // =====================================================
-    // 11. SIMPAN ISI SURAT
+    // 13. SIMPAN ISI SURAT
     // =====================================================
 
     await conn.query(

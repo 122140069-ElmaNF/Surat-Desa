@@ -376,39 +376,34 @@ export async function PUT(
     }
 
     // =========================================
-    // AMBIL FILE LAMA
+    // AMBIL KTP LAMA DARI KEPENDUDUKAN
     // =========================================
 
-    const [rows]: any =
+    const oldNik =
+      pengajuanRows[0]?.nik;
+
+    const [pendudukRows]: any =
       await conn.query(
         `
-        SELECT file_ktp
-        FROM izin_keramaian
-        WHERE pengajuan_id = ?
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
         LIMIT 1
         `,
-        [id]
+        [oldNik]
       );
-
-    if (rows.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Data izin keramaian tidak ditemukan.",
-        },
-        { status: 404 }
-      );
-    }
 
     const oldFile =
-      rows[0]?.file_ktp ?? null;
+      pendudukRows.length > 0
+        ? pendudukRows[0]?.file_ktp ?? null
+        : null;
 
     let newFileName =
       oldFile;
 
     // =========================================
-    // UPLOAD FILE BARU
+    // UPLOAD FILE KTP BARU
     // =========================================
 
     if (
@@ -503,9 +498,10 @@ export async function PUT(
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
         ttl = VALUES(ttl),
@@ -517,7 +513,8 @@ export async function PUT(
         dusun = VALUES(dusun),
         rt = VALUES(rt),
         rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
       `,
       [
         nik,
@@ -532,6 +529,7 @@ export async function PUT(
         rt,
         rw,
         kewarganegaraan,
+        newFileName,
       ]
     );
 
@@ -565,8 +563,7 @@ export async function PUT(
         jenis_kegiatan = ?,
         tanggal_kegiatan = ?,
         jam_kegiatan = ?,
-        acara = ?,
-        file_ktp = ?
+        acara = ?
       WHERE pengajuan_id = ?
       `,
       [
@@ -574,36 +571,9 @@ export async function PUT(
         tanggal_kegiatan,
         jam_kegiatan,
         acara,
-        newFileName,
         id,
       ]
     );
-
-    // =========================================
-    // HAPUS FILE LAMA
-    // =========================================
-
-    if (
-      fileKtp &&
-      fileKtp.size > 0 &&
-      oldFile &&
-      oldFile !== newFileName
-    ) {
-      const oldPath =
-        path.join(
-          process.cwd(),
-          "public",
-          "uploads",
-          "ktp",
-          oldFile
-        );
-
-      if (
-        fs.existsSync(oldPath)
-      ) {
-        await unlink(oldPath);
-      }
-    }
 
     // =========================================
     // ACTIVITY LOG
@@ -623,6 +593,39 @@ export async function PUT(
     // =========================================
 
     await conn.commit();
+
+    // =========================================
+    // HAPUS FILE KTP LAMA
+    // =========================================
+
+    if (
+      fileKtp &&
+      fileKtp.size > 0 &&
+      oldFile &&
+      oldFile !== newFileName
+    ) {
+      const oldPath =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp",
+          oldFile
+        );
+
+      try {
+        if (
+          fs.existsSync(oldPath)
+        ) {
+          await unlink(oldPath);
+        }
+      } catch (fileError) {
+        console.error(
+          "Gagal menghapus file KTP lama:",
+          fileError
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -672,9 +675,7 @@ export async function PUT(
           err.message ??
           "Terjadi kesalahan server.",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   } finally {
     conn.release();

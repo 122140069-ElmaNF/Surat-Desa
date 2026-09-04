@@ -102,7 +102,8 @@ export async function getPengajuanDetail(
           dusun,
           rt,
           rw,
-          kewarganegaraan
+          kewarganegaraan,
+          file_ktp
         FROM kependudukan
         WHERE nik = ?
         LIMIT 1
@@ -112,6 +113,32 @@ export async function getPengajuanDetail(
 
     dataKependudukan =
       (pendudukRows as any[])[0] ??
+      null;
+  }
+
+  // ===========================
+  // DATA PERSYARATAN
+  // ===========================
+
+  let dataPersyaratan: any = null;
+
+  if (pengajuan.nik) {
+    const [persyaratanRows] =
+      await db.query(
+        `
+        SELECT
+          nik,
+          no_kk,
+          file_kk
+        FROM persyaratan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [pengajuan.nik]
+      );
+
+    dataPersyaratan =
+      (persyaratanRows as any[])[0] ??
       null;
   }
 
@@ -178,6 +205,61 @@ export async function getPengajuanDetail(
         }
       }
     );
+
+    // ===========================
+    // DOKUMEN KTP
+    // DIAMBIL DARI KEPENDUDUKAN
+    // ===========================
+
+    if (
+      dataKependudukan.file_ktp &&
+      String(
+        dataKependudukan.file_ktp
+      ).trim() !== ""
+    ) {
+      dokumen.push({
+        key: "file_ktp",
+        label: "KTP",
+        file:
+          dataKependudukan.file_ktp,
+        url: `/uploads/ktp/${dataKependudukan.file_ktp}`,
+      });
+    }
+  }
+
+  // ===========================
+  // NOMOR KK
+  // DIAMBIL DARI PERSYARATAN
+  // ===========================
+
+  if (dataPersyaratan?.no_kk) {
+    detail.push({
+      key: "no_kk",
+      label: "No KK",
+      value: normalizeValue(
+        dataPersyaratan.no_kk
+      ),
+    });
+  }
+
+  // ===========================
+  // DOKUMEN KK
+  // DIAMBIL DARI PERSYARATAN
+  // ===========================
+
+  if (
+    dataPersyaratan?.file_kk &&
+    String(
+      dataPersyaratan.file_kk
+    ).trim() !== ""
+  ) {
+    dokumen.push({
+      key: "file_kk",
+      label: "KK",
+      file:
+        dataPersyaratan.file_kk,
+      url: `/uploads/kk/${dataPersyaratan.file_kk}`,
+    });
   }
 
   // ===========================
@@ -223,13 +305,20 @@ export async function getPengajuanDetail(
       });
 
     // ===========================
-    // DOKUMEN
+    // DOKUMEN LAIN
     // ===========================
+    // file_ktp dan file_kk sudah
+    // diambil dari tabel masing-masing.
+    //
+    // Dokumen lain tetap diambil
+    // dari tabel detail surat.
 
-    dokumen =
+    const dokumenDetail =
       FILE_COLUMNS
         .filter(
           (column) =>
+            column !== "file_ktp" &&
+            column !== "file_kk" &&
             detailRow[column] &&
             String(
               detailRow[column]
@@ -237,15 +326,24 @@ export async function getPengajuanDetail(
         )
         .map((column) => ({
           key: column,
-          label: formatLabel(
-            column
-          ),
+          label: formatLabel(column),
           file: detailRow[column],
           url: `/uploads/${getFolder(
             column
           )}/${detailRow[column]}`,
         }));
+
+    dokumen.push(
+      ...dokumenDetail
+    );
   }
+
+  // ===========================
+  // NOMOR KK UNTUK INITIAL DATA
+  // ===========================
+
+  pengajuan.no_kk =
+    dataPersyaratan?.no_kk ?? "";
 
   return {
     pengajuan,

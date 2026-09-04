@@ -133,51 +133,14 @@ export async function PUT(
     }
 
     // =========================================
-    // AMBIL FILE KTP LAMA
+    // AMBIL FILE KTP LAMA DARI KEPENDUDUKAN
     // =========================================
 
-    const [rows]: any =
+    const [pendudukLamaRows]: any =
       await conn.query(
         `
-        SELECT file_ktp
-        FROM tidak_mampu
-        WHERE pengajuan_id = ?
-        LIMIT 1
-        `,
-        [id]
-      );
-
-    if (
-      rows.length === 0
-    ) {
-      await conn.rollback();
-
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Data SKTM tidak ditemukan.",
-        },
-        {
-          status: 404,
-        }
-      );
-    }
-
-    const oldFileName =
-      rows[0].file_ktp;
-
-    let newFileName =
-      oldFileName;
-
-    // =========================================
-    // CEK / UPDATE KEPENDUDUKAN
-    // =========================================
-
-    const [pendudukRows]: any =
-      await conn.query(
-        `
-        SELECT nik
+        SELECT
+          file_ktp
         FROM kependudukan
         WHERE nik = ?
         LIMIT 1
@@ -185,86 +148,13 @@ export async function PUT(
         [nik]
       );
 
-    if (
-      pendudukRows.length === 0
-    ) {
-      // Jika NIK belum ada,
-      // buat data penduduk baru
+    const oldFileName =
+      pendudukLamaRows.length > 0
+        ? pendudukLamaRows[0]?.file_ktp ?? null
+        : null;
 
-      await conn.query(
-        `
-        INSERT INTO kependudukan
-        (
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan
-        )
-        VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan,
-        ]
-      );
-
-    } else {
-      // Jika NIK sudah ada,
-      // update data penduduk karena
-      // ini merupakan proses perbaikan
-
-      await conn.query(
-        `
-        UPDATE kependudukan
-        SET
-          nama = ?,
-          ttl = ?,
-          agama = ?,
-          jenis_kelamin = ?,
-          status_perkawinan = ?,
-          pekerjaan = ?,
-          alamat = ?,
-          dusun = ?,
-          rt = ?,
-          rw = ?,
-          kewarganegaraan = ?
-        WHERE nik = ?
-        `,
-        [
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan,
-          nik,
-        ]
-      );
-    }
+    let newFileName =
+      oldFileName;
 
     // =========================================
     // UPLOAD KTP BARU JIKA ADA
@@ -312,7 +202,7 @@ export async function PUT(
               "Ukuran file KTP maksimal 5 MB.",
           },
           {
-            status: 400,
+            status: 400
           }
         );
       }
@@ -351,6 +241,106 @@ export async function PUT(
     }
 
     // =========================================
+    // CEK / UPDATE KEPENDUDUKAN
+    // =========================================
+
+    const [pendudukRows]: any =
+      await conn.query(
+        `
+        SELECT nik
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    if (
+      pendudukRows.length === 0
+    ) {
+      // Jika NIK belum ada,
+      // buat data penduduk baru
+
+      await conn.query(
+        `
+        INSERT INTO kependudukan
+        (
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan,
+          file_ktp
+        )
+        VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          nik,
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan,
+          newFileName,
+        ]
+      );
+
+    } else {
+      // Jika NIK sudah ada,
+      // update data penduduk karena
+      // ini merupakan proses perbaikan
+
+      await conn.query(
+        `
+        UPDATE kependudukan
+        SET
+          nama = ?,
+          ttl = ?,
+          agama = ?,
+          jenis_kelamin = ?,
+          status_perkawinan = ?,
+          pekerjaan = ?,
+          alamat = ?,
+          dusun = ?,
+          rt = ?,
+          rw = ?,
+          kewarganegaraan = ?,
+          file_ktp = ?
+        WHERE nik = ?
+        `,
+        [
+          nama,
+          ttl,
+          agama,
+          jenis_kelamin,
+          status_perkawinan,
+          pekerjaan,
+          alamat,
+          dusun,
+          rt,
+          rw,
+          kewarganegaraan,
+          newFileName,
+          nik,
+        ]
+      );
+    }
+
+    // =========================================
     // UPDATE PENGAJUAN
     // =========================================
 
@@ -377,13 +367,11 @@ export async function PUT(
       `
       UPDATE tidak_mampu
       SET
-        keperluan = ?,
-        file_ktp = ?
+        keperluan = ?
       WHERE pengajuan_id = ?
       `,
       [
         keperluan,
-        newFileName,
         id,
       ]
     );
@@ -440,7 +428,11 @@ export async function PUT(
     });
 
   } catch (err: any) {
-    await conn.rollback();
+    try {
+      await conn.rollback();
+    } catch {
+      // Abaikan jika transaksi belum berjalan
+    }
 
     // Hapus file baru jika transaksi gagal
     if (newUploadedFile) {

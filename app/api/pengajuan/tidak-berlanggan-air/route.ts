@@ -88,6 +88,8 @@ export async function POST(request: Request) {
 
   let uploadedFilePath: string | null = null;
 
+  let oldFileName: string | null = null;
+
   try {
     const formData = await request.formData();
 
@@ -145,9 +147,6 @@ export async function POST(request: Request) {
 
     // =====================================================
     // DATA ORANG KEDUA / CALON MAHASISWA
-    // =====================================================
-    // HANYA field yang memang ada di form:
-    // NIK, Nama, TTL, Alamat
     // =====================================================
 
     const nikKedua = String(
@@ -317,6 +316,30 @@ export async function POST(request: Request) {
     }
 
     // =====================================================
+    // CEK KTP LAMA ORANG PERTAMA
+    // =====================================================
+
+    const [pendudukRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nikPertama]
+      );
+
+    if (
+      pendudukRows.length > 0
+    ) {
+      oldFileName =
+        pendudukRows[0]?.file_ktp ??
+        null;
+    }
+
+    // =====================================================
     // UPLOAD KTP
     // =====================================================
 
@@ -413,10 +436,11 @@ export async function POST(request: Request) {
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
         ttl = VALUES(ttl),
@@ -428,7 +452,8 @@ export async function POST(request: Request) {
         dusun = VALUES(dusun),
         rt = VALUES(rt),
         rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
       `,
       [
         nikPertama,
@@ -443,14 +468,12 @@ export async function POST(request: Request) {
         rtPertama,
         rwPertama,
         kewarganegaraanPertama,
+        fileName,
       ]
     );
 
     // =====================================================
     // UPSERT KEPENDUDUKAN ORANG KEDUA
-    // =====================================================
-    // Hanya memperbarui field yang digunakan form.
-    // Field lain tidak disentuh agar data lama tidak hilang.
     // =====================================================
 
     await conn.query(
@@ -555,18 +578,16 @@ export async function POST(request: Request) {
         pengajuan_id,
         nik_pertama,
         nik_kedua,
-        prodi_kedua,
-        file_ktp
+        prodi_kedua
       )
       VALUES
-      (?, ?, ?, ?, ?)
+      (?, ?, ?, ?)
       `,
       [
         pengajuanId,
         nikPertama,
         nikKedua,
         prodiKedua,
-        fileName,
       ]
     );
 
@@ -588,18 +609,48 @@ export async function POST(request: Request) {
 
     await conn.commit();
 
+    // =====================================================
+    // HAPUS KTP LAMA
+    // =====================================================
+
+    if (
+      oldFileName &&
+      oldFileName !== fileName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldFileName
+          )
+        );
+      } catch {
+        // Abaikan jika file lama
+        // tidak ditemukan
+      }
+    }
+
+    uploadedFilePath =
+      null;
+
     return NextResponse.json({
       success: true,
-      kode_tracking: kodeTracking,
+      kode_tracking:
+        kodeTracking,
       message:
         "Pengajuan berhasil.",
     });
 
   } catch (error) {
+
     try {
       await conn.rollback();
     } catch {
-      // Abaikan jika transaksi belum dimulai
+      // Abaikan jika transaksi
+      // belum dimulai
     }
 
     if (uploadedFilePath) {
@@ -608,7 +659,8 @@ export async function POST(request: Request) {
           uploadedFilePath
         );
       } catch {
-        // Abaikan jika file tidak ditemukan
+        // Abaikan jika file
+        // tidak ditemukan
       }
     }
 

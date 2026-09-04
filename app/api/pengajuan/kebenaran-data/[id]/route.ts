@@ -110,6 +110,14 @@ export async function PUT(
       )?.trim() ?? "";
 
     // ===========================
+    // DATA PERSYARATAN
+    // ===========================
+
+    const no_kk =
+      (formData.get("no_kk") as string | null)
+        ?.trim() ?? "";
+
+    // ===========================
     // DATA KHUSUS SKKD
     // ===========================
 
@@ -289,6 +297,28 @@ export async function PUT(
       );
     }
 
+    if (!no_kk) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Nomor KK wajib diisi.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (!/^\d{16}$/.test(no_kk)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Nomor KK harus terdiri dari 16 digit.",
+        },
+        { status: 400 }
+      );
+    }
+
     if (!no_hp) {
       return NextResponse.json(
         {
@@ -330,13 +360,15 @@ export async function PUT(
       await conn.query(
         `
         SELECT
-          kd.file_ktp,
-          kd.file_kk,
-          ps.nik AS pengajuan_nik
-        FROM kebenaran_data kd
-        INNER JOIN pengajuan_surat ps
-          ON ps.id = kd.pengajuan_id
-        WHERE kd.pengajuan_id = ?
+          ps.nik AS pengajuan_nik,
+          kp.file_ktp,
+          pr.file_kk
+        FROM pengajuan_surat ps
+        LEFT JOIN kependudukan kp
+          ON kp.nik = ps.nik
+        LEFT JOIN persyaratan pr
+          ON pr.nik = ps.nik
+        WHERE ps.id = ?
         LIMIT 1
         `,
         [pengajuanId]
@@ -354,10 +386,10 @@ export async function PUT(
     }
 
     const oldKtpName =
-      rows[0].file_ktp;
+      rows[0].file_ktp ?? null;
 
     const oldKkName =
-      rows[0].file_kk;
+      rows[0].file_kk ?? null;
 
     // ===========================
     // NAMA FILE LAMA
@@ -524,10 +556,11 @@ export async function PUT(
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
         ttl = VALUES(ttl),
@@ -539,7 +572,8 @@ export async function PUT(
         dusun = VALUES(dusun),
         rt = VALUES(rt),
         rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
       `,
       [
         nik,
@@ -554,6 +588,32 @@ export async function PUT(
         rt,
         rw,
         kewarganegaraan,
+        fileKtpName,
+      ]
+    );
+
+    // ===========================
+    // UPSERT PERSYARATAN
+    // ===========================
+
+    await conn.query(
+      `
+      INSERT INTO persyaratan
+      (
+        nik,
+        no_kk,
+        file_kk
+      )
+      VALUES
+      (?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        no_kk = VALUES(no_kk),
+        file_kk = VALUES(file_kk)
+      `,
+      [
+        nik,
+        no_kk,
+        fileKkName,
       ]
     );
 
@@ -586,70 +646,16 @@ export async function PUT(
       SET
         no_hp = ?,
         nomor_porsi = ?,
-        bin_binti = ?,
-        file_ktp = ?,
-        file_kk = ?
+        bin_binti = ?
       WHERE pengajuan_id = ?
       `,
       [
         no_hp,
         nomor_porsi,
         bin_binti,
-        fileKtpName,
-        fileKkName,
         pengajuanId,
       ]
     );
-
-    // ===========================
-    // HAPUS FILE LAMA
-    // ===========================
-
-    if (
-      newKtpName &&
-      oldKtpName &&
-      oldKtpName !== newKtpName
-    ) {
-      try {
-        await unlink(
-          path.join(
-            process.cwd(),
-            "public",
-            "uploads",
-            "ktp",
-            oldKtpName
-          )
-        );
-      } catch (error) {
-        console.error(
-          "Gagal menghapus KTP lama:",
-          error
-        );
-      }
-    }
-
-    if (
-      newKkName &&
-      oldKkName &&
-      oldKkName !== newKkName
-    ) {
-      try {
-        await unlink(
-          path.join(
-            process.cwd(),
-            "public",
-            "uploads",
-            "kk",
-            oldKkName
-          )
-        );
-      } catch (error) {
-        console.error(
-          "Gagal menghapus KK lama:",
-          error
-        );
-      }
-    }
 
     // ===========================
     // ACTIVITY LOG
@@ -673,6 +679,49 @@ export async function PUT(
     // ===========================
 
     await conn.commit();
+
+    // ===========================
+    // HAPUS FILE LAMA SETELAH COMMIT
+    // ===========================
+
+    try {
+      if (
+        newKtpName &&
+        oldKtpName &&
+        oldKtpName !== newKtpName
+      ) {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldKtpName
+          )
+        );
+      }
+
+      if (
+        newKkName &&
+        oldKkName &&
+        oldKkName !== newKkName
+      ) {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "kk",
+            oldKkName
+          )
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Gagal menghapus file lama:",
+        error
+      );
+    }
 
     return NextResponse.json({
       success: true,

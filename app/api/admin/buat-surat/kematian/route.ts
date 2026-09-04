@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   const conn = await db.getConnection();
 
   let uploadedFilePath: string | null = null;
+  let oldKtpFile: string | null = null;
 
   try {
     await conn.beginTransaction();
@@ -120,18 +121,49 @@ export async function POST(request: Request) {
     // FILE KTP - OPSIONAL UNTUK ADMIN
     // =================================================
 
-    const fileKtp = formData.get("file_ktp") as File | null;
+    const fileKtp =
+      formData.get("file_ktp") as File | null;
 
     let fileName: string | null = null;
 
-    if (fileKtp && fileKtp.size > 0) {
+    // =================================================
+    // CEK KTP LAMA
+    // =================================================
+
+    const [oldKtpRows]: any =
+      await conn.query(
+        `
+        SELECT file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nik]
+      );
+
+    oldKtpFile =
+      oldKtpRows[0]?.file_ktp ?? null;
+
+    // =================================================
+    // VALIDASI + UPLOAD KTP
+    // JIKA FILE DIISI
+    // =================================================
+
+    if (
+      fileKtp &&
+      fileKtp.size > 0
+    ) {
       const allowedTypes = [
         "image/jpeg",
         "image/jpg",
         "image/png",
       ];
 
-      if (!allowedTypes.includes(fileKtp.type)) {
+      if (
+        !allowedTypes.includes(
+          fileKtp.type
+        )
+      ) {
         await conn.rollback();
 
         return NextResponse.json(
@@ -146,13 +178,17 @@ export async function POST(request: Request) {
         );
       }
 
-      if (fileKtp.size > 5 * 1024 * 1024) {
+      if (
+        fileKtp.size >
+        5 * 1024 * 1024
+      ) {
         await conn.rollback();
 
         return NextResponse.json(
           {
             success: false,
-            message: "Ukuran file KTP maksimal 5 MB.",
+            message:
+              "Ukuran file KTP maksimal 5 MB.",
           },
           {
             status: 400,
@@ -164,24 +200,30 @@ export async function POST(request: Request) {
       // BUAT FOLDER UPLOAD
       // =================================================
 
-      const uploadDir = path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "ktp"
-      );
+      const uploadDir =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp"
+        );
 
-      await mkdir(uploadDir, {
-        recursive: true,
-      });
+      await mkdir(
+        uploadDir,
+        {
+          recursive: true,
+        }
+      );
 
       // =================================================
       // UPLOAD FILE
       // =================================================
 
-      const bytes = await fileKtp.arrayBuffer();
+      const bytes =
+        await fileKtp.arrayBuffer();
 
-      const buffer = Buffer.from(bytes);
+      const buffer =
+        Buffer.from(bytes);
 
       const ext =
         fileKtp.name
@@ -189,30 +231,36 @@ export async function POST(request: Request) {
           .pop()
           ?.toLowerCase() || "jpg";
 
-      fileName = `${randomUUID()}.${ext}`;
+      fileName =
+        `${randomUUID()}.${ext}`;
 
-      const uploadPath = path.join(
-        uploadDir,
-        fileName
-      );
+      const uploadPath =
+        path.join(
+          uploadDir,
+          fileName
+        );
 
       await writeFile(
         uploadPath,
         buffer
       );
 
-      uploadedFilePath = uploadPath;
+      uploadedFilePath =
+        uploadPath;
     }
 
     // =================================================
     // AMBIL JENIS SURAT
     // =================================================
 
-    const jenis = await getJenisSurat("SKM");
+    const jenis =
+      await getJenisSurat("SKM");
 
-    const jenisSuratId = jenis.id;
+    const jenisSuratId =
+      jenis.id;
 
-    const kodeSurat = jenis.kode_surat;
+    const kodeSurat =
+      jenis.kode_surat;
 
     const templateSurat =
       jenis.template_surat ?? "";
@@ -220,6 +268,9 @@ export async function POST(request: Request) {
     // =================================================
     // SIMPAN / UPDATE KEPENDUDUKAN
     // =================================================
+
+    const finalKtpFile =
+      fileName ?? oldKtpFile;
 
     const [pendudukRows]: any =
       await conn.query(
@@ -233,7 +284,9 @@ export async function POST(request: Request) {
         [nik]
       );
 
-    if (pendudukRows.length === 0) {
+    if (
+      pendudukRows.length === 0
+    ) {
       // =================================================
       // NIK BELUM ADA → INSERT
       // =================================================
@@ -253,10 +306,11 @@ export async function POST(request: Request) {
           dusun,
           rt,
           rw,
-          kewarganegaraan
+          kewarganegaraan,
+          file_ktp
         )
         VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           nik,
@@ -271,8 +325,10 @@ export async function POST(request: Request) {
           rt,
           rw,
           kewarganegaraan,
+          finalKtpFile,
         ]
       );
+
     } else {
       // =================================================
       // NIK SUDAH ADA → UPDATE
@@ -292,7 +348,8 @@ export async function POST(request: Request) {
           dusun = ?,
           rt = ?,
           rw = ?,
-          kewarganegaraan = ?
+          kewarganegaraan = ?,
+          file_ktp = ?
         WHERE nik = ?
         `,
         [
@@ -307,6 +364,7 @@ export async function POST(request: Request) {
           rt,
           rw,
           kewarganegaraan,
+          finalKtpFile,
           nik,
         ]
       );
@@ -316,10 +374,13 @@ export async function POST(request: Request) {
     // GENERATE TRACKING
     // =================================================
 
-    const sekarang = new Date();
+    const sekarang =
+      new Date();
 
     const tanggalTracking =
-      `${String(sekarang.getDate()).padStart(
+      `${String(
+        sekarang.getDate()
+      ).padStart(
         2,
         "0"
       )}${String(
@@ -342,9 +403,15 @@ export async function POST(request: Request) {
         [jenisSuratId]
       );
 
-    const urut = String(
-      Number(countRows[0].total) + 1
-    ).padStart(4, "0");
+    const urut =
+      String(
+        Number(
+          countRows[0].total
+        ) + 1
+      ).padStart(
+        4,
+        "0"
+      );
 
     const kode_tracking =
       `${kodeSurat}-${tanggalTracking}-${urut}`;
@@ -374,13 +441,14 @@ export async function POST(request: Request) {
         ]
       );
 
-    const pengajuan_id = result.insertId;
+    const pengajuan_id =
+      result.insertId;
 
     // =================================================
     // INSERT DETAIL KEMATIAN
     //
     // NIK TIDAK DISIMPAN DI SINI.
-    // NIK sudah berada di pengajuan_surat.
+    // KTP TIDAK DISIMPAN DI SINI.
     // =================================================
 
     await conn.query(
@@ -395,11 +463,10 @@ export async function POST(request: Request) {
         bertempat_di,
         penyebab,
         pelapor,
-        hubungan_pelapor,
-        file_ktp
+        hubungan_pelapor
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         pengajuan_id,
@@ -411,7 +478,6 @@ export async function POST(request: Request) {
         penyebab,
         pelapor,
         hubungan_pelapor,
-        fileName,
       ]
     );
 
@@ -419,22 +485,23 @@ export async function POST(request: Request) {
     // GENERATE ISI SURAT
     // =================================================
 
-    const replaceFields: Record<string, string> = {
+    const replaceFields:
+      Record<string, string> = {
       // =================================================
       // DATA SISTEM SURAT
       // =================================================
 
       nomor_surat: "",
 
-      // Tanggal surat dibuat oleh sistem
-      tanggal: new Date().toLocaleDateString(
-        "id-ID",
-        {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        }
-      ),
+      tanggal:
+        new Date().toLocaleDateString(
+          "id-ID",
+          {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          }
+        ),
 
       // =================================================
       // DATA KEPENDUDUKAN
@@ -459,9 +526,8 @@ export async function POST(request: Request) {
 
       hari,
 
-      // Gunakan key berbeda agar tidak bentrok
-      // dengan tanggal surat.
-      tanggal_kematian: tanggal,
+      tanggal_kematian:
+        tanggal,
 
       umur,
       jam,
@@ -476,13 +542,15 @@ export async function POST(request: Request) {
       hubungan_pelapor,
     };
 
-    const isiSurat = generateSurat(
-      templateSurat,
-      replaceFields,
-      {
-        preserveSystemFields: true,
-      }
-    );
+    const isiSurat =
+      generateSurat(
+        templateSurat,
+        replaceFields,
+        {
+          preserveSystemFields:
+            true,
+        }
+      );
 
     // =================================================
     // SIMPAN ISI SURAT
@@ -506,9 +574,11 @@ export async function POST(request: Request) {
     // =================================================
 
     await logActivity({
-      pengajuanId: pengajuan_id,
+      pengajuanId:
+        pengajuan_id,
 
-      status: "draft",
+      status:
+        "draft",
 
       aktivitas:
         "Surat dibuat oleh Admin.",
@@ -522,6 +592,30 @@ export async function POST(request: Request) {
 
     await conn.commit();
 
+    // =================================================
+    // HAPUS KTP LAMA JIKA DIGANTI
+    // =================================================
+
+    if (
+      fileName &&
+      oldKtpFile &&
+      oldKtpFile !== fileName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldKtpFile
+          )
+        );
+      } catch {
+        // Abaikan jika file lama tidak ditemukan
+      }
+    }
+
     uploadedFilePath = null;
 
     // =================================================
@@ -532,13 +626,20 @@ export async function POST(request: Request) {
       success: true,
       pengajuan_id,
       kode_tracking,
-      message: "Surat berhasil dibuat.",
+      message:
+        "Surat berhasil dibuat.",
     });
+
   } catch (err: any) {
-    await conn.rollback();
+
+    try {
+      await conn.rollback();
+    } catch {
+      // Abaikan jika transaksi belum dimulai
+    }
 
     // =================================================
-    // HAPUS FILE JIKA TRANSAKSI GAGAL
+    // HAPUS FILE JIKA GAGAL
     // =================================================
 
     if (uploadedFilePath) {
@@ -560,13 +661,14 @@ export async function POST(request: Request) {
       {
         success: false,
         message:
-          err.message ??
+          err?.message ??
           "Terjadi kesalahan server.",
       },
       {
         status: 500,
       }
     );
+
   } finally {
     conn.release();
   }

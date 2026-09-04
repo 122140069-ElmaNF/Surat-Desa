@@ -19,7 +19,9 @@ type Props = {
 // NORMALISASI TANGGAL UNTUK INPUT TYPE="DATE"
 // ======================================================
 
-function normalizeDateForInput(value: unknown): string {
+function normalizeDateForInput(
+  value: unknown
+): string {
   if (
     value === null ||
     value === undefined ||
@@ -28,25 +30,137 @@ function normalizeDateForInput(value: unknown): string {
     return "";
   }
 
-  const stringValue = String(value).trim();
+  // ====================================================
+  // JIKA DATA BERUPA OBJECT DATE
+  // ====================================================
 
-  // YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(stringValue)) {
+  if (value instanceof Date) {
+    if (isNaN(value.getTime())) {
+      return "";
+    }
+
+    const year =
+      value.getFullYear();
+
+    const month = String(
+      value.getMonth() + 1
+    ).padStart(2, "0");
+
+    const day = String(
+      value.getDate()
+    ).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  const stringValue =
+    String(value).trim();
+
+  // ====================================================
+  // FORMAT YYYY-MM-DD
+  // ====================================================
+
+  if (
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      stringValue
+    )
+  ) {
     return stringValue;
   }
 
-  // ISO Date
-  const isoMatch = stringValue.match(
-    /^(\d{4})-(\d{2})-(\d{2})/
-  );
+  // ====================================================
+  // FORMAT ISO
+  //
+  // Contoh:
+  // 2026-09-04T00:00:00.000Z
+  // ====================================================
+
+  const isoMatch =
+    stringValue.match(
+      /^(\d{4})-(\d{2})-(\d{2})/
+    );
 
   if (isoMatch) {
     return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
   }
 
-  // Format Indonesia
-  // Contoh: 17 Agustus 2026
-  const bulan: Record<string, string> = {
+  // ====================================================
+  // FORMAT DD/MM/YYYY
+  // ====================================================
+
+  const slashMatch =
+    stringValue.match(
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/
+    );
+
+  if (slashMatch) {
+    const day =
+      slashMatch[1].padStart(2, "0");
+
+    const month =
+      slashMatch[2].padStart(2, "0");
+
+    const year =
+      slashMatch[3];
+
+    return `${year}-${month}-${day}`;
+  }
+
+  // ====================================================
+  // FORMAT DD-MM-YYYY
+  // ====================================================
+
+  const dashMatch =
+    stringValue.match(
+      /^(\d{1,2})-(\d{1,2})-(\d{4})$/
+    );
+
+  if (dashMatch) {
+    const day =
+      dashMatch[1].padStart(2, "0");
+
+    const month =
+      dashMatch[2].padStart(2, "0");
+
+    const year =
+      dashMatch[3];
+
+    return `${year}-${month}-${day}`;
+  }
+
+  // ====================================================
+  // FORMAT DD.MM.YYYY
+  // ====================================================
+
+  const dotMatch =
+    stringValue.match(
+      /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/
+    );
+
+  if (dotMatch) {
+    const day =
+      dotMatch[1].padStart(2, "0");
+
+    const month =
+      dotMatch[2].padStart(2, "0");
+
+    const year =
+      dotMatch[3];
+
+    return `${year}-${month}-${day}`;
+  }
+
+  // ====================================================
+  // FORMAT INDONESIA
+  //
+  // Contoh:
+  // 4 September 2026
+  // ====================================================
+
+  const bulan: Record<
+    string,
+    string
+  > = {
     januari: "01",
     februari: "02",
     maret: "03",
@@ -61,22 +175,31 @@ function normalizeDateForInput(value: unknown): string {
     desember: "12",
   };
 
-  const indoMatch = stringValue.match(
-    /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/
-  );
+  const indoMatch =
+    stringValue.match(
+      /^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/
+    );
 
   if (indoMatch) {
-    const day = indoMatch[1].padStart(2, "0");
+    const day =
+      indoMatch[1].padStart(2, "0");
 
     const month =
-      bulan[indoMatch[2].toLowerCase()];
+      bulan[
+        indoMatch[2].toLowerCase()
+      ];
 
-    const year = indoMatch[3];
+    const year =
+      indoMatch[3];
 
     if (month) {
       return `${year}-${month}-${day}`;
     }
   }
+
+  // ====================================================
+  // FALLBACK
+  // ====================================================
 
   return "";
 }
@@ -136,6 +259,20 @@ export default function KematianForm({
     ) {
       return;
     }
+
+    // ====================================================
+    // DEBUG TANGGAL
+    // Bisa dihapus nanti setelah berhasil.
+    // ====================================================
+
+    console.log(
+      "DEBUG TANGGAL KEMATIAN:",
+      initialData.tanggal,
+      typeof initialData.tanggal,
+      normalizeDateForInput(
+        initialData.tanggal
+      )
+    );
 
     setForm({
 
@@ -675,7 +812,8 @@ export default function KematianForm({
               className="reject-alert"
               style={{
                 background: "#fff7ed",
-                border: "1px solid #fdba74",
+                border:
+                  "1px solid #fdba74",
                 borderLeft:
                   "6px solid #f97316",
                 borderRadius: 12,
@@ -1092,5 +1230,6 @@ export default function KematianForm({
       </section>
 
     </div>
+
   );
 }

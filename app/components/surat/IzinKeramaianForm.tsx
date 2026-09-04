@@ -57,6 +57,150 @@ export default function IzinKeramaianForm({
     useState("");
 
   // =========================================
+  // FORMAT TANGGAL UNTUK INPUT DATE
+  // =========================================
+
+  function formatDateInput(
+    value: any
+  ): string {
+    if (!value) {
+      return "";
+    }
+
+    // Jika value merupakan Date object
+    if (value instanceof Date) {
+      if (isNaN(value.getTime())) {
+        return "";
+      }
+
+      const year =
+        value.getFullYear();
+
+      const month =
+        String(
+          value.getMonth() + 1
+        ).padStart(2, "0");
+
+      const day =
+        String(
+          value.getDate()
+        ).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    const dateString =
+      String(value).trim();
+
+    if (!dateString) {
+      return "";
+    }
+
+    // =====================================
+    // FORMAT: YYYY-MM-DD
+    // =====================================
+
+    if (
+      /^\d{4}-\d{2}-\d{2}$/.test(
+        dateString
+      )
+    ) {
+      return dateString;
+    }
+
+    // =====================================
+    // FORMAT: YYYY-MM-DDTHH:mm:ss...
+    // =====================================
+
+    if (
+      /^\d{4}-\d{2}-\d{2}T/.test(
+        dateString
+      )
+    ) {
+      return dateString
+        .split("T")[0];
+    }
+
+    // =====================================
+    // FORMAT: DD/MM/YYYY
+    // =====================================
+
+    const slashMatch =
+      dateString.match(
+        /^(\d{2})\/(\d{2})\/(\d{4})$/
+      );
+
+    if (slashMatch) {
+      const [, day, month, year] =
+        slashMatch;
+
+      return `${year}-${month}-${day}`;
+    }
+
+    // =====================================
+    // FORMAT: DD-MM-YYYY
+    // =====================================
+
+    const dashMatch =
+      dateString.match(
+        /^(\d{2})-(\d{2})-(\d{4})$/
+      );
+
+    if (dashMatch) {
+      const [, day, month, year] =
+        dashMatch;
+
+      return `${year}-${month}-${day}`;
+    }
+
+    // =====================================
+    // FORMAT: DD.MM.YYYY
+    // =====================================
+
+    const dotMatch =
+      dateString.match(
+        /^(\d{2})\.(\d{2})\.(\d{4})$/
+      );
+
+    if (dotMatch) {
+      const [, day, month, year] =
+        dotMatch;
+
+      return `${year}-${month}-${day}`;
+    }
+
+    // =====================================
+    // FALLBACK DATE
+    // =====================================
+
+    const parsedDate =
+      new Date(dateString);
+
+    if (
+      !isNaN(
+        parsedDate.getTime()
+      )
+    ) {
+      const year =
+        parsedDate.getFullYear();
+
+      const month =
+        String(
+          parsedDate.getMonth() + 1
+        ).padStart(2, "0");
+
+      const day =
+        String(
+          parsedDate.getDate()
+        ).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    return "";
+  }
+
+  // =========================================
   // LOAD DATA SAAT EDIT
   // =========================================
 
@@ -67,6 +211,23 @@ export default function IzinKeramaianForm({
     ) {
       return;
     }
+
+    console.log(
+      "INITIAL DATA IZIN KERAMAIAN:",
+      initialData
+    );
+
+    console.log(
+      "TANGGAL KEGIATAN DARI API:",
+      initialData.tanggal_kegiatan
+    );
+
+    console.log(
+      "TANGGAL KEGIATAN SETELAH FORMAT:",
+      formatDateInput(
+        initialData.tanggal_kegiatan
+      )
+    );
 
     const ttl =
       initialData.ttl?.split(",") ?? [];
@@ -114,8 +275,14 @@ export default function IzinKeramaianForm({
       jenis_kegiatan:
         initialData.jenis_kegiatan ?? "",
 
+      // =====================================
+      // FIX TANGGAL KEGIATAN
+      // =====================================
+
       tanggal_kegiatan:
-        initialData.tanggal_kegiatan ?? "",
+        formatDateInput(
+          initialData.tanggal_kegiatan
+        ),
 
       jam_kegiatan:
         initialData.jam_kegiatan ?? "",
@@ -146,9 +313,10 @@ export default function IzinKeramaianForm({
         setLoadingNik(true);
         setLookupMessage("");
 
-        const res = await fetch(
-          `/api/pengajuan/izin-keramaian?nik=${form.nik}`
-        );
+        const res =
+          await fetch(
+            `/api/pengajuan/izin-keramaian?nik=${form.nik}`
+          );
 
         const json =
           await res.json();
@@ -1148,7 +1316,11 @@ export default function IzinKeramaianForm({
             ================================= */}
 
             <FileUploadField
-              label={role === "admin" ? "Upload KTP (Opsional)" : "Upload KTP"}
+              label={
+                role === "admin"
+                  ? "Upload KTP (Opsional)"
+                  : "Upload KTP"
+              }
               accept="image/jpeg,image/png"
               onChange={(
                 file: File | null

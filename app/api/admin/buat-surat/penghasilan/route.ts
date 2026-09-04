@@ -9,6 +9,7 @@ export async function POST(request: Request) {
   const conn = await db.getConnection();
 
   let uploadedFilePath: string | null = null;
+  let oldKtpFile: string | null = null;
 
   try {
     await conn.beginTransaction();
@@ -280,7 +281,8 @@ export async function POST(request: Request) {
     }
 
     // =====================================================
-    // FILE KTP - OPSIONAL UNTUK ADMIN
+    // FILE KTP
+    // OPSIONAL UNTUK ADMIN
     // =====================================================
 
     const fileKtp =
@@ -296,7 +298,10 @@ export async function POST(request: Request) {
     const maxSize =
       5 * 1024 * 1024;
 
-    if (fileKtp && fileKtp.size > 0) {
+    if (
+      fileKtp &&
+      fileKtp.size > 0
+    ) {
       // Validasi tipe file
       if (!allowedTypes.includes(fileKtp.type)) {
         return NextResponse.json(
@@ -367,6 +372,27 @@ export async function POST(request: Request) {
     }
 
     // =====================================================
+    // AMBIL KTP LAMA KEPALA KELUARGA
+    // =====================================================
+
+    const [oldKtpRows]: any =
+      await conn.query(
+        `
+        SELECT file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nikKepalaKeluarga]
+      );
+
+    oldKtpFile =
+      oldKtpRows?.[0]?.file_ktp || null;
+
+    const finalKtpFile =
+      fileName ?? oldKtpFile;
+
+    // =====================================================
     // AMBIL JENIS SURAT
     // =====================================================
 
@@ -413,9 +439,10 @@ export async function POST(request: Request) {
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
         ttl = VALUES(ttl),
@@ -427,7 +454,8 @@ export async function POST(request: Request) {
         dusun = VALUES(dusun),
         rt = VALUES(rt),
         rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
       `,
       [
         nikKepalaKeluarga,
@@ -442,6 +470,7 @@ export async function POST(request: Request) {
         rtKepalaKeluarga,
         rwKepalaKeluarga,
         kewarganegaraanKepalaKeluarga,
+        finalKtpFile,
       ]
     );
 
@@ -572,17 +601,15 @@ export async function POST(request: Request) {
         pengajuan_id,
         nik_kepala_keluarga,
         nik_anak,
-        penghasilan,
-        file_ktp
+        penghasilan
       )
-      VALUES (?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?)
       `,
       [
         pengajuanId,
         nikKepalaKeluarga,
         nikAnak,
         nilaiPenghasilan,
-        fileName,
       ]
     );
 
@@ -604,6 +631,34 @@ export async function POST(request: Request) {
 
     await conn.commit();
 
+    // =====================================================
+    // HAPUS KTP LAMA
+    // JIKA DIGANTI DENGAN KTP BARU
+    // =====================================================
+
+    if (
+      fileName &&
+      oldKtpFile &&
+      oldKtpFile !== fileName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldKtpFile
+          )
+        );
+      } catch {
+        // Abaikan jika file lama tidak ditemukan
+      }
+    }
+
+    // File baru sudah berhasil disimpan
+    uploadedFilePath = null;
+
     return NextResponse.json({
       success: true,
       message:
@@ -615,7 +670,11 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    await conn.rollback();
+    try {
+      await conn.rollback();
+    } catch {
+      // Abaikan jika transaksi belum dimulai
+    }
 
     // Hapus file jika transaksi gagal
     if (uploadedFilePath) {

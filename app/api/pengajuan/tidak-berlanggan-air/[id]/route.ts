@@ -30,6 +30,8 @@ export async function PUT(
 
   let uploadedFilePath: string | null = null;
 
+  let oldFile: string | null = null;
+
   try {
     await conn.beginTransaction();
 
@@ -91,9 +93,6 @@ export async function PUT(
 
     // =====================================================
     // DATA ORANG KEDUA / CALON MAHASISWA
-    // =====================================================
-    // HANYA:
-    // NIK, Nama, TTL, Alamat
     // =====================================================
 
     const nikKedua = String(
@@ -208,33 +207,26 @@ export async function PUT(
     }
 
     // =====================================================
-    // AMBIL DATA DETAIL LAMA
+    // AMBIL KTP LAMA DARI KEPENDUDUKAN
     // =====================================================
 
-    const [rows]: any = await conn.query(
-      `
-      SELECT
-        file_ktp
-      FROM tidak_berlangganan_air
-      WHERE pengajuan_id = ?
-      LIMIT 1
-      `,
-      [id]
-    );
-
-    if (!rows.length) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Data pengajuan tidak ditemukan.",
-        },
-        { status: 404 }
+    const [pendudukRows]: any =
+      await conn.query(
+        `
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
+        LIMIT 1
+        `,
+        [nikPertama]
       );
-    }
 
-    const oldFile =
-      rows[0]?.file_ktp ?? null;
+    if (pendudukRows.length > 0) {
+      oldFile =
+        pendudukRows[0]?.file_ktp ??
+        null;
+    }
 
     let newFileName = oldFile;
 
@@ -347,10 +339,11 @@ export async function PUT(
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama = VALUES(nama),
         ttl = VALUES(ttl),
@@ -362,7 +355,8 @@ export async function PUT(
         dusun = VALUES(dusun),
         rt = VALUES(rt),
         rw = VALUES(rw),
-        kewarganegaraan = VALUES(kewarganegaraan)
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
       `,
       [
         nikPertama,
@@ -377,19 +371,12 @@ export async function PUT(
         rtPertama,
         rwPertama,
         kewarganegaraanPertama,
+        newFileName,
       ]
     );
 
     // =====================================================
     // UPSERT KEPENDUDUKAN ORANG KEDUA / CALON MAHASISWA
-    // =====================================================
-    // Hanya memperbarui data yang memang digunakan
-    // oleh form surat ini.
-    //
-    // Field lain seperti:
-    // agama, jenis_kelamin, status_perkawinan,
-    // pekerjaan, dusun, rt, rw, kewarganegaraan
-    // TIDAK disentuh.
     // =====================================================
 
     await conn.query(
@@ -445,15 +432,13 @@ export async function PUT(
       SET
         nik_pertama = ?,
         nik_kedua = ?,
-        prodi_kedua = ?,
-        file_ktp = ?
+        prodi_kedua = ?
       WHERE pengajuan_id = ?
       `,
       [
         nikPertama,
         nikKedua,
         prodiKedua,
-        newFileName,
         id,
       ]
     );

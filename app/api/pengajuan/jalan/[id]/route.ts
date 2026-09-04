@@ -24,9 +24,17 @@ export async function PUT(
   const conn =
     await db.getConnection();
 
-  let newFilePath: string | null = null;
-  let oldFilePath: string | null = null;
-  let oldFileName: string | null = null;
+  let newFilePath:
+    | string
+    | null = null;
+
+  let oldFilePath:
+    | string
+    | null = null;
+
+  let oldFileName:
+    | string
+    | null = null;
 
   try {
     await conn.beginTransaction();
@@ -63,17 +71,23 @@ export async function PUT(
 
     const jenis_kelamin =
       String(
-        formData.get("jenis_kelamin") ?? ""
+        formData.get(
+          "jenis_kelamin"
+        ) ?? ""
       ).trim();
 
     const status_perkawinan =
       String(
-        formData.get("status_perkawinan") ?? ""
+        formData.get(
+          "status_perkawinan"
+        ) ?? ""
       ).trim();
 
     const pekerjaan =
       String(
-        formData.get("pekerjaan") ?? ""
+        formData.get(
+          "pekerjaan"
+        ) ?? ""
       ).trim();
 
     const alamat =
@@ -98,7 +112,9 @@ export async function PUT(
 
     const kewarganegaraan =
       String(
-        formData.get("kewarganegaraan") ?? ""
+        formData.get(
+          "kewarganegaraan"
+        ) ?? ""
       ).trim();
 
     // =====================================================
@@ -107,7 +123,9 @@ export async function PUT(
 
     const keperluan =
       String(
-        formData.get("keperluan") ?? ""
+        formData.get(
+          "keperluan"
+        ) ?? ""
       ).trim();
 
     // =====================================================
@@ -205,22 +223,37 @@ export async function PUT(
     }
 
     // =====================================================
-    // AMBIL FILE KTP LAMA
+    // NIK LAMA
     // =====================================================
 
-    const [rows]: any =
-      await conn.query(
-        `
-        SELECT file_ktp
-        FROM jalan
-        WHERE pengajuan_id = ?
-        LIMIT 1
-        `,
-        [id]
-      );
+    const oldNik =
+      pengajuanRows[0]?.nik ?? null;
 
-    oldFileName =
-      rows[0]?.file_ktp ?? null;
+    // =====================================================
+    // AMBIL FILE KTP DARI KEPENDUDUKAN
+    // =====================================================
+
+    if (oldNik) {
+      const [oldKtpRows]: any =
+        await conn.query(
+          `
+          SELECT
+            file_ktp
+          FROM kependudukan
+          WHERE nik = ?
+          LIMIT 1
+          `,
+          [oldNik]
+        );
+
+      oldFileName =
+        oldKtpRows[0]
+          ?.file_ktp ?? null;
+    }
+
+    // =====================================================
+    // TENTUKAN FILE KTP
+    // =====================================================
 
     let newFileName =
       oldFileName;
@@ -233,9 +266,9 @@ export async function PUT(
       fileKtp &&
       fileKtp.size > 0
     ) {
-      // ===============================
-      // Validasi tipe file
-      // ===============================
+      // ===============================================
+      // VALIDASI TIPE FILE
+      // ===============================================
 
       const allowedTypes = [
         "image/jpeg",
@@ -261,9 +294,9 @@ export async function PUT(
         );
       }
 
-      // ===============================
-      // Validasi ukuran
-      // ===============================
+      // ===============================================
+      // VALIDASI UKURAN FILE
+      // ===============================================
 
       const maxSize =
         5 * 1024 * 1024;
@@ -285,9 +318,9 @@ export async function PUT(
         );
       }
 
-      // ===============================
-      // Simpan file baru
-      // ===============================
+      // ===============================================
+      // SIMPAN FILE BARU
+      // ===============================================
 
       const bytes =
         await fileKtp.arrayBuffer();
@@ -321,9 +354,15 @@ export async function PUT(
       newFilePath =
         uploadPath;
 
-      // Simpan path file lama
-      // untuk dihapus setelah commit
-      if (oldFileName) {
+      // ===============================================
+      // SIMPAN PATH FILE LAMA
+      // UNTUK DIHAPUS SETELAH COMMIT
+      // ===============================================
+
+      if (
+        oldFileName &&
+        oldFileName !== newFileName
+      ) {
         oldFilePath =
           path.join(
             process.cwd(),
@@ -339,101 +378,59 @@ export async function PUT(
     // INSERT / UPDATE KEPENDUDUKAN
     // =====================================================
 
-    const [pendudukRows]: any =
-      await conn.query(
-        `
-        SELECT nik
-        FROM kependudukan
-        WHERE nik = ?
-        LIMIT 1
-        `,
-        [nik]
-      );
-
-    if (
-      pendudukRows.length === 0
-    ) {
-      // =================================================
-      // INSERT PENDUDUK BARU
-      // =================================================
-
-      await conn.query(
-        `
-        INSERT INTO kependudukan
-        (
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan
-        )
-        VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          nik,
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan,
-        ]
-      );
-
-    } else {
-      // =================================================
-      // UPDATE DATA PENDUDUK
-      // =================================================
-
-      await conn.query(
-        `
-        UPDATE kependudukan
-        SET
-          nama = ?,
-          ttl = ?,
-          agama = ?,
-          jenis_kelamin = ?,
-          status_perkawinan = ?,
-          pekerjaan = ?,
-          alamat = ?,
-          dusun = ?,
-          rt = ?,
-          rw = ?,
-          kewarganegaraan = ?
-        WHERE nik = ?
-        `,
-        [
-          nama,
-          ttl,
-          agama,
-          jenis_kelamin,
-          status_perkawinan,
-          pekerjaan,
-          alamat,
-          dusun,
-          rt,
-          rw,
-          kewarganegaraan,
-          nik,
-        ]
-      );
-    }
+    await conn.query(
+      `
+      INSERT INTO kependudukan
+      (
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan,
+        file_ktp
+      )
+      VALUES
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        nama = VALUES(nama),
+        ttl = VALUES(ttl),
+        agama = VALUES(agama),
+        jenis_kelamin = VALUES(jenis_kelamin),
+        status_perkawinan = VALUES(status_perkawinan),
+        pekerjaan = VALUES(pekerjaan),
+        alamat = VALUES(alamat),
+        dusun = VALUES(dusun),
+        rt = VALUES(rt),
+        rw = VALUES(rw),
+        kewarganegaraan = VALUES(kewarganegaraan),
+        file_ktp = VALUES(file_ktp)
+      `,
+      [
+        nik,
+        nama,
+        ttl,
+        agama,
+        jenis_kelamin,
+        status_perkawinan,
+        pekerjaan,
+        alamat,
+        dusun,
+        rt,
+        rw,
+        kewarganegaraan,
+        newFileName,
+      ]
+    );
 
     // =====================================================
-    // UPDATE NIK PADA PENGAJUAN
+    // UPDATE PENGAJUAN SURAT
     // =====================================================
 
     await conn.query(
@@ -459,13 +456,11 @@ export async function PUT(
       `
       UPDATE jalan
       SET
-        keperluan = ?,
-        file_ktp = ?
+        keperluan = ?
       WHERE pengajuan_id = ?
       `,
       [
         keperluan,
-        newFileName,
         id,
       ]
     );
@@ -492,7 +487,7 @@ export async function PUT(
 
     // =====================================================
     // HAPUS FILE KTP LAMA
-    // Dilakukan setelah commit berhasil
+    // HANYA JIKA ADA FILE BARU
     // =====================================================
 
     if (
@@ -519,8 +514,8 @@ export async function PUT(
       }
     }
 
-    // File baru sudah menjadi bagian
-    // dari data yang berhasil disimpan
+    // File baru sudah berhasil
+    // disimpan ke database
     newFilePath = null;
 
     return NextResponse.json({
@@ -530,7 +525,6 @@ export async function PUT(
     });
 
   } catch (err: any) {
-
     // =====================================================
     // ROLLBACK
     // =====================================================

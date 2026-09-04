@@ -21,14 +21,20 @@ export async function PUT(
   request: Request,
   context: RouteContext
 ) {
-  const conn = await db.getConnection();
+  const conn =
+    await db.getConnection();
 
-  let newUploadedFile: string | null = null;
+  let newUploadedFile:
+    string | null = null;
+
+  let oldFileName:
+    string | null = null;
 
   try {
     await conn.beginTransaction();
 
-    const { id } = await context.params;
+    const { id } =
+      await context.params;
 
     const formData =
       await request.formData();
@@ -59,7 +65,9 @@ export async function PUT(
 
     const jenis_kelamin =
       String(
-        formData.get("jenis_kelamin") ?? ""
+        formData.get(
+          "jenis_kelamin"
+        ) ?? ""
       ).trim();
 
     const status_perkawinan =
@@ -162,7 +170,9 @@ export async function PUT(
       );
     }
 
-    if (!/^\d{16}$/.test(nik)) {
+    if (
+      !/^\d{16}$/.test(nik)
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -240,7 +250,9 @@ export async function PUT(
         [id]
       );
 
-    if (!pengajuanRows.length) {
+    if (
+      !pengajuanRows.length
+    ) {
       return NextResponse.json(
         {
           success: false,
@@ -252,36 +264,32 @@ export async function PUT(
     }
 
     // ===========================
-    // AMBIL FILE LAMA
+    // AMBIL FILE KTP LAMA
+    // DARI KEPENDUDUKAN
     // ===========================
 
-    const [rows]: any =
+    const [pendudukRows]: any =
       await conn.query(
         `
-        SELECT file_ktp
-        FROM tafsiran_harga_tanah
-        WHERE pengajuan_id = ?
+        SELECT
+          file_ktp
+        FROM kependudukan
+        WHERE nik = ?
         LIMIT 1
         `,
-        [id]
+        [nik]
       );
 
-    if (!rows.length) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Detail surat tafsiran harga tanah tidak ditemukan.",
-        },
-        { status: 404 }
-      );
+    if (
+      pendudukRows.length > 0
+    ) {
+      oldFileName =
+        pendudukRows[0]
+          ?.file_ktp ?? null;
     }
 
-    const oldFile =
-      rows[0]?.file_ktp ?? null;
-
     let newFileName =
-      oldFile;
+      oldFileName;
 
     // ===========================
     // FILE KTP BARU
@@ -328,7 +336,8 @@ export async function PUT(
         5 * 1024 * 1024;
 
       if (
-        fileKtp.size > maxSize
+        fileKtp.size >
+        maxSize
       ) {
         return NextResponse.json(
           {
@@ -354,7 +363,8 @@ export async function PUT(
         fileKtp.name
           .split(".")
           .pop()
-          ?.toLowerCase() || "jpg";
+          ?.toLowerCase() ||
+        "jpg";
 
       newFileName =
         `${randomUUID()}.${ext}`;
@@ -396,10 +406,11 @@ export async function PUT(
         dusun,
         rt,
         rw,
-        kewarganegaraan
+        kewarganegaraan,
+        file_ktp
       )
       VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         nama =
           VALUES(nama),
@@ -422,7 +433,9 @@ export async function PUT(
         rw =
           VALUES(rw),
         kewarganegaraan =
-          VALUES(kewarganegaraan)
+          VALUES(kewarganegaraan),
+        file_ktp =
+          VALUES(file_ktp)
       `,
       [
         nik,
@@ -437,6 +450,7 @@ export async function PUT(
         rt,
         rw,
         kewarganegaraan,
+        newFileName,
       ]
     );
 
@@ -469,8 +483,7 @@ export async function PUT(
         tahun_perolehan = ?,
         asal_perolehan = ?,
         letak_tanah = ?,
-        harga_taksiran = ?,
-        file_ktp = ?
+        harga_taksiran = ?
       WHERE pengajuan_id = ?
       `,
       [
@@ -480,37 +493,9 @@ export async function PUT(
         asal_perolehan,
         letak_tanah,
         harga_taksiran,
-        newFileName,
         id,
       ]
     );
-
-    // ===========================
-    // HAPUS FILE KTP LAMA
-    // ===========================
-
-    if (
-      newUploadedFile &&
-      oldFile &&
-      oldFile !== newFileName
-    ) {
-      const oldPath =
-        path.join(
-          process.cwd(),
-          "public",
-          "uploads",
-          "ktp",
-          oldFile
-        );
-
-      if (
-        fs.existsSync(oldPath)
-      ) {
-        await unlink(
-          oldPath
-        );
-      }
-    }
 
     // ===========================
     // ACTIVITY LOG
@@ -532,6 +517,36 @@ export async function PUT(
 
     await conn.commit();
 
+    // ===========================
+    // HAPUS FILE KTP LAMA
+    // ===========================
+
+    if (
+      newUploadedFile &&
+      oldFileName &&
+      oldFileName !== newFileName
+    ) {
+      const oldPath =
+        path.join(
+          process.cwd(),
+          "public",
+          "uploads",
+          "ktp",
+          oldFileName
+        );
+
+      if (
+        fs.existsSync(oldPath)
+      ) {
+        await unlink(
+          oldPath
+        );
+      }
+    }
+
+    newUploadedFile =
+      null;
+
     return NextResponse.json({
       success: true,
       message:
@@ -539,9 +554,13 @@ export async function PUT(
     });
 
   } catch (err: any) {
+
     await conn.rollback();
 
-    // Hapus file baru jika transaksi gagal
+    // ===========================
+    // HAPUS FILE BARU JIKA GAGAL
+    // ===========================
+
     if (newUploadedFile) {
       try {
         if (
@@ -574,7 +593,10 @@ export async function PUT(
         status: 500,
       }
     );
+
   } finally {
+
     conn.release();
+
   }
 }

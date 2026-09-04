@@ -16,6 +16,7 @@ export async function POST(request: Request) {
   const conn = await db.getConnection();
 
   let uploadedFilePath: string | null = null;
+  let oldKtpFile: string | null = null;
 
   try {
     const formData =
@@ -156,6 +157,25 @@ export async function POST(request: Request) {
       string | null = null;
 
     // =====================================================
+    // CEK KTP LAMA
+    // =====================================================
+
+    const [
+      oldKtpRows,
+    ]: any = await conn.query(
+      `
+      SELECT file_ktp
+      FROM kependudukan
+      WHERE nik = ?
+      LIMIT 1
+      `,
+      [nik]
+    );
+
+    oldKtpFile =
+      oldKtpRows[0]?.file_ktp ?? null;
+
+    // =====================================================
     // VALIDASI + UPLOAD JIKA FILE DIISI
     // =====================================================
 
@@ -292,6 +312,9 @@ export async function POST(request: Request) {
     // INSERT / UPDATE KEPENDUDUKAN
     // =====================================================
 
+    const finalKtpFile =
+      fileName ?? oldKtpFile;
+
     const [
       pendudukRows,
     ]: any = await conn.query(
@@ -326,10 +349,11 @@ export async function POST(request: Request) {
           dusun,
           rt,
           rw,
-          kewarganegaraan
+          kewarganegaraan,
+          file_ktp
         )
         VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         [
           nik,
@@ -344,6 +368,7 @@ export async function POST(request: Request) {
           rt,
           rw,
           kewarganegaraan,
+          finalKtpFile,
         ]
       );
 
@@ -366,7 +391,8 @@ export async function POST(request: Request) {
           dusun = ?,
           rt = ?,
           rw = ?,
-          kewarganegaraan = ?
+          kewarganegaraan = ?,
+          file_ktp = ?
         WHERE nik = ?
         `,
         [
@@ -381,6 +407,7 @@ export async function POST(request: Request) {
           rt,
           rw,
           kewarganegaraan,
+          finalKtpFile,
           nik,
         ]
       );
@@ -460,16 +487,14 @@ export async function POST(request: Request) {
       INSERT INTO jalan
       (
         pengajuan_id,
-        keperluan,
-        file_ktp
+        keperluan
       )
       VALUES
-      (?, ?, ?)
+      (?, ?)
       `,
       [
         pengajuan_id,
         keperluan,
-        fileName,
       ]
     );
 
@@ -558,6 +583,30 @@ export async function POST(request: Request) {
     // =====================================================
 
     await conn.commit();
+
+    // =====================================================
+    // HAPUS KTP LAMA JIKA DIGANTI
+    // =====================================================
+
+    if (
+      fileName &&
+      oldKtpFile &&
+      oldKtpFile !== fileName
+    ) {
+      try {
+        await unlink(
+          path.join(
+            process.cwd(),
+            "public",
+            "uploads",
+            "ktp",
+            oldKtpFile
+          )
+        );
+      } catch {
+        // Abaikan jika file lama tidak ditemukan
+      }
+    }
 
     uploadedFilePath = null;
 
