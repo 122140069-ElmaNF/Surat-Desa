@@ -39,7 +39,7 @@ export default function JenisSuratSection() {
                 {surat.no}
               </div>
 
-              <div className="surat-content">
+              <div className="surat-item-content">
                 <h3>{surat.title}</h3>
                 <p>{surat.desc}</p>
               </div>
